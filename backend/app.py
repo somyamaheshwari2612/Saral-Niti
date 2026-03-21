@@ -44,8 +44,13 @@ def test_db():
 # Register blueprints
 from routes.schemes import schemes_bp
 from routes.search import search_bp
+from routes.live import live_bp        
+from routes.chatbot import chatbot_bp 
+
 app.register_blueprint(schemes_bp)
 app.register_blueprint(search_bp)
+app.register_blueprint(live_bp)       
+app.register_blueprint(chatbot_bp) 
     
 if __name__ == "__main__":
     app.run(debug=True , port=5000)
