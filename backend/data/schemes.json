@@ -1,0 +1,172 @@
+[
+  {
+    "title": "PM Kisan Samman Nidhi",
+    "slug": "pm-kisan-samman-nidhi",
+    "description": "Provides income support of Rs.6000 per year to small and marginal farmer families across India in three equal installments.",
+    "category": "agriculture",
+    "tags": ["farmer", "rural", "income support", "cash transfer"],
+    "eligibility": {
+      "min_age": 18, "max_age": null, "gender": "all",
+      "income_limit": null, "caste": ["general","obc","sc","st"],
+      "occupation": ["farmer"], "state": "all"
+    },
+    "benefits": "Rs.6000 per year in 3 installments of Rs.2000",
+    "application_url": "https://pmkisan.gov.in",
+    "ministry": "Ministry of Agriculture & Farmers Welfare",
+    "launched_year": 2019,
+    "is_active": true
+  },
+  {
+    "title": "PM Awas Yojana Urban",
+    "slug": "pm-awas-yojana-urban",
+    "description": "Affordable housing for urban poor through credit-linked subsidy on home loans.",
+    "category": "housing",
+    "tags": ["housing", "urban", "home loan", "subsidy"],
+    "eligibility": {
+      "min_age": 18, "max_age": null, "gender": "all",
+      "income_limit": 1800000, "caste": ["general","obc","sc","st"],
+      "occupation": [], "state": "all"
+    },
+    "benefits": "Interest subsidy up to Rs.2.67 lakh on home loans",
+    "application_url": "https://pmaymis.gov.in",
+    "ministry": "Ministry of Housing & Urban Affairs",
+    "launched_year": 2015,
+    "is_active": true
+  },
+  {
+    "title": "Beti Bachao Beti Padhao",
+    "slug": "beti-bachao-beti-padhao",
+    "description": "Scheme to address declining child sex ratio and promote welfare and education of the girl child.",
+    "category": "women",
+    "tags": ["girl child", "education", "women", "empowerment"],
+    "eligibility": {
+      "min_age": 0, "max_age": 10, "gender": "female",
+      "income_limit": null, "caste": ["general","obc","sc","st"],
+      "occupation": [], "state": "all"
+    },
+    "benefits": "Financial incentives, scholarship support, awareness programs",
+    "application_url": "https://wcd.nic.in",
+    "ministry": "Ministry of Women & Child Development",
+    "launched_year": 2015,
+    "is_active": true
+  },
+  {
+    "title": "Ayushman Bharat PM-JAY",
+    "slug": "ayushman-bharat-pmjay",
+    "description": "World's largest health insurance scheme providing Rs.5 lakh per family per year for secondary and tertiary hospitalization.",
+    "category": "health",
+    "tags": ["health", "insurance", "hospital", "free treatment"],
+    "eligibility": {
+      "min_age": 0, "max_age": null, "gender": "all",
+      "income_limit": 100000, "caste": ["general","obc","sc","st"],
+      "occupation": [], "state": "all"
+    },
+    "benefits": "Rs.5 lakh per family per year for hospitalization",
+    "application_url": "https://pmjay.gov.in",
+    "ministry": "Ministry of Health & Family Welfare",
+    "launched_year": 2018,
+    "is_active": true
+  },
+  {
+    "title": "PM Mudra Yojana",
+    "slug": "pm-mudra-yojana",
+    "description": "Provides loans up to Rs.10 lakh to non-corporate, non-farm small and micro enterprises.",
+    "category": "employment",
+    "tags": ["loan", "business", "self employment", "micro enterprise", "startup"],
+    "eligibility": {
+      "min_age": 18, "max_age": null, "gender": "all",
+      "income_limit": null, "caste": ["general","obc","sc","st"],
+      "occupation": ["business", "self-employed"], "state": "all"
+    },
+    "benefits": "Collateral-free loans: Shishu up to Rs.50k, Kishor up to Rs.5L, Tarun up to Rs.10L",
+    "application_url": "https://mudra.org.in",
+    "ministry": "Ministry of Finance",
+    "launched_year": 2015,
+    "is_active": true
+  },
+  {
+    "title": "National Scholarship Portal",
+    "slug": "national-scholarship-portal",
+    "description": "Single-window portal for students to apply for various central and state government scholarships.",
+    "category": "education",
+    "tags": ["scholarship", "student", "education", "minority", "merit"],
+    "eligibility": {
+      "min_age": 6, "max_age": 30, "gender": "all",
+      "income_limit": 250000, "caste": ["sc","st","obc","minority"],
+      "occupation": ["student"], "state": "all"
+    },
+    "benefits": "Scholarships ranging from Rs.1000 to Rs.20000 per year",
+    "application_url": "https://scholarships.gov.in",
+    "ministry": "Ministry of Education",
+    "launched_year": 2015,
+    "is_active": true
+  },
+  {
+    "title": "Sukanya Samriddhi Yojana",
+    "slug": "sukanya-samriddhi-yojana",
+    "description": "Small savings scheme for girl child providing high interest rate and tax benefits.",
+    "category": "women",
+    "tags": ["girl child", "savings", "investment", "tax benefit"],
+    "eligibility": {
+      "min_age": 0, "max_age": 10, "gender": "female",
+      "income_limit": null, "caste": ["general","obc","sc","st"],
+      "occupation": [], "state": "all"
+    },
+    "benefits": "8.2% interest rate per year, tax exemption under Section 80C",
+    "application_url": "https://www.indiapost.gov.in",
+    "ministry": "Ministry of Finance",
+    "launched_year": 2015,
+    "is_active": true
+  },
+  {
+    "title": "Atal Pension Yojana",
+    "slug": "atal-pension-yojana",
+    "description": "Guaranteed pension scheme for workers in the unorganized sector.",
+    "category": "elderly",
+    "tags": ["pension", "retirement", "unorganized sector", "old age"],
+    "eligibility": {
+      "min_age": 18, "max_age": 40, "gender": "all",
+      "income_limit": null, "caste": ["general","obc","sc","st"],
+      "occupation": ["unorganized sector"], "state": "all"
+    },
+    "benefits": "Guaranteed pension of Rs.1000 to Rs.5000 per month after age 60",
+    "application_url": "https://npscra.nsdl.co.in",
+    "ministry": "Ministry of Finance",
+    "launched_year": 2015,
+    "is_active": true
+  },
+  {
+    "title": "PM Rozgar Protsahan Yojana",
+    "slug": "pm-rozgar-protsahan-yojana",
+    "description": "Government pays full employer EPF contribution for new employees to incentivize job creation.",
+    "category": "employment",
+    "tags": ["employment", "job creation", "EPF", "employer", "youth"],
+    "eligibility": {
+      "min_age": 18, "max_age": null, "gender": "all",
+      "income_limit": null, "caste": ["general","obc","sc","st"],
+      "occupation": ["employed"], "state": "all"
+    },
+    "benefits": "Employer's full EPF contribution 12% paid by government for 3 years",
+    "application_url": "https://pmrpy.gov.in",
+    "ministry": "Ministry of Labour & Employment",
+    "launched_year": 2016,
+    "is_active": true
+  },
+  {
+    "title": "Stand Up India",
+    "slug": "stand-up-india",
+    "description": "Facilitates bank loans between Rs.10 lakh to Rs.1 crore to SC/ST and women entrepreneurs.",
+    "category": "financial",
+    "tags": ["loan", "women", "sc", "st", "entrepreneurship", "business"],
+    "eligibility": {
+      "min_age": 18, "max_age": null, "gender": "all",
+      "income_limit": null, "caste": ["sc","st"],
+      "occupation": ["entrepreneur", "business"], "state": "all"
+    },
+    "benefits": "Bank loan from Rs.10 lakh to Rs.1 crore for greenfield enterprises",
+    "application_url": "https://www.standupmitra.in",
+    "ministry": "Ministry of Finance",
+    "launched_year": 2016,
+    "is_active": true
+  }
+]
