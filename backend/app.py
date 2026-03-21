@@ -40,6 +40,12 @@ def test_db():
             "message" : " MongoDB connection failed",
             "error" : str(e)
         } , 500
+
+# Register blueprints
+from routes.schemes import schemes_bp
+from routes.search import search_bp
+app.register_blueprint(schemes_bp)
+app.register_blueprint(search_bp)
     
 if __name__ == "__main__":
     app.run(debug=True , port=5000)
