@@ -6,15 +6,12 @@ import os
 
 load_dotenv()
 
-# Create blueprint
 schemes_bp = Blueprint("schemes", __name__)
 
-# Connect to DB
 client = MongoClient(os.getenv("MONGO_URI"))
-db = client["saralniti"]
+db = client["saral_niti_db"]
 schemes_collection = db["schemes"]
 
-# Helper to convert MongoDB object to JSON
 def scheme_to_dict(scheme):
     scheme["_id"] = str(scheme["_id"])
     return scheme
@@ -33,11 +30,22 @@ def get_all_schemes():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-# GET /api/schemes/<id> — get one scheme by ID
+# GET /api/schemes/<id> — get one scheme by MongoDB ID
 @schemes_bp.route("/api/schemes/<id>", methods=["GET"])
 def get_scheme_by_id(id):
     try:
         scheme = schemes_collection.find_one({"_id": ObjectId(id)})
+        if not scheme:
+            return jsonify({"error": "Scheme not found"}), 404
+        return jsonify(scheme_to_dict(scheme))
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# GET /api/schemes/slug/<slug> — get scheme by slug
+@schemes_bp.route("/api/schemes/slug/<slug>", methods=["GET"])
+def get_scheme_by_slug(slug):
+    try:
+        scheme = schemes_collection.find_one({"slug": slug})
         if not scheme:
             return jsonify({"error": "Scheme not found"}), 404
         return jsonify(scheme_to_dict(scheme))
