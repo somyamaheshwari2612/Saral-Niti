@@ -2,7 +2,7 @@
 
 Bridging the gap between citizens and government schemes through a simple, searchable platform.
 
-> Similar to [myscheme.gov.in](https://myscheme.gov.in) — built by a team of 4.
+Built by a team of 4 💗
 
 ---
 
@@ -37,7 +37,6 @@ Bridging the gap between citizens and government schemes through a simple, searc
 ```bash
 cd backend
 pip install -r requirements.txt
-cp .env.example .env   # Fill in your MongoDB URI
 python app.py
 ```
 
