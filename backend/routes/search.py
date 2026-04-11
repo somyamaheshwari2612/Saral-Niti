@@ -28,7 +28,7 @@ def search_schemes():
 
         if query:
             filter["$or"] = [
-                {"name": {"$regex": query, "$options": "i"}},
+                {"title": {"$regex": query, "$options": "i"}},
                 {"description": {"$regex": query, "$options": "i"}},
                 {"tags": {"$regex": query, "$options": "i"}}
             ]
