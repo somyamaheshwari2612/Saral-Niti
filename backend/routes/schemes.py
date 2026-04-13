@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify
 from pymongo import MongoClient
 from dotenv import load_dotenv
 from bson import ObjectId
@@ -11,7 +11,7 @@ schemes_bp = Blueprint("schemes", __name__)
 
 # Connect to DB
 client = MongoClient(os.getenv("MONGO_URI"))
-db = client["saralniti"]
+db = client["saral_niti_db"]
 schemes_collection = db["schemes"]
 
 # Helper to convert MongoDB object to JSON

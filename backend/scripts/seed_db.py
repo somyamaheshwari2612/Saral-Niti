@@ -2,8 +2,7 @@ import json
 import os
 import sys
 from datetime import datetime
-from pymongo import MongoClient
-from pymongo import TEXT
+from pymongo import MongoClient, TEXT
 from dotenv import load_dotenv
 
 # Load .env file
@@ -17,7 +16,7 @@ if not MONGO_URI:
 
 # Connect to MongoDB Atlas
 client = MongoClient(MONGO_URI)
-db = client["saralniti"]
+db = client["saral_niti_db"]
 collection = db["schemes"]
 
 # Load dataset
