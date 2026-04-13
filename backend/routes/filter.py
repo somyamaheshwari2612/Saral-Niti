@@ -5,7 +5,7 @@ import os
 
 load_dotenv()
 
-search_bp = Blueprint("search", __name__)
+filter_bp = Blueprint("filter", __name__)
 
 client = MongoClient(os.getenv("MONGO_URI"))
 db = client["saral_niti_db"]
@@ -15,26 +15,19 @@ def scheme_to_dict(scheme):
     scheme["_id"] = str(scheme["_id"])
     return scheme
 
-# GET /api/search?q=keyword
-@search_bp.route("/api/search", methods=["GET"])
-def search_schemes():
+# GET /api/filter?category=health
+@filter_bp.route("/api/filter", methods=["GET"])
+def filter_schemes():
     try:
-        query = request.args.get("q", "")
-        # Build search filter
+        category = request.args.get("category", "")
         filter = {}
-
-        if query:
-            filter["$or"] = [
-                {"title": {"$regex": query, "$options": "i"}},
-                {"description": {"$regex": query, "$options": "i"}},
-                {"tags": {"$regex": query, "$options": "i"}},
-                {"ministry": {"$regex": query, "$options": "i"}}
-            ]
+        if category:
+            filter["category"] = {"$regex": category, "$options": "i"}
         results = list(schemes_collection.find(filter).limit(50))
         results = [scheme_to_dict(s) for s in results]
         return jsonify({
             "status": "ok",
-            "query": query,
+            "category": category,
             "count": len(results),
             "schemes": results
         })

@@ -1,0 +1,37 @@
+<!-- ══════════════ SCHEMES SECTION ══════════════ -->
+<main class="main">
+  <div class="section-header">
+    <div>
+      <div class="section-title">Browse by Category</div>
+      <div class="section-sub">Select a category to filter schemes</div>
+    </div>
+  </div>
+
+  <!-- FILTERS -->
+  <div class="filters" id="schemes">
+    <button class="filter-btn active" onclick="filterByCategory('all', this)"  id='schemes' >All</button>
+    <button class="filter-btn" onclick="filterByCategory('agriculture', this)">🌾 Agriculture</button>
+    <button class="filter-btn" onclick="filterByCategory('health', this)">🏥 Health</button>
+    <button class="filter-btn" onclick="filterByCategory('education', this)">📚 Education</button>
+    <button class="filter-btn" onclick="filterByCategory('housing', this)">🏠 Housing</button>
+    <button class="filter-btn" onclick="filterByCategory('employment', this)">💼 Employment</button>
+    <button class="filter-btn" onclick="filterByCategory('women', this)">👩 Women</button>
+    <button class="filter-btn" onclick="filterByCategory('financial', this)">💰 Financial</button>
+    <button class="filter-btn" onclick="filterByCategory('elderly', this)">👴 Elderly</button>
+    <button class="filter-btn" onclick="filterByCategory('youth', this)">🧑 Youth</button>
+    <button class="filter-btn" onclick="filterByCategory('disability', this)">♿ Disability</button>
+  </div>
+
+  <!-- RESULTS BAR -->
+  <div class="results-bar">
+    <div class="results-count" id="resultsCount">Loading schemes...</div>
+  </div>
+
+  <!-- SCHEMES GRID -->
+  <div id="schemesGrid" class="schemes-grid">
+    <div class="loading">
+      <div class="spinner"></div>
+      <span>Fetching schemes...</span>
+    </div>
+  </div>
+</main>

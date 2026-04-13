@@ -1,0 +1,71 @@
+<!-- ══════════════ URL DETECTOR MODAL ══════════════ -->
+<div class="det-overlay" id="detOverlay" onclick="closeDetectorOnOverlay(event)">
+  <div class="det-modal">
+
+    <div class="det-header">
+      <button class="det-header-close" onclick="closeDetector()">✕</button>
+      <div class="det-header-badge"><i class="fa-solid fa-shield-halved"></i> AI Security Tool</div>
+      <h2>🔍 URL & Document Detector</h2>
+      <p>Check if a government scheme URL is real or fake, and scan documents for scam content</p>
+    </div>
+
+    <div class="det-tabs">
+      <button class="det-tab active" id="tab-url" onclick="switchDetectorTab('url')">
+        <i class="fa-solid fa-link"></i> URL Checker
+      </button>
+      <button class="det-tab" id="tab-file" onclick="switchDetectorTab('file')">
+        <i class="fa-solid fa-file-shield"></i> Document Validator
+      </button>
+    </div>
+
+    <div class="det-body">
+
+      <!-- URL PANEL -->
+      <div class="det-panel active" id="panel-url">
+        <label class="det-label" for="urlInput">
+          <i class="fa-solid fa-globe"></i>&nbsp; Enter a URL to verify:
+        </label>
+        <input type="text" id="urlInput" class="det-input"
+          placeholder="e.g. https://pmkisan.gov.in or http://pm-kisan-free.com" />
+        <button class="det-btn" id="urlBtn" onclick="analyzeURL()">
+          <i class="fa-solid fa-magnifying-glass"></i> Classify URL
+        </button>
+        <div class="det-spinner-row" id="urlSpinner">
+          <div class="det-mini-spinner"></div>
+          <span class="det-spinner-text">Analyzing URL with AI... please wait</span>
+        </div>
+        <div class="det-result" id="urlResult">
+          <div class="det-result-heading">Analysis Result</div>
+          <div class="det-result-box" id="urlResultBox"></div>
+          <p class="det-note">⚠️ AI-generated result. Always cross-check with official government portals.</p>
+        </div>
+      </div>
+
+      <!-- FILE PANEL -->
+      <div class="det-panel" id="panel-file">
+        <label class="det-label">
+          <i class="fa-solid fa-file-pdf"></i>&nbsp; Upload a document to scan:
+        </label>
+        <div class="det-file-area" onclick="document.getElementById('fileInput').click()">
+          <input type="file" id="fileInput" accept=".pdf,.txt" onchange="onFileSelected(this)">
+          <div class="det-file-icon">📄</div>
+          <div class="det-file-text">Click to upload or drag a file here<br><span>PDF or TXT only</span></div>
+          <div class="det-file-name" id="fileName"></div>
+        </div>
+        <button class="det-btn" id="fileBtn" onclick="analyzeFile()">
+          <i class="fa-solid fa-upload"></i> Analyze Document
+        </button>
+        <div class="det-spinner-row" id="fileSpinner">
+          <div class="det-mini-spinner"></div>
+          <span class="det-spinner-text">Reading and analyzing document... please wait</span>
+        </div>
+        <div class="det-result" id="fileResult">
+          <div class="det-result-heading">Analysis Result</div>
+          <div class="det-result-box" id="fileResultBox"></div>
+          <p class="det-note">⚠️ AI-generated result. Verify with official sources before taking action.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
