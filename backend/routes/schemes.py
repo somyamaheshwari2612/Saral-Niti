@@ -6,15 +6,12 @@ import os
 
 load_dotenv()
 
-# Create blueprint
 schemes_bp = Blueprint("schemes", __name__)
 
-# Connect to DB
 client = MongoClient(os.getenv("MONGO_URI"))
 db = client["saral_niti_db"]
 schemes_collection = db["schemes"]
 
-# Helper to convert MongoDB object to JSON
 def scheme_to_dict(scheme):
     scheme["_id"] = str(scheme["_id"])
     return scheme

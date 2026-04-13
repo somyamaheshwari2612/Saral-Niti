@@ -13,7 +13,7 @@ CORS(app)
 
 # Connect to MongoDB
 client = MongoClient(os.getenv("MONGO_URI"))
-db = client["saralniti"]
+db = client["saral_niti_db"]
 schemes_collection = db["schemes"]
 
 # Test route
