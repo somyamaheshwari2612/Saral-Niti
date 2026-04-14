@@ -1,9 +1,11 @@
 from pymongo import MongoClient
 import json
 import os
+from dotenv import load_dotenv
+load_dotenv()
 
 # MongoDB connection
-MONGO_URI = "mongodb+srv://saral_admin:Saral%401234@saralniti.lo8zpcn.mongodb.net/saral_niti_db?retryWrites=true&w=majority&appName=SaralNiti"
+MONGO_URI = os.getenv("MONGO_URI")
 
 client = MongoClient(MONGO_URI)
 db = client["saral_niti_db"]
