@@ -291,3 +291,36 @@ document.addEventListener('keydown', e => {
 //  INIT
 // ══════════════════════════════════════════════════
 loadSchemes();
+const placeholders = [
+  "Search for farmer schemes...",
+  "Search for health schemes...",
+  "Search for student schemes...",
+  "Search for women schemes...",
+  "Search for housing schemes..."
+];
+
+let pIndex = 0;
+setInterval(() => {
+  pIndex = (pIndex + 1) % placeholders.length;
+  document.getElementById('searchInput').placeholder = placeholders[pIndex];
+}, 3500);
+
+function toggleDarkMode() {
+  document.documentElement.classList.toggle('dark-mode');
+  const icon = document.getElementById('darkIcon');
+  if (document.documentElement.classList.contains('dark-mode')) {
+    icon.classList.replace('fa-moon', 'fa-sun');
+    localStorage.setItem('darkMode', 'on');
+  } else {
+    icon.classList.replace('fa-sun', 'fa-moon');
+    localStorage.setItem('darkMode', 'off');
+  }
+}
+
+// Page load pe dark mode check karo
+window.addEventListener('DOMContentLoaded', () => {
+  if (localStorage.getItem('darkMode') === 'on') {
+    document.documentElement.classList.add('dark-mode');
+    document.getElementById('darkIcon').classList.replace('fa-moon', 'fa-sun');
+  }
+});
