@@ -4,6 +4,7 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
 
+
 # Load .env file
 load_dotenv()
 
@@ -52,6 +53,8 @@ from routes.filter import filter_bp
 from routes.live import live_bp        
 from routes.chatbot import chatbot_bp
 from routes.detector import detector_bp
+from routes.detector import detector_bp      # ← add this
+app.register_blueprint(detector_bp)           # ← add this
 
 # from prototype.backend.routes.detector import api_detect_url, api_detect_file
 # app.add_url_rule('/api/detect-url', view_func=api_detect_url, methods=['POST'])

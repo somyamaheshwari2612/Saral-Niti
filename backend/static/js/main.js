@@ -3,8 +3,8 @@
 //  SCHEMES_API  → Person 2's Flask backend (schemes)
 //  ML_API       → ML Flask backend (URL detector)
 // ══════════════════════════════════════════════════
-const SCHEMES_API = 'http://127.0.0.1:5000';
-const ML_API      = 'http://127.0.0.1:5000';
+const SCHEMES_API = 'https://saral-niti-backend.onrender.com';
+const ML_API      = 'https://saral-niti-backend.onrender.com';
 
 let allSchemes = [];
 
