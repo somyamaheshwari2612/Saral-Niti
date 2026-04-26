@@ -23,7 +23,7 @@ schemes_collection = db["schemes"]
 # ← pehle JSON return karta tha, ab HTML page serve karta hai
 @app.route("/")
 def home():
-    return render_template("base.html")  # ← CHANGE kiya
+    return render_template("schemes.html")  # ← CHANGE kiya
 
 @app.route("/schemes")
 def schemes_page():
