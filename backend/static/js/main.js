@@ -74,13 +74,13 @@ async function handleSearch() {
     document.getElementById('schemesGrid').innerHTML = `<div class="no-results"><h3>Search failed</h3><p>Please try again</p></div>`;
   }
 }
-document.getElementById('searchInput').addEventListener('input', () => {
- handleSearch();
-});
-
-document.getElementById('searchInput').addEventListener('keydown', e => {
-  if (e.key === 'Enter') handleSearch();
-});
+const searchEl = document.getElementById('searchInput');
+if (searchEl) {
+  searchEl.addEventListener('input', () => handleSearch());
+  searchEl.addEventListener('keydown', e => {
+    if (e.key === 'Enter') handleSearch();
+  });
+}
 
 // ══════════════════════════════════════════════════
 //  FILTER BY CATEGORY
@@ -302,7 +302,8 @@ const placeholders = [
 let pIndex = 0;
 setInterval(() => {
   pIndex = (pIndex + 1) % placeholders.length;
-  document.getElementById('searchInput').placeholder = placeholders[pIndex];
+  const sEl = document.getElementById('searchInput');
+  if (sEl) sEl.placeholder = placeholders[pIndex];
 }, 3500);
 
 function toggleDarkMode() {
