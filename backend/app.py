@@ -9,8 +9,8 @@ load_dotenv()
 
 # ← template_folder aur static_folder ADD kiya
 app = Flask(__name__,
-    template_folder='../frontend/templates',
-    static_folder='../frontend/static'
+    template_folder='templates',
+    static_folder='static'
 )
 CORS(app)
 
@@ -22,8 +22,15 @@ schemes_collection = db["schemes"]
 # ← pehle JSON return karta tha, ab HTML page serve karta hai
 @app.route("/")
 def home():
-    return render_template("project.html")  # ← CHANGE kiya
+    return render_template("base.html")  # ← CHANGE kiya
 
+@app.route("/schemes")
+def schemes_page():
+    return render_template("schemes.html")
+
+@app.route("/project")
+def project_page():
+    return render_template("project.html")
 # MongoDB connection test — kuch nahi badla
 @app.route("/test-db")
 def test_db():
