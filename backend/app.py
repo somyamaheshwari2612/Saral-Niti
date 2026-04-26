@@ -50,15 +50,9 @@ def test_db():
 from routes.schemes import schemes_bp
 from routes.search import search_bp
 from routes.filter import filter_bp
-from routes.live import live_bp        
+from routes.live import live_bp
 from routes.chatbot import chatbot_bp
 from routes.detector import detector_bp
-from routes.detector import detector_bp      # ← add this
-app.register_blueprint(detector_bp)           # ← add this
-
-# from prototype.backend.routes.detector import api_detect_url, api_detect_file
-# app.add_url_rule('/api/detect-url', view_func=api_detect_url, methods=['POST'])
-# app.add_url_rule('/api/detect-file', view_func=api_detect_file, methods=['POST'])
 
 app.register_blueprint(schemes_bp)
 app.register_blueprint(search_bp)
