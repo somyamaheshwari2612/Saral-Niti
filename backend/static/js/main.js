@@ -325,3 +325,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('darkIcon').classList.replace('fa-moon', 'fa-sun');
   }
 });
+function toggleMenu() {
+  const links = document.querySelector('.nav-links');
+  links.classList.toggle('open');
+}
