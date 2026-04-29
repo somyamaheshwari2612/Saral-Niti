@@ -2,7 +2,7 @@
 from flask import Flask, render_template, request, jsonify ,Blueprint
 from flask_cors import CORS
 from groq import Groq
-import PyPDF2
+import pdfplumber
 from dotenv import load_dotenv  # ← ADD kiya
 import os                        # ← ADD kiya
 
@@ -88,10 +88,10 @@ def api_detect_file():
         return jsonify({"error": "No file selected"}), 400
     try:
         if file.filename.endswith(".pdf"):
-            pdf_reader = PyPDF2.PdfReader(file)
-            extracted_text = "".join([
-                page.extract_text() for page in pdf_reader.pages if page.extract_text()
-            ])
+            with pdfplumber.open(file) as pdf:
+                extracted_text = "".join([
+                    page.extract_text() or "" for page in pdf.pages
+                ])
         elif file.filename.endswith(".txt"):
             extracted_text = file.read().decode("UTF-8")
         else:
