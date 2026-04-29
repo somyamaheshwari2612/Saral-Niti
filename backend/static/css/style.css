@@ -281,7 +281,7 @@ footer strong { color: var(--saffron); }
   display: block;
   width: 24px;
   height: 2px;
-  background: var(--navy);
+  background: var(--saffron);
   border-radius: 2px;
   transition: all 0.3s;
 }
