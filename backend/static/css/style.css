@@ -68,6 +68,25 @@ nav {
 .nav-detector-btn:hover { background: linear-gradient(135deg, #3b0f70, #6b21a8) !important; transform: translateY(-1px); box-shadow: 0 4px 16px rgba(80,0,180,0.4); }
 .nav-badge { background: var(--saffron-pale); color: var(--saffron); font-size: 12px; font-weight: 600; padding: 6px 16px; border-radius: 20px; border: 1px solid #FFD4B0; }
 
+/* ── HAMBURGER ── */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+.hamburger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--navy);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
 /* ── HERO ── */
 .hero {
   background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 60%, #1a3a5c 100%);
@@ -249,17 +268,49 @@ footer { background: var(--navy); color: rgba(255,255,255,0.5); text-align: cent
 footer strong { color: var(--saffron); }
 
 /* ── RESPONSIVE ── */
+.hamburger {
+  display: none;
+  flex-direction: column;
+  gap: 5px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+}
+.hamburger span {
+  display: block;
+  width: 24px;
+  height: 2px;
+  background: var(--saffron);
+  border-radius: 2px;
+  transition: all 0.3s;
+}
+
 @media (max-width: 600px) {
-  .nav-links { display: none; }
+  .hamburger { display: flex; }
+  .nav-links {
+    display: none;
+    flex-direction: column;
+    position: absolute;
+    top: 64px;
+    left: 0; right: 0;
+    background: white;
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    z-index: 99;
+    gap: 16px;
+  }
+  .nav-links.open { display: flex; }
+  .nav-badge { display: none; }
   .stats { gap: 1.5rem; }
   .schemes-grid { grid-template-columns: 1fr; }
   .eligibility-grid { grid-template-columns: 1fr; }
   .modal-body, .det-body { padding: 20px; }
   .modal-footer { padding: 0 20px 20px; flex-direction: column; }
 }
-  
+
 * { box-sizing: border-box; margin: 0; padding: 0; }
-    /* body { font-family: sans-serif; } */
 
     .footer-wrap {
       background: #1e1b3a;
