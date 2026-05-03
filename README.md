@@ -1,47 +1,48 @@
 # 🇮🇳 Saral Niti — Government Schemes Discovery Platform
 
-Bridging the gap between citizens and government schemes through a simple, searchable platform.
+Bridging the gap between citizens and government schemes 
+through a simple, searchable platform.
 
 Built by a team of 4 💗
 
 ---
 
-## 🔗 Live Links
-- **Frontend:** (GitHub Pages link — would be added later)
-- **Backend API:** (Render link — would be added later)
+## 🔗 Live App
+🌐 https://saral-niti-backend.onrender.com
+
+> ⚠️ Hosted on Render's free tier — may take ~50 seconds 
+> to load on first visit after inactivity.
 
 ---
 
 ## 🧑‍💻 Team & Responsibilities
 
-| Person | Role | Branch |
-|--------|------|--------|
-| Dushyant Sharma | Frontend — HTML/CSS/JS | `frontend` |
+| Name | Role | Branch |
+|------|------|--------|
+| Dushyant Sharma | Frontend — HTML/CSS/JS/Bootstrap | `frontend` |
 | Savita | Backend — Flask APIs | `backend` |
 | Aryan Singhal | Database — MongoDB Atlas | `database` |
-| Somya Maheshwari | Live API + Chatbot + Deploy | `deployment` |
+| Somya Maheshwari | Chatbot + Deployment | `deployment` |
 
 ---
 
 ## 🛠️ Tech Stack
 - **Frontend:** HTML, CSS, Bootstrap 5, JavaScript
-- **Backend:** Python, Flask, PyMongo
+- **Backend:** Python, Flask, PyMongo, Gunicorn
 - **Database:** MongoDB Atlas
-- **Deployment:** GitHub Pages (frontend) + Render (backend)
+- **AI:** Groq API (LLaMA 3.3 70B) — fake scheme detection
+- **Deployment:** Render (full stack)
 
 ---
 
-## 🚀 How to Run Locally
-
-### Backend
-```bash
-cd backend
-pip install -r requirements.txt
-python app.py
-```
-
-### Frontend
-Just open `frontend/index.html` in your browser.
+## ✨ Features
+- 🔍 Search and filter government schemes by category
+- 📋 Detailed scheme view with eligibility, benefits, 
+  and apply link
+- 🤖 Rule-based chatbot for scheme discovery
+- 🛡️ AI-powered URL and document detector to identify 
+  fake schemes
+- 🌙 Dark mode support
 
 ---
 
@@ -52,18 +53,31 @@ Just open `frontend/index.html` in your browser.
 | GET | `/api/schemes` | All schemes |
 | GET | `/api/schemes/:id` | One scheme by ID |
 | GET | `/api/search?q=` | Search schemes |
-| GET | `/api/live/schemes?q=` | Live from MyScheme API |
+| GET | `/api/filter?category=` | Filter by category |
 | POST | `/api/chatbot` | Chatbot reply |
+| POST | `/api/detect-url` | Fake URL detector |
+| POST | `/api/detect-file` | Fake document detector |
 
 ---
-
 ## 📁 Project Structure
 ```
-saral-niti/
-├── frontend/        # HTML pages + CSS + JS
-├── backend/         # Flask app + routes
-│   ├── routes/      # API route files
-│   ├── models/      # Database schema
-│   └── data/        # JSON dataset
-└── docs/            # API docs + setup guide
+Saral-Niti/
+├── backend/
+│   ├── data/            # JSON dataset
+│   ├── models/          # Database schema
+│   ├── routes/          # API route files
+│   ├── scripts/         # Seed scripts
+│   ├── static/          # CSS + JS files
+│   ├── templates/       # HTML templates
+│   ├── app.py           # Flask entry point
+│   ├── Procfile         # Render deployment config
+│   └── requirements.txt
+├── docs/                # API docs + setup guide
+├── .gitignore
+├── LICENSE
+└── README.md
 ```
+---
+
+## 📄 License
+MIT License
