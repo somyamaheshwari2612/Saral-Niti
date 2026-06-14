@@ -7,9 +7,13 @@ load_dotenv()
 
 filter_bp = Blueprint("filter", __name__)
 
-client = MongoClient(os.getenv("MONGO_URI"))
-db = client["saral_niti_db"]
-schemes_collection = db["schemes"]
+MONGO_URI = os.getenv("MONGO_URI")
+if MONGO_URI:
+    client = MongoClient(MONGO_URI)
+else:
+    client = None
+db = client["saral_niti_db"] if client else None
+schemes_collection = db["schemes"] if db else None
 
 def scheme_to_dict(scheme):
     scheme["_id"] = str(scheme["_id"])
