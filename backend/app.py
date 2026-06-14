@@ -16,7 +16,11 @@ app = Flask(__name__,
 CORS(app)
 
 # Connect to MongoDB
-client = MongoClient(os.getenv("MONGO_URI"))
+MONGO_URI = os.getenv("MONGO_URI")
+if MONGO_URI:
+    client = MongoClient(MONGO_URI)
+else:
+    client = None
 db = client["saral_niti_db"]
 schemes_collection = db["schemes"]
 
