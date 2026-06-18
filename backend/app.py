@@ -21,8 +21,8 @@ if MONGO_URI:
     client = MongoClient(MONGO_URI)
 else:
     client = None
-db = client["saral_niti_db"] if client else None
-schemes_collection = db["schemes"] if db else None
+db = client["saral_niti_db"] if client is not None else None
+schemes_collection = db["schemes"] if db is not None else None
 
 # ← pehle JSON return karta tha, ab HTML page serve karta hai
 @app.route("/")

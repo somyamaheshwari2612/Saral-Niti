@@ -13,7 +13,7 @@ if MONGO_URI:
 else:
     client = None
 db = client["saral_niti_db"] if client else None
-schemes_collection = db["schemes"] if db else None
+schemes_collection = db["schemes"] if db is not None else None
 
 def scheme_to_dict(scheme):
     scheme["_id"] = str(scheme["_id"])
