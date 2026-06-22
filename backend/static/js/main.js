@@ -325,7 +325,13 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('darkIcon').classList.replace('fa-moon', 'fa-sun');
   }
 });
+
+// ══════════════════════════════════════════════════
+//  MOBILE MENU TOGGLE (hamburger <-> X animation)
+// ══════════════════════════════════════════════════
 function toggleMenu() {
   const links = document.querySelector('.nav-links');
+  const burger = document.querySelector('.hamburger');
   links.classList.toggle('open');
+  if (burger) burger.classList.toggle('open');
 }
