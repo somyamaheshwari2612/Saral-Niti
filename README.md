@@ -62,7 +62,7 @@ India has 3,000+ central and state government welfare schemes — yet a large sh
 
 | Feature | Description |
 |---|---|
-| 🔍 **Search & Filter** | Real-time keyword search and 10-category filtering across 50 schemes |
+| 🔍 **Search & Filter** | Real-time keyword search and 10-category filtering across 50+ schemes |
 | 📋 **Scheme Details** | Eligibility, benefits, ministry, and direct apply links in a modal view |
 | 🤖 **Chatbot** | Rule-based assistant that recommends schemes based on user intent |
 | 🛡️ **Fraud Detector** | Groq (LLaMA 3.3 70B)-powered URL & document checker — flags REAL / FAKE / SUSPICIOUS |
