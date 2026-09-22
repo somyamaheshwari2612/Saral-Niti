@@ -1,12 +1,20 @@
 // ══════════════════════════════════════════════════
 //  CONFIG
-//  SCHEMES_API  → Person 2's Flask backend (schemes)
-//  ML_API       → ML Flask backend (URL detector)
+//  Using relative URLs so local and production hosts work automatically
 // ══════════════════════════════════════════════════
-const SCHEMES_API = 'https://saral-niti-backend.onrender.com';
-const ML_API      = 'https://saral-niti-backend.onrender.com';
+const SCHEMES_API = '';
+const ML_API      = '';
 
 let allSchemes = [];
+
+// Debounce helper to prevent excessive API requests on keystroke
+function debounce(func, delay = 300) {
+  let timer;
+  return function(...args) {
+    clearTimeout(timer);
+    timer = setTimeout(() => func.apply(this, args), delay);
+  };
+}
 
 // ══════════════════════════════════════════════════
 //  LOAD SCHEMES
@@ -76,7 +84,8 @@ async function handleSearch() {
 }
 const searchEl = document.getElementById('searchInput');
 if (searchEl) {
-  searchEl.addEventListener('input', () => handleSearch());
+  const debouncedSearch = debounce(() => handleSearch(), 300);
+  searchEl.addEventListener('input', debouncedSearch);
   searchEl.addEventListener('keydown', e => {
     if (e.key === 'Enter') handleSearch();
   });
@@ -209,11 +218,11 @@ async function analyzeURL() {
     if (data.error) {
       showDetectorResult('url', '❌ Error: ' + data.error, 'fake');
     } else {
-      showDetectorResult('url', data.result, classifyResult(data.result));
+      showDetectorResult('url', data.result, classifyResult(data.result, data.verdict));
     }
   } catch (err) {
     showDetectorResult('url',
-      '❌ Could not connect to ML backend.\n\nMake sure Flask server is running on port 5001.\n\nError: ' + err.message,
+      '❌ Could not connect to backend server.\n\nError: ' + err.message,
       'fake'
     );
   } finally {
@@ -246,11 +255,11 @@ async function analyzeFile() {
     if (data.error) {
       showDetectorResult('file', '❌ Error: ' + data.error, 'fake');
     } else {
-      showDetectorResult('file', data.result, classifyResult(data.result));
+      showDetectorResult('file', data.result, classifyResult(data.result, data.verdict));
     }
   } catch (err) {
     showDetectorResult('file',
-      '❌ Could not connect to ML backend.\n\nMake sure Flask server is running on port 5001.\n\nError: ' + err.message,
+      '❌ Could not connect to backend server.\n\nError: ' + err.message,
       'fake'
     );
   } finally {
@@ -270,16 +279,34 @@ function setDetectorLoading(type, loading) {
 function showDetectorResult(type, text, cssClass) {
   const box = document.getElementById(type + 'ResultBox');
   box.textContent = text;
-  box.className = 'det-result-box ' + cssClass;
+  box.className = 'det-result-box ' + (cssClass || 'suspicious');
   document.getElementById(type + 'Result').classList.add('show');
 }
 
-function classifyResult(text) {
+function classifyResult(text, verdict) {
+  if (verdict) return verdict.toLowerCase();
+  if (!text) return 'suspicious';
+  
+  // Look for explicit Result: REAL/FAKE/SUSPICIOUS line
+  const resultMatch = text.match(/Result:\s*(REAL|FAKE|SUSPICIOUS)/i);
+  if (resultMatch) {
+    return resultMatch[1].toLowerCase();
+  }
+  
+  // Look for Risk Level: LOW/MEDIUM/HIGH line
+  const riskMatch = text.match(/Risk Level:\s*(LOW|MEDIUM|HIGH)/i);
+  if (riskMatch) {
+    const r = riskMatch[1].toUpperCase();
+    if (r === 'LOW') return 'real';
+    if (r === 'HIGH') return 'fake';
+    return 'suspicious';
+  }
+
   const t = text.toUpperCase();
-  if (t.includes('FAKE') || t.includes('HIGH') || t.includes('SCAM')) return 'fake';
-  if (t.includes('SUSPICIOUS') || t.includes('MEDIUM')) return 'suspicious';
-  if (t.includes('REAL') || t.includes('LEGITIMATE') || t.includes('LOW')) return 'real';
-  return '';
+  if (t.includes('FAKE') || t.includes('SCAM')) return 'fake';
+  if (t.includes('SUSPICIOUS')) return 'suspicious';
+  if (t.includes('REAL')) return 'real';
+  return 'suspicious';
 }
 
 // ESC closes any modal

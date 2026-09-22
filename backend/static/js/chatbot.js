@@ -1,7 +1,7 @@
 // frontend/js/chatbot.js
 // Person 4 — Chatbot frontend logic
 
-const BACKEND_URL = "https://saral-niti-backend.onrender.com";
+const BACKEND_URL = "";
 // Create chatbot HTML and inject into page
 function initChatbot() {
     const chatHTML = `

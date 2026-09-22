@@ -15,33 +15,30 @@ app = Flask(__name__,
 )
 CORS(app)
 
-# Connect to MongoDB
-MONGO_URI = os.getenv("MONGO_URI")
-if MONGO_URI:
-    client = MongoClient(MONGO_URI)
-else:
-    client = None
-db = client["saral_niti_db"] if client is not None else None
-schemes_collection = db["schemes"] if db is not None else None
+from database import get_client, get_schemes_collection
 
-# ← pehle JSON return karta tha, ab HTML page serve karta hai
 @app.route("/")
 def home():
-    return render_template("base.html")  # ← CHANGE kiya
+    return render_template("base.html")
 
 @app.route("/schemes")
 def schemes_page():
-    return render_template("schemes.html")
+    return render_template("base.html")
 
 @app.route("/project")
 def project_page():
-    return render_template("project.html")
-# MongoDB connection test — kuch nahi badla
+    return render_template("base.html")
+
+# MongoDB connection test
 @app.route("/test-db")
 def test_db():
     try:
+        client = get_client()
+        if client is None:
+            return {"message": "MongoDB connection failed", "error": "No MongoDB client available"}, 500
         client.admin.command("ping")
-        count = schemes_collection.count_documents({})
+        collection = get_schemes_collection()
+        count = collection.count_documents({}) if collection is not None else 0
         return {
             "message": "MongoDB connected successfully",
             "schemes_in_db": count,

@@ -1,31 +1,16 @@
 from flask import Blueprint, jsonify
-from pymongo import MongoClient
-from dotenv import load_dotenv
 from bson import ObjectId
-import os
-
-load_dotenv()
+from database import get_schemes_collection, scheme_to_dict
 
 schemes_bp = Blueprint("schemes", __name__)
-
-MONGO_URI = os.getenv("MONGO_URI")
-if MONGO_URI:
-    client = MongoClient(MONGO_URI)
-    db = client["saral_niti_db"]
-    schemes_collection = db["schemes"]
-else:
-    client = None
-    db = None
-    schemes_collection = None
-
-def scheme_to_dict(scheme):
-    scheme["_id"] = str(scheme["_id"])
-    return scheme
 
 # GET /api/schemes — get all schemes
 @schemes_bp.route("/api/schemes", methods=["GET"])
 def get_all_schemes():
     try:
+        schemes_collection = get_schemes_collection()
+        if schemes_collection is None:
+            return jsonify({"error": "Database not connected"}), 500
         schemes = list(schemes_collection.find())
         schemes = [scheme_to_dict(s) for s in schemes]
         return jsonify({
@@ -40,6 +25,9 @@ def get_all_schemes():
 @schemes_bp.route("/api/schemes/<id>", methods=["GET"])
 def get_scheme_by_id(id):
     try:
+        schemes_collection = get_schemes_collection()
+        if schemes_collection is None:
+            return jsonify({"error": "Database not connected"}), 500
         scheme = schemes_collection.find_one({"_id": ObjectId(id)})
         if not scheme:
             return jsonify({"error": "Scheme not found"}), 404

@@ -1,23 +1,8 @@
 from flask import Blueprint, jsonify, request
-from pymongo import MongoClient
-from dotenv import load_dotenv
-import os
 import re
-
-load_dotenv()
+from database import get_schemes_collection, scheme_to_dict
 
 search_bp = Blueprint("search", __name__)
-MONGO_URI = os.getenv("MONGO_URI")
-if MONGO_URI:
-    client = MongoClient(MONGO_URI)
-else:
-    client = None
-db = client["saral_niti_db"] if client is not None else None
-schemes_collection = db["schemes"] if db is not None else None
-
-def scheme_to_dict(scheme):
-    scheme["_id"] = str(scheme["_id"])
-    return scheme
 
 # GET /api/search?q=keyword
 @search_bp.route("/api/search", methods=["GET"])
@@ -50,6 +35,10 @@ def search_schemes():
                 {"ministry": {"$regex": safe_query, "$options": "i"}}
             ]
         }
+
+        schemes_collection = get_schemes_collection()
+        if schemes_collection is None:
+            return jsonify({"error": "Database not connected"}), 500
 
         results = list(schemes_collection.find(filter).limit(50))
         results = [scheme_to_dict(s) for s in results]
