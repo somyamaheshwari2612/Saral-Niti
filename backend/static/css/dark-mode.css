@@ -1,107 +1,294 @@
 /* ══════════════════════════════════════════
-   DARK MODE — All dark mode color overrides
+   DARK MODE — Premium Zinc & Saffron Dark Theme
    ══════════════════════════════════════════ */
+html.dark-mode {
+  --bg: #090D16;
+  --bg-card: #111827;
+  --border: #1F2937;
+  --white: #111827;
+}
+
+html.dark-mode body {
+  background: #090D16;
+  color: #E2E8F0;
+}
+
+/* ── NAVBAR ── */
+html.dark-mode .navbar-wrapper {
+  background: rgba(11, 19, 43, 0.9);
+  border-bottom-color: rgba(255, 255, 255, 0.08);
+}
+
+html.dark-mode .logo-title {
+  color: #FFFFFF;
+}
+
+html.dark-mode .nav-link {
+  color: #94A3B8;
+}
+
+html.dark-mode .nav-link:hover,
+html.dark-mode .nav-link.active {
+  color: #FF8C3A;
+}
+
+html.dark-mode .hamburger span {
+  background: #E2E8F0;
+}
+
 html.dark-mode .dark-toggle {
-  background: #2a2a3e;
+  background: #1E293B;
+  border: 1px solid #334155;
 }
 
 html.dark-mode .dark-toggle i {
-  color: #f5c518;
+  color: #FBBF24;
 }
 
 html.dark-mode .toggle-switch {
-  background: #1a6ef5;
+  background: #FF6B00;
 }
 
 html.dark-mode .toggle-ball {
   left: 19px;
-}
-html.dark-mode body {
-  background: #0f0f1a;
-  color: #e0e0e0;
+  background: #FFFFFF;
 }
 
-html.dark-mode .scheme-card {
-  background: #1e1e30;
-  border-color: #3a3a5a;
-  color: #e0e0e0;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.2);
+/* ── HERO OVERRIDES IN DARK MODE ── */
+html.dark-mode .search-box {
+  background: #111827;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.1);
 }
 
-html.dark-mode .card-title {
-  color: #ffffff;
+html.dark-mode .search-box input {
+  color: #FFFFFF;
 }
 
-html.dark-mode .card-desc {
-  color: #b0b0c0;
+html.dark-mode .search-box input::placeholder {
+  color: #64748B;
 }
 
-html.dark-mode .card-benefit {
-  color: #a0a0b0;
-}
-
-html.dark-mode .ministry-name {
-  color: #9090a0;
-}
-
+/* ── SCHEMES & FILTERS ── */
 html.dark-mode .section-title {
-  color: #ffffff;
+  color: #FFFFFF;
 }
 
 html.dark-mode .section-sub {
-  color: #b0b0c0;
-}
-
-html.dark-mode .results-count {
-  color: #b0b0c0;
+  color: #94A3B8;
 }
 
 html.dark-mode .filter-btn {
-  background: #2a2a3e;
-  color: #e0e0e0;
-  border-color: #444;
+  background: #111827;
+  color: #CBD5E1;
+  border-color: #1F2937;
+}
+
+html.dark-mode .filter-btn:hover {
+  border-color: #FF6B00;
+  color: #FF8C3A;
 }
 
 html.dark-mode .filter-btn.active {
-  background: #1a6ef5;
-  color: #ffffff;
+  background: #FF6B00;
+  color: #FFFFFF;
+  border-color: #FF6B00;
 }
 
-html.dark-mode .search-bar input {
-  background: #1a1a2e;
-  color: #e0e0e0;
-  border-color: #4a4a6a;
-  box-shadow: 0 0 0 2px rgba(26, 110, 245, 0.2);
+html.dark-mode .results-bar {
+  border-bottom-color: #1F2937;
 }
 
-html.dark-mode .search-bar {
-  background: #1a1a2e;
-  border: 1px solid #4a4a6a;
-  border-radius: 12px;
+html.dark-mode .results-count {
+  color: #94A3B8;
 }
 
-html.dark-mode .search-btn {
-  background: #1a6ef5;
-  color: #ffffff;
+html.dark-mode .results-count strong {
+  color: #FFFFFF;
 }
 
-html.dark-mode .footer-wrap {
-  background: #1a1a2e;
-  color: #b0b0c0;
+html.dark-mode .reset-filter-btn {
+  border-color: #334155;
+  color: #94A3B8;
 }
 
-html.dark-mode .hero h1 {
-  color: #ffffff;
+html.dark-mode .reset-filter-btn:hover {
+  background: #1E293B;
+  color: #FFFFFF;
 }
 
-html.dark-mode .hero p {
-  color: #b0b0c0;
+/* ── SCHEME CARDS ── */
+html.dark-mode .scheme-card {
+  background: #111827;
+  border-color: #1F2937;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
 }
 
-html.dark-mode .stat-num {
-  color: #ffffff;
+html.dark-mode .scheme-card:hover {
+  border-color: rgba(255, 107, 0, 0.35);
+  box-shadow: 0 18px 36px -8px rgba(0, 0, 0, 0.5), 0 4px 12px rgba(255, 107, 0, 0.1);
 }
 
-html.dark-mode .stat-label {
-  color: #b0b0c0;
+html.dark-mode .card-title {
+  color: #FFFFFF;
+}
+
+html.dark-mode .card-desc {
+  color: #94A3B8;
+}
+
+html.dark-mode .card-benefit {
+  background: rgba(255, 107, 0, 0.1);
+  border-left-color: #FF6B00;
+  border-radius: var(--radius-sm);
+  color: #FDBA74;
+}
+
+html.dark-mode .card-footer {
+  border-top-color: #1F2937;
+}
+
+html.dark-mode .ministry-name {
+  color: #64748B;
+}
+
+html.dark-mode .apply-btn {
+  background: #1E293B;
+  color: #E2E8F0;
+}
+
+html.dark-mode .apply-btn:hover {
+  background: #FF6B00;
+  color: #FFFFFF;
+}
+
+html.dark-mode .scheme-skeleton-card {
+  background: #111827;
+  border-color: #1F2937;
+}
+
+html.dark-mode .skeleton {
+  background: linear-gradient(90deg, #1e293b 25%, #334155 50%, #1e293b 75%);
+  background-size: 200% 100%;
+}
+
+/* ── MODALS ── */
+html.dark-mode .modal,
+html.dark-mode .det-modal {
+  background: #0F172A;
+  color: #E2E8F0;
+  border: 1px solid #1E293B;
+}
+
+html.dark-mode .modal-desc {
+  color: #CBD5E1;
+}
+
+html.dark-mode .elig-item {
+  background: #1E293B;
+  border-color: #334155;
+}
+
+html.dark-mode .elig-value {
+  color: #FFFFFF;
+}
+
+html.dark-mode .tag {
+  background: #1E293B;
+  border-color: #334155;
+  color: #CBD5E1;
+}
+
+html.dark-mode .modal-footer {
+  background: #0B132B;
+  border-top-color: #1E293B;
+}
+
+html.dark-mode .btn-secondary {
+  background: #1E293B;
+  color: #CBD5E1;
+  border-color: #334155;
+}
+
+html.dark-mode .btn-secondary:hover {
+  color: #FFFFFF;
+  border-color: #64748B;
+}
+
+html.dark-mode .det-tabs {
+  background: #090D16;
+  border-bottom-color: #1E293B;
+}
+
+html.dark-mode .det-tab.active {
+  background: #0F172A;
+  color: #818CF8;
+  border-bottom-color: #818CF8;
+}
+
+html.dark-mode .det-label {
+  color: #E2E8F0;
+}
+
+html.dark-mode .det-input {
+  background: #1E293B;
+  border-color: #334155;
+  color: #FFFFFF;
+}
+
+html.dark-mode .det-file-area {
+  background: #1E293B;
+  border-color: #334155;
+}
+
+html.dark-mode .det-file-text {
+  color: #94A3B8;
+}
+
+html.dark-mode .det-file-name {
+  color: #FFFFFF;
+}
+
+html.dark-mode .det-result-box {
+  background: #1E293B;
+  border-color: #334155;
+  color: #E2E8F0;
+}
+
+/* ── CHATBOT ── */
+html.dark-mode .chat-card {
+  background: #0F172A;
+  border-color: #1E293B;
+}
+
+html.dark-mode .chat-body {
+  background: #090D16;
+}
+
+html.dark-mode .bot-msg {
+  background: #1E293B;
+  color: #E2E8F0;
+  border-color: #334155;
+}
+
+html.dark-mode .quick-chip {
+  background: #1E293B;
+  border-color: #334155;
+  color: #CBD5E1;
+}
+
+html.dark-mode .quick-chip:hover {
+  background: rgba(255, 107, 0, 0.15);
+  border-color: #FF6B00;
+  color: #FFA559;
+}
+
+html.dark-mode .chat-footer {
+  background: #0F172A;
+  border-top-color: #1E293B;
+}
+
+html.dark-mode .chat-footer input {
+  background: #1E293B;
+  border-color: #334155;
+  color: #FFFFFF;
 }

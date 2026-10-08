@@ -36,35 +36,85 @@ async function loadSchemes() {
   }
 }
 
+const CATEGORY_ICONS = {
+  agriculture: '🌾',
+  health: '🏥',
+  education: '📚',
+  housing: '🏠',
+  employment: '💼',
+  women: '👩',
+  financial: '💰',
+  elderly: '👴',
+  youth: '🧑',
+  disability: '♿'
+};
+
+function renderSkeletons() {
+  const grid = document.getElementById('schemesGrid');
+  if (!grid) return;
+  grid.innerHTML = Array(6).fill(0).map(() => `
+    <div class="scheme-skeleton-card">
+      <div class="skeleton" style="height:22px; width:90px; border-radius:12px; margin-bottom:16px;"></div>
+      <div class="skeleton" style="height:24px; width:80%; margin-bottom:12px;"></div>
+      <div class="skeleton" style="height:14px; width:100%; margin-bottom:8px;"></div>
+      <div class="skeleton" style="height:14px; width:70%; margin-bottom:20px;"></div>
+      <div class="skeleton" style="height:44px; width:100%; border-radius:10px; margin-bottom:20px;"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="skeleton" style="height:14px; width:45%;"></div>
+        <div class="skeleton" style="height:32px; width:80px; border-radius:8px;"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
 // ══════════════════════════════════════════════════
 //  RENDER CARDS
 // ══════════════════════════════════════════════════
 function renderSchemes(schemes) {
   const grid = document.getElementById('schemesGrid');
   const count = document.getElementById('resultsCount');
+  const resetBtn = document.getElementById('resetBtn');
+
+  if (resetBtn) {
+    const isFiltered = schemes.length !== allSchemes.length;
+    resetBtn.style.display = isFiltered ? 'inline-flex' : 'none';
+  }
 
   if (!schemes.length) {
-    grid.innerHTML = `<div class="no-results"><h3>No schemes found</h3><p>Try a different search or category</p></div>`;
-    count.innerHTML = 'No results found';
+    grid.innerHTML = `
+      <div class="no-results">
+        <h3>No schemes found matching your search</h3>
+        <p>Try searching for different keywords or select "All Categories".</p>
+      </div>`;
+    count.innerHTML = 'Showing <strong>0</strong> schemes';
     return;
   }
 
-  count.innerHTML = `Showing <strong>${schemes.length}</strong> scheme${schemes.length !== 1 ? 's' : ''}`;
-  grid.innerHTML = schemes.map(s => `
+  count.innerHTML = `Showing <strong>${schemes.length}</strong> verified scheme${schemes.length !== 1 ? 's' : ''}`;
+  grid.innerHTML = schemes.map(s => {
+    const icon = CATEGORY_ICONS[s.category] || '🏛';
+    return `
     <div class="scheme-card" onclick="openModal(${JSON.stringify(s).replace(/"/g, '&quot;')})">
-      <div class="card-top">
-        <span class="category-badge cat-${s.category}">${s.category}</span>
-        <div class="active-dot"></div>
+      <div>
+        <div class="card-top">
+          <span class="category-badge cat-${s.category}">${icon} ${s.category}</span>
+          <div class="active-dot" title="Active Scheme"></div>
+        </div>
+        <div class="card-title">${s.title}</div>
+        <div class="card-desc">${s.description}</div>
+        <div class="card-benefit">
+          <i class="fa-solid fa-gift" style="margin-right:4px;"></i> ${s.benefits}
+        </div>
       </div>
-      <div class="card-title">${s.title}</div>
-      <div class="card-desc">${s.description}</div>
-      <div class="card-benefit">${s.benefits}</div>
       <div class="card-footer">
-        <span class="ministry-name">${s.ministry}</span>
-        <a href="${s.application_url}" target="_blank" class="apply-btn" onclick="event.stopPropagation()">Apply ↗</a>
+        <span class="ministry-name" title="${s.ministry}"><i class="fa-solid fa-building-columns"></i> ${s.ministry}</span>
+        <a href="${s.application_url}" target="_blank" rel="noopener noreferrer" class="apply-btn" onclick="event.stopPropagation()">
+          <span>Apply</span>
+          <i class="fa-solid fa-arrow-up-right-from-square"></i>
+        </a>
       </div>
     </div>
-  `).join('');
+  `}).join('');
 }
 
 // ══════════════════════════════════════════════════
@@ -73,15 +123,33 @@ function renderSchemes(schemes) {
 async function handleSearch() {
   const q = document.getElementById('searchInput').value.trim();
   if (!q) { renderSchemes(allSchemes); return; }
-  document.getElementById('schemesGrid').innerHTML = `<div class="loading"><div class="spinner"></div><span>Searching...</span></div>`;
+  renderSkeletons();
   try {
     const res = await fetch(`${SCHEMES_API}/api/search?q=${encodeURIComponent(q)}`);
     const data = await res.json();
     renderSchemes(data.schemes || []);
   } catch {
-    document.getElementById('schemesGrid').innerHTML = `<div class="no-results"><h3>Search failed</h3><p>Please try again</p></div>`;
+    document.getElementById('schemesGrid').innerHTML = `<div class="no-results"><h3>Search failed</h3><p>Please check your connection and try again</p></div>`;
   }
 }
+
+function quickSearch(term) {
+  const input = document.getElementById('searchInput');
+  if (input) {
+    input.value = term;
+    handleSearch();
+    const target = document.getElementById('schemes');
+    if (target) target.scrollIntoView({ behavior: 'smooth' });
+  }
+}
+
+function resetFilters() {
+  const input = document.getElementById('searchInput');
+  if (input) input.value = '';
+  const allBtn = document.querySelector('.filter-btn');
+  if (allBtn) filterByCategory('all', allBtn);
+}
+
 const searchEl = document.getElementById('searchInput');
 if (searchEl) {
   const debouncedSearch = debounce(() => handleSearch(), 300);
@@ -96,12 +164,13 @@ if (searchEl) {
 // ══════════════════════════════════════════════════
 async function filterByCategory(category, btn) {
   document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  btn.classList.add('active');
-  document.getElementById('searchInput').value = '';
+  if (btn) btn.classList.add('active');
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) searchInput.value = '';
 
   if (category === 'all') { renderSchemes(allSchemes); return; }
 
-  document.getElementById('schemesGrid').innerHTML = `<div class="loading"><div class="spinner"></div><span>Filtering...</span></div>`;
+  renderSkeletons();
   try {
     const res = await fetch(`${SCHEMES_API}/api/filter?category=${category}`);
     const data = await res.json();
@@ -112,12 +181,16 @@ async function filterByCategory(category, btn) {
 }
 
 // ══════════════════════════════════════════════════
-//  SCHEME DETAIL MODAL
+//  SCHEME DETAIL MODAL & SHARE
 // ══════════════════════════════════════════════════
+let currentModalScheme = null;
+
 function openModal(s) {
-  document.getElementById('modalCategory').textContent = '🏛 ' + s.category.toUpperCase();
+  currentModalScheme = s;
+  const icon = CATEGORY_ICONS[s.category] || '🏛';
+  document.getElementById('modalCategory').textContent = icon + ' ' + s.category.toUpperCase();
   document.getElementById('modalTitle').textContent = s.title;
-  document.getElementById('modalMinistry').textContent = s.ministry + ' • Since ' + s.launched_year;
+  document.getElementById('modalMinistry').textContent = s.ministry + (s.launched_year ? ' • Launched ' + s.launched_year : '');
   document.getElementById('modalDesc').textContent = s.description;
   document.getElementById('modalBenefits').textContent = s.benefits;
   document.getElementById('modalApplyBtn').href = s.application_url;
@@ -125,14 +198,20 @@ function openModal(s) {
   const e = s.eligibility || {};
   document.getElementById('modalEligibility').innerHTML = `
     <div class="elig-item"><div class="elig-label">Age Range</div><div class="elig-value">${e.min_age ?? 0} – ${e.max_age ?? 'No limit'} years</div></div>
-    <div class="elig-item"><div class="elig-label">Gender</div><div class="elig-value">${e.gender ?? 'All'}</div></div>
-    <div class="elig-item"><div class="elig-label">Income Limit</div><div class="elig-value">${e.income_limit ? '₹' + e.income_limit.toLocaleString('en-IN') : 'No limit'}</div></div>
-    <div class="elig-item"><div class="elig-label">State</div><div class="elig-value">${e.state ?? 'All India'}</div></div>
+    <div class="elig-item"><div class="elig-label">Gender</div><div class="elig-value">${e.gender ?? 'All Citizens'}</div></div>
+    <div class="elig-item"><div class="elig-label">Income Limit</div><div class="elig-value">${e.income_limit ? '₹' + e.income_limit.toLocaleString('en-IN') + ' / year' : 'No income cap'}</div></div>
+    <div class="elig-item"><div class="elig-label">Coverage State</div><div class="elig-value">${e.state ?? 'All India'}</div></div>
   `;
 
   document.getElementById('modalTags').innerHTML = (s.tags || []).map(t => `<span class="tag">#${t}</span>`).join('');
   document.getElementById('modalOverlay').classList.add('open');
   document.body.style.overflow = 'hidden';
+}
+
+function shareOnWhatsApp() {
+  if (!currentModalScheme) return;
+  const text = `🇮🇳 *${currentModalScheme.title}*\n\n${currentModalScheme.description}\n\n*Key Benefits:* ${currentModalScheme.benefits}\n\nApply on official portal: ${currentModalScheme.application_url}\n\n_Discovered via Saral Niti Portal_`;
+  window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
 }
 
 function closeModal() {

@@ -1,30 +1,46 @@
+<!-- ══════════════ TOP TRICOLOR BAR ══════════════ -->
+<div class="tricolor-strip">
+  <div class="strip-saffron"></div>
+  <div class="strip-white"></div>
+  <div class="strip-green"></div>
+</div>
+
 <!-- ══════════════ NAVBAR ══════════════ -->
-<nav>
-  <a href="#" class="logo">
-    <div class="logo-icon">स</div>
-    <span class="logo-text">Saral <span>Niti</span></span>
-  </a>
-  <ul class="nav-links">
-    <li><a href="#base">Home</a></li>
-    <li><a href="#schemes" onclick="filterByCategory('all',document.querySelector('.filter-btn'))">All Schemes</a></li>
-    
-    <li><a href="#Contact">About</a></li>
-    <li>
-      <a href="#" class="nav-detector-btn" onclick="openDetector(); return false;">
-        <i class="fa-solid fa-shield-halved"></i> URL Detector
-      </a>
-    </li>
-   <li>
-  <div class="dark-toggle" onclick="toggleDarkMode()">
-    <i class="fa-solid fa-moon" id="darkIcon"></i>
-    <div class="toggle-switch">
-      <div class="toggle-ball"></div>
-    </div>
-  </div>
-</li>
-  </ul>
-  <button class="hamburger" onclick="toggleMenu()" id="hamburgerBtn">
-  <span></span><span></span><span></span>
-</button>
-  <span class="nav-badge">🇮🇳 Government of India</span>
-</nav>
+<header class="navbar-wrapper">
+  <nav class="nav-container">
+    <a href="#" class="logo">
+      <div class="logo-icon">
+        <span>स</span>
+      </div>
+      <div class="logo-brand">
+        <span class="logo-title">Saral<span>Niti</span></span>
+        <span class="logo-sub">Citizen Welfare Portal</span>
+      </div>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#base" class="nav-link active">Home</a></li>
+      <li><a href="#schemes" class="nav-link" onclick="filterByCategory('all', document.querySelector('.filter-btn'))">Browse Schemes</a></li>
+      <li><a href="#Contact" class="nav-link">About</a></li>
+      <li>
+        <button class="nav-detector-btn" onclick="openDetector()">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>Scam Detector</span>
+          <span class="ai-pill">AI</span>
+        </button>
+      </li>
+      <li>
+        <div class="dark-toggle" onclick="toggleDarkMode()" title="Toggle Dark/Light Mode">
+          <i class="fa-solid fa-moon" id="darkIcon"></i>
+          <div class="toggle-switch">
+            <div class="toggle-ball"></div>
+          </div>
+        </div>
+      </li>
+    </ul>
+
+    <button class="hamburger" onclick="toggleMenu()" id="hamburgerBtn" aria-label="Toggle Navigation Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+</header>

@@ -1,37 +1,101 @@
-<!-- ══════════════ SCHEMES SECTION ══════════════ -->
-<main class="main">
+<!-- ══════════════ SCHEMES EXPLORER SECTION ══════════════ -->
+<main class="main" id="schemes">
   <div class="section-header">
-    <div>
-      <div class="section-title">Browse by Category</div>
-      <div class="section-sub">Select a category to filter schemes</div>
+    <div class="section-heading">
+      <div class="section-badge">
+        <i class="fa-solid fa-shapes"></i> Category Directory
+      </div>
+      <h2 class="section-title">Explore Welfare Schemes by Sector</h2>
+      <p class="section-sub">Filter verified government initiatives tailored to your demographic and sector needs</p>
     </div>
   </div>
 
-  <!-- FILTERS -->
-  <div class="filters" id="schemes">
-    <button class="filter-btn active" onclick="filterByCategory('all', this)"  id='schemes' >All</button>
-    <button class="filter-btn" onclick="filterByCategory('agriculture', this)">🌾 Agriculture</button>
-    <button class="filter-btn" onclick="filterByCategory('health', this)">🏥 Health</button>
-    <button class="filter-btn" onclick="filterByCategory('education', this)">📚 Education</button>
-    <button class="filter-btn" onclick="filterByCategory('housing', this)">🏠 Housing</button>
-    <button class="filter-btn" onclick="filterByCategory('employment', this)">💼 Employment</button>
-    <button class="filter-btn" onclick="filterByCategory('women', this)">👩 Women</button>
-    <button class="filter-btn" onclick="filterByCategory('financial', this)">💰 Financial</button>
-    <button class="filter-btn" onclick="filterByCategory('elderly', this)">👴 Elderly</button>
-    <button class="filter-btn" onclick="filterByCategory('youth', this)">🧑 Youth</button>
-    <button class="filter-btn" onclick="filterByCategory('disability', this)">♿ Disability</button>
+  <!-- CATEGORY FILTERS -->
+  <div class="filters-scroll-wrap">
+    <div class="filters">
+      <button class="filter-btn active" onclick="filterByCategory('all', this)">
+        <span>✨ All Categories</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('agriculture', this)">
+        <span>🌾 Agriculture</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('health', this)">
+        <span>🏥 Healthcare</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('education', this)">
+        <span>📚 Education</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('housing', this)">
+        <span>🏠 Housing</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('employment', this)">
+        <span>💼 Employment</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('women', this)">
+        <span>👩 Women & Child</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('financial', this)">
+        <span>💰 Financial Aid</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('elderly', this)">
+        <span>👴 Senior Citizens</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('youth', this)">
+        <span>🧑 Youth & Skill</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('disability', this)">
+        <span>♿ Divyangjan</span>
+      </button>
+    </div>
   </div>
 
-  <!-- RESULTS BAR -->
+  <!-- RESULTS META BAR -->
   <div class="results-bar">
-    <div class="results-count" id="resultsCount">Loading schemes...</div>
+    <div class="results-count" id="resultsCount">
+      <i class="fa-solid fa-circle-notch fa-spin"></i> Discovering schemes...
+    </div>
+    <div class="results-actions">
+      <button class="reset-filter-btn" id="resetBtn" onclick="resetFilters()" style="display:none;">
+        <i class="fa-solid fa-rotate-left"></i> Reset Filter
+      </button>
+    </div>
   </div>
 
-  <!-- SCHEMES GRID -->
+  <!-- SCHEMES GRID WITH SKELETON PLACEHOLDERS -->
   <div id="schemesGrid" class="schemes-grid">
-    <div class="loading">
-      <div class="spinner"></div>
-      <span>Fetching schemes...</span>
+    <!-- 6 Skeleton cards loaded while initial data fetches -->
+    <div class="scheme-skeleton-card">
+      <div class="skeleton" style="height:22px; width:90px; border-radius:12px; margin-bottom:16px;"></div>
+      <div class="skeleton" style="height:24px; width:80%; margin-bottom:12px;"></div>
+      <div class="skeleton" style="height:14px; width:100%; margin-bottom:8px;"></div>
+      <div class="skeleton" style="height:14px; width:70%; margin-bottom:20px;"></div>
+      <div class="skeleton" style="height:44px; width:100%; border-radius:10px; margin-bottom:20px;"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="skeleton" style="height:14px; width:45%;"></div>
+        <div class="skeleton" style="height:32px; width:80px; border-radius:8px;"></div>
+      </div>
+    </div>
+    <div class="scheme-skeleton-card">
+      <div class="skeleton" style="height:22px; width:90px; border-radius:12px; margin-bottom:16px;"></div>
+      <div class="skeleton" style="height:24px; width:80%; margin-bottom:12px;"></div>
+      <div class="skeleton" style="height:14px; width:100%; margin-bottom:8px;"></div>
+      <div class="skeleton" style="height:14px; width:70%; margin-bottom:20px;"></div>
+      <div class="skeleton" style="height:44px; width:100%; border-radius:10px; margin-bottom:20px;"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="skeleton" style="height:14px; width:45%;"></div>
+        <div class="skeleton" style="height:32px; width:80px; border-radius:8px;"></div>
+      </div>
+    </div>
+    <div class="scheme-skeleton-card">
+      <div class="skeleton" style="height:22px; width:90px; border-radius:12px; margin-bottom:16px;"></div>
+      <div class="skeleton" style="height:24px; width:80%; margin-bottom:12px;"></div>
+      <div class="skeleton" style="height:14px; width:100%; margin-bottom:8px;"></div>
+      <div class="skeleton" style="height:14px; width:70%; margin-bottom:20px;"></div>
+      <div class="skeleton" style="height:44px; width:100%; border-radius:10px; margin-bottom:20px;"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="skeleton" style="height:14px; width:45%;"></div>
+        <div class="skeleton" style="height:32px; width:80px; border-radius:8px;"></div>
+      </div>
     </div>
   </div>
 </main>

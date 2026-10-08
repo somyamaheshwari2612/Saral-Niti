@@ -1,24 +1,88 @@
-<!-- ══════════════ HERO ══════════════ -->
+<!-- ══════════════ HERO SECTION ══════════════ -->
 <section class="hero">
-  
-  <h1>Find the right <span>government scheme</span><br>for you, instantly</h1>
-  <p>Saral Niti helps every Indian citizen discover, verify, and apply for government schemes across agriculture, health, education, housing and more.</p>
-  <div class="search-bar">
-    <input type="text" id="searchInput" placeholder="Search schemes... e.g. farmer, health, student" />
-    <button class="search-btn" onclick="handleSearch()">Search</button>
-  </div>
-  <div class="stats">
-    <div class="stat">
-      <div class="stat-num" id="totalCount">50+</div>
-      <div class="stat-label">Active Schemes</div>
+  <div class="hero-container">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      <span>National Welfare Portal • Direct Benefit Discovery</span>
     </div>
-    <div class="stat">
-      <div class="stat-num">10</div>
-      <div class="stat-label">Categories</div>
+
+    <h1 class="hero-headline">
+      Find the Right <span class="highlight-text">Government Scheme</span><br>
+      For You & Your Family
+    </h1>
+
+    <p class="hero-subtitle">
+      Explore verified central and state welfare initiatives across agriculture, healthcare, education, and entrepreneurship with zero paperwork hurdles.
+    </p>
+
+    <!-- SEARCH BAR -->
+    <div class="search-wrapper">
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Search by scheme name, ministry, or keyword (e.g. farmer, student, health)..."
+          autocomplete="off"
+        />
+        <button class="search-btn" onclick="handleSearch()" aria-label="Search schemes">
+          <span>Search</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+
+      <!-- TRENDING CHIPS -->
+      <div class="trending-searches">
+        <span class="trending-label"><i class="fa-solid fa-fire"></i> Popular:</span>
+        <button class="trend-chip" onclick="quickSearch('farmer')">🌾 PM Kisan</button>
+        <button class="trend-chip" onclick="quickSearch('ayushman')">🏥 Ayushman Bharat</button>
+        <button class="trend-chip" onclick="quickSearch('scholarship')">📚 Scholarships</button>
+        <button class="trend-chip" onclick="quickSearch('women')">👩 Women Welfare</button>
+        <button class="trend-chip" onclick="quickSearch('housing')">🏠 Awas Yojana</button>
+      </div>
     </div>
-    <div class="stat">
-      <div class="stat-num">100%</div>
-      <div class="stat-label">Free to Apply</div>
+
+    <!-- STATS GRID -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon-wrap saffron">
+          <i class="fa-solid fa-file-shield"></i>
+        </div>
+        <div>
+          <div class="stat-number" id="totalCount">50+</div>
+          <div class="stat-title">Active Schemes</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon-wrap blue">
+          <i class="fa-solid fa-layer-group"></i>
+        </div>
+        <div>
+          <div class="stat-number">10</div>
+          <div class="stat-title">Target Sectors</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon-wrap green">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div>
+          <div class="stat-number">100%</div>
+          <div class="stat-title">Official & Free</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon-wrap purple">
+          <i class="fa-solid fa-robot"></i>
+        </div>
+        <div>
+          <div class="stat-number">AI Powered</div>
+          <div class="stat-title">Fraud Protection</div>
+        </div>
+      </div>
     </div>
   </div>
 </section>

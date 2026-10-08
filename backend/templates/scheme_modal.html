@@ -1,32 +1,49 @@
 <!-- ══════════════ SCHEME DETAIL MODAL ══════════════ -->
-<div class="modal-overlay" id="modalOverlay" onclick="closeModalOnOverlay(event)">
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOnOverlay(event)" role="dialog" aria-modal="true">
   <div class="modal">
     <div class="modal-header">
-      <button class="modal-close" onclick="closeModal()">✕</button>
+      <button class="modal-close" onclick="closeModal()" aria-label="Close modal">✕</button>
       <div class="modal-category" id="modalCategory"></div>
-      <div class="modal-title" id="modalTitle"></div>
+      <h2 class="modal-title" id="modalTitle"></h2>
       <div class="modal-ministry" id="modalMinistry"></div>
     </div>
+    
     <div class="modal-body">
+      <!-- ABOUT -->
       <div class="modal-section">
-        <div class="modal-section-title">About this Scheme</div>
+        <div class="modal-section-title"><i class="fa-solid fa-circle-info"></i> About this Scheme</div>
         <div class="modal-desc" id="modalDesc"></div>
       </div>
+
+      <!-- BENEFITS -->
       <div class="modal-section">
-        <div class="modal-section-title">Benefits</div>
+        <div class="modal-section-title"><i class="fa-solid fa-gift"></i> Key Benefits</div>
         <div class="benefit-box" id="modalBenefits"></div>
       </div>
+
+      <!-- ELIGIBILITY -->
       <div class="modal-section">
-        <div class="modal-section-title">Eligibility</div>
+        <div class="modal-section-title"><i class="fa-solid fa-id-card"></i> Eligibility Criteria</div>
         <div class="eligibility-grid" id="modalEligibility"></div>
       </div>
+
+      <!-- TAGS -->
       <div class="modal-section">
-        <div class="modal-section-title">Tags</div>
+        <div class="modal-section-title"><i class="fa-solid fa-tags"></i> Related Tags</div>
         <div class="tags-wrap" id="modalTags"></div>
       </div>
     </div>
+
+    <!-- FOOTER WITH SHARE & APPLY -->
     <div class="modal-footer">
-      <a href="#" id="modalApplyBtn" target="_blank" class="btn-primary">Apply Now →</a>
+      <a href="#" id="modalApplyBtn" target="_blank" rel="noopener noreferrer" class="btn-primary">
+        <span>Apply on Official Portal</span>
+        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+      </a>
+      <button class="btn-whatsapp" onclick="shareOnWhatsApp()" title="Share Scheme on WhatsApp">
+        <i class="fa-brands fa-whatsapp"></i>
+        <span>Share</span>
+      </button>
       <button class="btn-secondary" onclick="closeModal()">Close</button>
     </div>
   </div>
