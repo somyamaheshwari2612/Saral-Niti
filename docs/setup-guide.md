@@ -83,22 +83,22 @@ Saral Niti is engineered to deploy the backend API and the frontend client indep
 
 ### A. Backend Deployment (Render / Railway)
 - **Platform:** Render Web Service (or Railway)
-- **Root Directory:** `backend` (or repo root with `Procfile`)
+- **Root Directory:** `backend` (or repo root with `render.yaml`)
 - **Runtime:** Python 3
-- **Build Command:** `pip install -r requirements.txt`
+- **Build Command:** `pip install -r requirements.txt && python scripts/seed_db.py`
 - **Start Command:** `gunicorn app:app`
 - **Environment Variables on Render:**
-  - `MONGO_URI`: Your production MongoDB Atlas connection string
   - `GEMINI_API_KEY`: Your Google Gemini API key
+  - `GEMINI_MODEL`: `gemini-3.5-flash-lite`
 
-### B. Frontend Deployment (Vercel / Netlify / Cloudflare Pages)
-- **Platform:** Vercel, Netlify, or GitHub Pages
+### B. Frontend Deployment (Vercel / Netlify)
+- **Platform:** Vercel or Netlify (Pre-configured via `frontend/vercel.json` and `frontend/netlify.toml`)
 - **Root Directory:** `frontend`
-- **Build Command:** None (pure HTML/CSS/JS)
+- **Build Command:** None (static assets)
 - **Output Directory:** `.` (root of frontend folder)
-- **API Auto-Connection:**
-  The frontend automatically connects to `http://127.0.0.1:5000` in local development. When deployed on a separate host (e.g. Vercel), set `window.SARAL_API_BASE` in `frontend/index.html` to your deployed backend URL:
+- **API Connection:**
+  Set your deployed backend URL in `frontend/index.html` via the `<meta name="backend-api" content="https://your-backend-api.onrender.com">` tag, or set:
   ```html
-  <script>window.SARAL_API_BASE = "https://your-backend-service.com";</script>
+  <script>window.SARAL_API_BASE = "https://your-backend-api.onrender.com";</script>
   ```
 

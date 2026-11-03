@@ -1,0 +1,17 @@
+services:
+  # Backend API Service (Deploy on Render)
+  - type: web
+    name: saral-niti-backend
+    env: python
+    rootDir: backend
+    plan: free
+    buildCommand: pip install -r requirements.txt && python scripts/seed_db.py
+    startCommand: gunicorn app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.9
+      - key: GEMINI_MODEL
+        value: gemini-3.5-flash-lite
+      - key: GEMINI_API_KEY
+        sync: false
+

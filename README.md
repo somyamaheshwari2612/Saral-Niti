@@ -1,5 +1,3 @@
-<div align="center">
-
 # 🇮🇳 Saral Niti
 ### Government Schemes Discovery Platform
 
@@ -16,8 +14,6 @@
 [![Gemini](https://img.shields.io/badge/Google%20Gemini-4285F4?style=flat-square&logo=google&logoColor=white)](https://aistudio.google.com/)
 
 Built with ❤️ by a team of 4 — GLA University, Mathura
-
-</div>
 
 ---
 
@@ -232,8 +228,4 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 ---
 
-<div align="center">
-
-Made with 🧡 for the citizens of India 🇮🇳
-
-</div>
+**Made with 🧡 for the citizens of India 🇮🇳**

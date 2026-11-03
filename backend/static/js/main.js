@@ -2,11 +2,13 @@
 //  CONFIG
 //  Automatically handles monolithic, local dev, and separate deployments
 // ══════════════════════════════════════════════════
-const BACKEND_URL = (typeof window !== 'undefined' && window.SARAL_API_BASE) || (
-  typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '5000'
+const BACKEND_URL = (typeof window !== 'undefined' && (
+  window.SARAL_API_BASE ||
+  document.querySelector('meta[name="backend-api"]')?.getAttribute('content') ||
+  ((window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '5000'
     ? 'http://127.0.0.1:5000'
-    : ''
-);
+    : '')
+)) || '';
 const SCHEMES_API = BACKEND_URL;
 const ML_API      = BACKEND_URL;
 
@@ -107,12 +109,21 @@ function renderSkeletons() {
 // ══════════════════════════════════════════════════
 //  RENDER CARDS (XSS-safe with data attributes)
 // ══════════════════════════════════════════════════
-function renderSchemes(schemes) {
+const PAGE_SIZE = 24;
+let currentPage = 1;
+
+function renderSchemes(schemes, resetPage = true) {
   const grid = document.getElementById('schemesGrid');
   const count = document.getElementById('resultsCount');
   const resetBtn = document.getElementById('resetBtn');
+  const paginationWrap = document.getElementById('paginationWrap');
+  const loadMoreBtn = document.getElementById('loadMoreBtn');
+  const paginationInfo = document.getElementById('paginationInfo');
 
-  currentSchemesList = Array.isArray(schemes) ? schemes : [];
+  if (resetPage) {
+    currentPage = 1;
+    currentSchemesList = Array.isArray(schemes) ? schemes : [];
+  }
 
   if (resetBtn) {
     const isFiltered = currentSchemesList.length !== allSchemes.length;
@@ -126,11 +137,16 @@ function renderSchemes(schemes) {
         <p>Try searching for different keywords or select "All Categories".</p>
       </div>`;
     count.innerHTML = 'Showing <strong>0</strong> schemes';
+    if (paginationWrap) paginationWrap.style.display = 'none';
     return;
   }
 
-  count.innerHTML = `Showing <strong>${currentSchemesList.length}</strong> verified scheme${currentSchemesList.length !== 1 ? 's' : ''}`;
-  grid.innerHTML = currentSchemesList.map((s, idx) => {
+  const total = currentSchemesList.length;
+  const displayedCount = Math.min(currentPage * PAGE_SIZE, total);
+  count.innerHTML = `Showing <strong>${displayedCount}</strong> of <strong>${total.toLocaleString('en-IN')}</strong> verified schemes`;
+
+  const visibleSchemes = currentSchemesList.slice(0, displayedCount);
+  grid.innerHTML = visibleSchemes.map((s, idx) => {
     const icon = CATEGORY_ICONS[s.category] || '🏛';
     const safeCat = escapeHtml(s.category || 'general');
     const safeTitle = escapeHtml(s.title || '');
@@ -161,6 +177,31 @@ function renderSchemes(schemes) {
       </div>
     </div>
   `}).join('');
+
+  if (paginationWrap) {
+    if (displayedCount < total) {
+      paginationWrap.style.display = 'flex';
+      if (loadMoreBtn) {
+        const remaining = total - displayedCount;
+        loadMoreBtn.style.display = 'inline-flex';
+        loadMoreBtn.querySelector('span').textContent = `Load More Schemes (${Math.min(PAGE_SIZE, remaining)} more)`;
+      }
+      if (paginationInfo) {
+        paginationInfo.textContent = `Showing ${displayedCount} of ${total.toLocaleString('en-IN')} total schemes`;
+      }
+    } else {
+      if (loadMoreBtn) loadMoreBtn.style.display = 'none';
+      if (paginationInfo) {
+        paginationInfo.textContent = `All ${total.toLocaleString('en-IN')} schemes displayed`;
+      }
+      paginationWrap.style.display = total > PAGE_SIZE ? 'flex' : 'none';
+    }
+  }
+}
+
+function loadMoreSchemes() {
+  currentPage++;
+  renderSchemes(currentSchemesList, false);
 }
 
 // Scheme card delegated click and keyboard handlers

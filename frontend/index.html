@@ -12,6 +12,8 @@
 </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- For separate frontend deployment: Set content to your backend URL e.g. https://saral-niti-backend.onrender.com -->
+  <meta name="backend-api" content="">
   <title>Saral Niti — Government Scheme Discovery</title>
   <script>
     (function() {
@@ -272,6 +274,15 @@
         <div class="skeleton" style="height:32px; width:80px; border-radius:8px;"></div>
       </div>
     </div>
+  </div>
+
+  <!-- PAGINATION CONTROLS -->
+  <div class="pagination-wrap" id="paginationWrap" style="display:none;">
+    <button class="load-more-btn" id="loadMoreBtn" onclick="loadMoreSchemes()">
+      <span>Load More Schemes</span>
+      <i class="fa-solid fa-arrow-down"></i>
+    </button>
+    <div class="pagination-info" id="paginationInfo"></div>
   </div>
 </main>
 

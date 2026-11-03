@@ -17,10 +17,9 @@ jobs:
           python-version: '3.11'
       - name: Install dependencies
         run: pip install -r backend/requirements.txt
-      - name: Run tests
+      - name: Run unit tests
         env:
-          MONGO_URI: ${{ secrets.MONGO_URI }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GEMINI_MODEL: gemini-3.5-flash-lite
         run: |
-          cd backend
-          python -m pytest tests/test_api.py -v
+          python backend/tests/test_api.py
