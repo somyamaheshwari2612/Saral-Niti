@@ -66,7 +66,9 @@ _cached_schemes = None
 def setup_mock_db():
     global _cached_schemes
     if _cached_schemes is None:
-        data_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'schemes.json')
+        cand_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'schemes.json'))
+        cand_backend = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'data', 'schemes.json'))
+        data_path = cand_root if os.path.exists(cand_root) else cand_backend
         if os.path.exists(data_path):
             with open(data_path, "r", encoding="utf-8") as f:
                 schemes = json.load(f)

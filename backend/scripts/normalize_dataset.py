@@ -5,7 +5,7 @@ backend/scripts/normalize_dataset.py
 ETL and Normalization Pipeline for Government Scheme Datasets.
 Ingests raw CSV or JSON files (from Kaggle, GitHub, or data.gov.in),
 cleans and normalizes records into the canonical Saral-Niti schema,
-and writes or merges them safely into backend/data/schemes.json.
+and writes or merges them safely into data/schemes.json.
 """
 
 import os
@@ -325,9 +325,10 @@ def process_dataset(input_file, output_file, merge=True):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Normalize scheme datasets into Saral-Niti schema")
     parser.add_argument("--input", required=True, help="Path to input raw CSV or JSON file")
+    cand_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '..', 'data', 'schemes.json'))
     parser.add_argument(
         "--output",
-        default=os.path.join(os.path.dirname(__file__), '..', 'data', 'schemes.json'),
+        default=cand_root,
         help="Path to output schemes.json"
     )
     parser.add_argument("--no-merge", action="store_true", help="Overwrite instead of merging with existing schemes")

@@ -3,7 +3,7 @@
 backend/scripts/seed_db.py
 --------------------------
 Seeds the local high-speed SQLite database (schemes.db) with FTS5 search
-indexes directly from backend/data/schemes.json.
+indexes directly from data/schemes.json.
 """
 
 import os
