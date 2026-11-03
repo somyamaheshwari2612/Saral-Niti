@@ -37,6 +37,83 @@
         <div class="docs-wrap" id="modalDocs"></div>
       </div>
 
+      <!-- LAST-MILE PRE-FLIGHT AUDIT & VERIFICATION -->
+      <div class="modal-section pre-audit-section" id="modalPreAuditSection">
+        <div class="modal-section-title">
+          <i class="fa-solid fa-shield-halved"></i> Last-Mile Pre-Flight Audit (आवेदन पूर्व विभागीय जांच)
+          <span class="pre-audit-badge" id="modalAuditRiskBadge">DBT APBS Check</span>
+        </div>
+        <p class="pre-audit-intro">
+          Prevent last-mile departmental rejections caused by unmapped NPCI bank accounts, spelling mismatches, expired certificates, or statutory tax disqualifications before submitting your application.
+        </p>
+
+        <!-- Departmental Failure Traps -->
+        <div class="audit-checkpoints-list" id="modalAuditCheckpoints"></div>
+
+        <!-- Interactive Self-Check Widget -->
+        <div class="pre-audit-widget">
+          <div class="widget-header">
+            <div>
+              <h4 class="widget-heading"><i class="fa-solid fa-clipboard-check"></i> Self-Check Application Readiness</h4>
+              <p class="widget-sub">Run an automated diagnostic against departmental validation rules</p>
+            </div>
+            <span class="widget-pill" id="widgetPillStatus">Pre-Verification Engine</span>
+          </div>
+
+          <div class="pre-audit-form-grid">
+            <div class="audit-form-group">
+              <label for="auditAadhaarName"><i class="fa-solid fa-id-card"></i> Name on Aadhaar Card</label>
+              <input type="text" id="auditAadhaarName" placeholder="e.g. Ramesh Kumar Sharma">
+            </div>
+            <div class="audit-form-group">
+              <label for="auditBankName"><i class="fa-solid fa-building-columns"></i> Name on Bank Passbook</label>
+              <input type="text" id="auditBankName" placeholder="e.g. Ramesh K Sharma">
+            </div>
+            <div class="audit-form-group">
+              <label for="auditNpciSeeded"><i class="fa-solid fa-link"></i> Bank Seeded on NPCI Mapper?</label>
+              <select id="auditNpciSeeded">
+                <option value="yes">Yes (Mapped on *99*99*1# / UIDAI)</option>
+                <option value="unknown" selected>Not Sure / Needs Checking</option>
+                <option value="no">No (Unmapped / Dormant)</option>
+              </select>
+            </div>
+            <div class="audit-form-group">
+              <label for="auditIncomeStatus"><i class="fa-solid fa-calendar-check"></i> Income Certificate Freshness</label>
+              <select id="auditIncomeStatus">
+                <option value="valid_current_fy" selected>Issued This Financial Year (Fresh)</option>
+                <option value="older_than_1yr">Older than 1 Year / Previous FY</option>
+                <option value="no_cert">No Certificate Yet / Pending</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="audit-form-row-extra">
+            <label class="audit-checkbox-item">
+              <input type="checkbox" id="auditTaxFiler">
+              <span>Any immediate family member filed Income Tax (ITR) in last year?</span>
+            </label>
+            <label class="audit-checkbox-item">
+              <input type="checkbox" id="auditMobileActive" checked>
+              <span>Aadhaar-linked mobile SIM is active in my phone right now</span>
+            </label>
+          </div>
+
+          <div class="widget-actions">
+            <button type="button" class="btn-audit-run" onclick="runPreFlightAuditForModal()">
+              <i class="fa-solid fa-stethoscope"></i>
+              <span>Diagnose Last-Mile Readiness</span>
+            </button>
+            <a href="https://myaadhaar.uidai.gov.in" target="_blank" rel="noopener noreferrer" class="btn-npci-tool" title="Check bank seeding status on UIDAI portal">
+              <i class="fa-solid fa-arrow-up-right-from-square"></i>
+              <span>Verify Bank Seeding on UIDAI</span>
+            </a>
+          </div>
+
+          <!-- Diagnostic Results Output -->
+          <div class="pre-audit-results" id="modalAuditResults" style="display: none;"></div>
+        </div>
+      </div>
+
       <!-- TAGS -->
       <div class="modal-section">
         <div class="modal-section-title"><i class="fa-solid fa-tags"></i> Related Tags</div>
@@ -56,6 +133,10 @@
         <span>Apply on Official Portal</span>
         <i class="fa-solid fa-arrow-up-right-from-square"></i>
       </a>
+      <button class="btn-checklist-print" id="modalPrintChecklistBtn" onclick="printModalAuditChecklist()" title="Print Pre-Application Clearance Checklist">
+        <i class="fa-solid fa-print"></i>
+        <span>Checklist</span>
+      </button>
       <button class="btn-whatsapp" onclick="shareOnWhatsApp()" title="Share Scheme on WhatsApp">
         <i class="fa-brands fa-whatsapp"></i>
         <span>Share</span>

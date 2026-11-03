@@ -54,6 +54,7 @@ India provides thousands of central and state government welfare schemes — yet
 | 🎛️ **Multi-Dimensional Filters** | Interactive 6-card drawer filtering age, social categories (SC/ST/OBC/Minority/DNT), vulnerabilities, location, ration card, education, and trades |
 | 🎙️ **Voice-First Vernacular Chatbot** | Browser-native Speech-to-Text and Text-to-Speech in Hindi/English, code-mixed NLU, and SQLite FTS5 RAG grounding |
 | 🎯 **Personalized Eligibility Calculator** | Multi-factor questionnaire assessing citizen profile with transparent reasons and zero hallucinations |
+| 🛡️ **Last-Mile Pre-Flight Audit** | Proactive diagnostic engine preventing departmental failure traps (Aadhaar-NPCI bank mapping, passbook spelling discrepancies, expired certificates, statutory tax exclusions) |
 | 🛡️ **Scam & Fake Scheme Detector** | URL and PDF/document validator powered by Google Gemini (`gemini-3.5-flash-lite`) |
 | 🌙 **Theme & Accessibility** | Dark mode with persistent session state and zero flash of unstyled content (FOUC) |
 | 🚀 **Decoupled Deployment** | Pure static client ready for **Vercel**; lightweight Python REST backend ready for **Render** |
@@ -194,6 +195,8 @@ Saral-Niti/
 | `POST` | `/api/filter` | Multi-dimensional filtering across all 6 categories |
 | `POST` | `/api/recommend` | Personalized multi-factor eligibility evaluation |
 | `POST` | `/api/chatbot` | Vernacular code-mixed NLU & RAG welfare assistant |
+| `GET` | `/api/schemes/:id/last-mile-audit` | Departmental failure modes, audit traps, and verification checkpoints |
+| `POST` | `/api/pre-audit` | Last-mile citizen diagnostic scoring readiness (0–100%) and clearance slip |
 | `POST` | `/api/detect-url` | Scam URL detection (Google Gemini Flash Lite) |
 | `POST` | `/api/detect-file` | Document validator (PDF/TXT) |
 
@@ -244,7 +247,7 @@ The automated test suite runs completely offline without external cloud dependen
 python backend/tests/test_api.py
 ```
 
-All **33 unit tests** verify API routes, input sanitization, multi-dimensional filters, Hinglish NLU, and eligibility evaluation.
+All **37 unit tests** verify API routes, input sanitization, multi-dimensional filters, Hinglish NLU, last-mile pre-verification diagnostics, and eligibility evaluation.
 
 ---
 
@@ -254,6 +257,7 @@ All **33 unit tests** verify API routes, input sanitization, multi-dimensional f
 - [x] Migrate to high-speed local SQLite FTS5 search
 - [x] Implement multi-dimensional 6-category filtering engine
 - [x] Build voice-enabled vernacular RAG chatbot (Web Speech API + Gemini 3.5 Flash Lite)
+- [x] Last-Mile Pre-Flight Verification & Diagnostic Engine (NPCI bank mapping, name concordance, certificate freshness)
 - [x] Decouple frontend for independent Vercel hosting
 - [ ] Add conversational accessibility co-pilot mode with quick-tap slot chips (see `for_future/`)
 - [ ] Direct WhatsApp bot interface for rural citizen outreach

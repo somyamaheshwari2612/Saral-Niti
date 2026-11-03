@@ -548,6 +548,98 @@ def test_chatbot_code_mixed_rag(client=None):
     assert "suggested_followups" in data
 
 
+def test_name_similarity_engine(client=None):
+    from routes.pre_audit import calculate_name_similarity
+
+    # Exact match
+    r1 = calculate_name_similarity('Ramesh Kumar Sharma', 'Ramesh Kumar Sharma')
+    assert r1['status'] == 'PASS'
+    assert r1['score'] == 100
+
+    # Honorific stripping
+    r2 = calculate_name_similarity('Shri Ramesh Sharma', 'Ramesh Sharma')
+    assert r2['status'] == 'PASS'
+    assert r2['score'] >= 85
+
+    # Token reordering (surname first)
+    r3 = calculate_name_similarity('Sharma Ramesh', 'Ramesh Sharma')
+    assert r3['status'] == 'PASS'
+    assert r3['score'] >= 85
+
+    # Minor initial variation
+    r4 = calculate_name_similarity('Ramesh K Sharma', 'Ramesh Kumar Sharma')
+    assert r4['score'] >= 70
+
+    # Severe mismatch
+    r5 = calculate_name_similarity('Ramesh Sharma', 'Sita Devi')
+    assert r5['status'] == 'FAIL'
+    assert r5['score'] < 60
+
+
+def test_scheme_last_mile_audit(client=None):
+    c = client or app.test_client()
+    scheme_id = str(SAMPLE_SCHEMES[0]['_id'])
+    res = c.get(f'/api/schemes/{scheme_id}/last-mile-audit')
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data['status'] == 'ok'
+    assert 'audit_spec' in data
+    spec = data['audit_spec']
+    assert 'scheme_title' in spec
+    assert 'checkpoints' in spec
+    assert len(spec['checkpoints']) >= 2
+    checkpoint_ids = [cp['id'] for cp in spec['checkpoints']]
+    assert any(k in checkpoint_ids for k in ['mobile_otp', 'npci_seeding', 'name_matching'])
+
+
+def test_pre_audit_high_readiness(client=None):
+    c = client or app.test_client()
+    payload = {
+        'aadhaar_name': 'Ramesh Kumar Sharma',
+        'bank_name': 'Ramesh Kumar Sharma',
+        'npci_seeded': 'yes',
+        'aadhaar_mobile_active': True,
+        'family_tax_filer': False,
+        'income_cert_status': 'valid_current_fy',
+        'caste_cert_status': 'digital_barcode',
+        'land_record_status': 'individual_digitized',
+        'channel_aware': True
+    }
+    res = c.post('/api/pre-audit', json=payload)
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data['status'] == 'ok'
+    assert data['readiness_score'] >= 85
+    assert data['readiness_level'] == 'READY_FOR_SUBMISSION'
+    assert len(data['critical_failures']) == 0
+    assert 'printable_slip' in data
+    assert data['printable_slip']['audit_id'].startswith('SN-AUDIT')
+
+
+def test_pre_audit_critical_rejection_traps(client=None):
+    c = client or app.test_client()
+    payload = {
+        'aadhaar_name': 'Ramesh Sharma',
+        'bank_name': 'Sita Devi',
+        'npci_seeded': 'no',
+        'aadhaar_mobile_active': False,
+        'family_tax_filer': True,
+        'income_cert_status': 'older_than_1yr',
+        'land_record_status': 'manual_unregistered',
+        'channel_aware': False
+    }
+    res = c.post('/api/pre-audit', json=payload)
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data['status'] == 'ok'
+    assert data['readiness_score'] < 60
+    assert data['readiness_level'] == 'HIGH_REJECTION_RISK'
+    assert len(data['critical_failures']) >= 3
+    assert len(data['remedies']) >= 3
+    assert any('NPCI' in r for r in data['remedies'])
+    assert any('mobile' in r.lower() for r in data['remedies'])
+
+
 # ══════════════════════════════════════════════════
 #  DIRECT TEST RUNNER (Works without pytest installed)
 # ══════════════════════════════════════════════════
@@ -586,6 +678,10 @@ if __name__ == "__main__":
         test_filter_enterprise,
         test_filter_get_with_query_params,
         test_chatbot_code_mixed_rag,
+        test_name_similarity_engine,
+        test_scheme_last_mile_audit,
+        test_pre_audit_high_readiness,
+        test_pre_audit_critical_rejection_traps,
     ]
 
     passed = 0

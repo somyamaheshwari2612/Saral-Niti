@@ -584,9 +584,196 @@ function openModal(s) {
     docsEl.innerHTML = docs.map(d => `<span class="doc-pill"><i class="fa-solid fa-file-check"></i> ${escapeHtml(d)}</span>`).join('');
   }
 
+  // Load Last-Mile Pre-Flight Verification Checkpoints
+  loadSchemeLastMileAudit(s);
+
   const overlay = document.getElementById('modalOverlay');
   if (overlay) overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
+}
+
+// ══════════════════════════════════════════════════
+//  LAST-MILE PRE-FLIGHT AUDIT CLIENT LOGIC
+// ══════════════════════════════════════════════════
+let currentSchemeAuditSpec = null;
+let lastAuditDiagnosticResult = null;
+
+async function loadSchemeLastMileAudit(s) {
+  const badgeEl = document.getElementById('modalAuditRiskBadge');
+  const checkpointsEl = document.getElementById('modalAuditCheckpoints');
+  const resultsEl = document.getElementById('modalAuditResults');
+  const widgetPill = document.getElementById('widgetPillStatus');
+  if (resultsEl) resultsEl.style.display = 'none';
+  if (widgetPill) {
+    widgetPill.textContent = 'Pre-Verification Engine';
+    widgetPill.className = 'widget-pill';
+  }
+
+  if (!checkpointsEl) return;
+  checkpointsEl.innerHTML = '<div style="font-size:12px; color:#64748B; padding:8px 0;"><i class="fa-solid fa-circle-notch fa-spin"></i> Loading departmental validation checkpoints...</div>';
+
+  try {
+    const schemeId = s._id || s.id;
+    const res = await fetch(`${SCHEMES_API}/api/schemes/${encodeURIComponent(schemeId)}/last-mile-audit`);
+    if (!res.ok) throw new Error('Failed to load audit spec');
+    const data = await res.json();
+    const spec = data.audit_spec;
+    currentSchemeAuditSpec = spec;
+
+    if (badgeEl) {
+      badgeEl.textContent = spec.is_dbt ? 'DBT APBS Check' : 'Standard Audit';
+      badgeEl.style.background = spec.is_dbt ? '#E0E7FF' : '#F1F5F9';
+      badgeEl.style.color = spec.is_dbt ? '#3730A3' : '#475569';
+    }
+
+    if (!spec.checkpoints || spec.checkpoints.length === 0) {
+      checkpointsEl.innerHTML = '<div style="font-size:12px; color:#64748B;">No specific high-risk failure traps flagged for this scheme. Standard documentation applies.</div>';
+      return;
+    }
+
+    checkpointsEl.innerHTML = spec.checkpoints.map(cp => `
+      <div class="audit-checkpoint-card risk-${escapeHtml(cp.risk_type || 'MEDIUM')}">
+        <div class="audit-cp-header">
+          <span class="audit-cp-title">${escapeHtml(cp.title)}</span>
+          <span class="audit-cp-dimension">${escapeHtml(cp.dimension)}</span>
+        </div>
+        <div class="audit-cp-trap"><i class="fa-solid fa-triangle-exclamation" style="color: #EA580C; margin-right: 4px;"></i> <strong>Audit Trap:</strong> ${escapeHtml(cp.departmental_trap)}</div>
+        <div class="audit-cp-action"><i class="fa-solid fa-circle-check" style="margin-top: 2px;"></i> <div><strong>Pre-Submission Fix:</strong> ${escapeHtml(cp.prevention_step)} <span style="display:block; font-size:11px; opacity:0.85; margin-top:2px;">🔍 <em>${escapeHtml(cp.verification_instruction)}</em></span></div></div>
+      </div>
+    `).join('');
+  } catch (err) {
+    checkpointsEl.innerHTML = `
+      <div class="audit-checkpoint-card risk-HIGH">
+        <div class="audit-cp-header">
+          <span class="audit-cp-title">Aadhaar-NPCI Bank Seeding Mandate (आधार-बैंक एनपीसीआई सीडिंग)</span>
+          <span class="audit-cp-dimension">APBS Banking</span>
+        </div>
+        <div class="audit-cp-trap">Direct Benefit Transfer funds are routed via the NPCI Aadhaar Payment Bridge. Unmapped accounts cause DBT transactions to fail.</div>
+        <div class="audit-cp-action"><i class="fa-solid fa-circle-check"></i> <div><strong>Pre-Submission Fix:</strong> Dial *99*99*1# from your registered SIM to check status, or submit DBT Annexure-I at your bank branch.</div></div>
+      </div>
+    `;
+  }
+}
+
+async function runPreFlightAuditForModal() {
+  const aadhaarName = document.getElementById('auditAadhaarName')?.value.trim() || '';
+  const bankName = document.getElementById('auditBankName')?.value.trim() || '';
+  const npciSeeded = document.getElementById('auditNpciSeeded')?.value || 'unknown';
+  const incomeStatus = document.getElementById('auditIncomeStatus')?.value || 'valid_current_fy';
+  const taxFiler = document.getElementById('auditTaxFiler')?.checked || false;
+  const mobileActive = document.getElementById('auditMobileActive')?.checked ?? true;
+  const resultsEl = document.getElementById('modalAuditResults');
+  const widgetPill = document.getElementById('widgetPillStatus');
+
+  if (!resultsEl) return;
+
+  resultsEl.style.display = 'block';
+  resultsEl.innerHTML = '<div style="text-align:center; padding:16px; color:#2563EB;"><i class="fa-solid fa-circle-notch fa-spin"></i> Running last-mile pre-verification diagnostics...</div>';
+
+  const payload = {
+    scheme_id: currentModalScheme ? (currentModalScheme._id || currentModalScheme.id) : null,
+    aadhaar_name: aadhaarName,
+    bank_name: bankName,
+    npci_seeded: npciSeeded,
+    income_cert_status: incomeStatus,
+    family_tax_filer: taxFiler,
+    aadhaar_mobile_active: mobileActive,
+    channel_aware: true
+  };
+
+  try {
+    const res = await fetch(`${SCHEMES_API}/api/pre-audit`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    lastAuditDiagnosticResult = data;
+
+    if (widgetPill) {
+      widgetPill.textContent = `${data.readiness_score}% Readiness`;
+      widgetPill.className = `widget-pill ${data.badge_class}`;
+    }
+
+    let breakdownHtml = '';
+
+    if (data.critical_failures && data.critical_failures.length > 0) {
+      breakdownHtml += data.critical_failures.map(f => `
+        <div class="diag-item diag-item-fail">
+          <div class="diag-item-title"><i class="fa-solid fa-circle-xmark"></i> ${escapeHtml(f.title)}</div>
+          <div>${escapeHtml(f.reason)}</div>
+          <div class="diag-item-remedy"><i class="fa-solid fa-wrench"></i> ${escapeHtml(f.remedy)}</div>
+        </div>
+      `).join('');
+    }
+
+    if (data.warnings && data.warnings.length > 0) {
+      breakdownHtml += data.warnings.map(w => `
+        <div class="diag-item diag-item-warn">
+          <div class="diag-item-title"><i class="fa-solid fa-triangle-exclamation"></i> ${escapeHtml(w.title)}</div>
+          <div>${escapeHtml(w.reason)}</div>
+          <div class="diag-item-remedy"><i class="fa-solid fa-arrow-right"></i> ${escapeHtml(w.remedy)}</div>
+        </div>
+      `).join('');
+    }
+
+    if (data.passed_checks && data.passed_checks.length > 0) {
+      breakdownHtml += data.passed_checks.map(p => `
+        <div class="diag-item diag-item-pass">
+          <div class="diag-item-title"><i class="fa-solid fa-circle-check"></i> ${escapeHtml(p.title)}</div>
+          <div>${escapeHtml(p.message)}</div>
+        </div>
+      `).join('');
+    }
+
+    resultsEl.innerHTML = `
+      <div class="results-meter-box">
+        <div class="meter-left">
+          <div class="meter-score-num">${data.readiness_score}<span style="font-size:14px; font-weight:600; color:#64748B;">/100</span></div>
+          <span class="meter-status-badge ${data.badge_class}">${escapeHtml(data.badge_text)}</span>
+        </div>
+        <p class="meter-summary-text">${escapeHtml(data.summary)}</p>
+      </div>
+
+      <div class="results-breakdown-list">
+        ${breakdownHtml}
+      </div>
+
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px; flex-wrap:wrap; gap:8px;">
+        <span style="font-size:11px; color:#64748B;"><i class="fa-solid fa-shield-halved"></i> Pre-Audit Slip ID: ${escapeHtml(data.printable_slip?.audit_id || 'SN-AUDIT')}</span>
+        <button type="button" class="btn-checklist-print" onclick="printModalAuditChecklist()">
+          <i class="fa-solid fa-print"></i> <span>Print Verification Slip</span>
+        </button>
+      </div>
+    `;
+
+    resultsEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  } catch (err) {
+    resultsEl.innerHTML = '<div style="color:#DC2626; font-size:12px;">Failed to complete pre-flight diagnostic. Please try again.</div>';
+  }
+}
+
+function printModalAuditChecklist() {
+  if (!lastAuditDiagnosticResult) {
+    runPreFlightAuditForModal().then(() => {
+      window.print();
+    });
+    return;
+  }
+  window.print();
+}
+
+function openEligSchemeWithAudit(idx) {
+  if (currentEligRecommendations[idx]) {
+    closeEligibilityModal();
+    openModal(currentEligRecommendations[idx].scheme);
+    setTimeout(() => {
+      const auditSec = document.getElementById('modalPreAuditSection');
+      if (auditSec) {
+        auditSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }, 300);
+  }
 }
 
 function shareOnWhatsApp() {
@@ -903,6 +1090,10 @@ async function handleEligibilitySubmit(e) {
           ${unmetHtml ? `<ul class="elig-unmet-list">${unmetHtml}</ul>` : ''}
 
           <div class="elig-card-action">
+            <button type="button" class="elig-audit-btn" onclick="openEligSchemeWithAudit(${idx})" title="Check Last-Mile Rejection Traps">
+              <i class="fa-solid fa-shield-halved"></i>
+              <span>Pre-Flight Audit</span>
+            </button>
             <button type="button" class="elig-view-btn" onclick="openEligScheme(${idx})">
               <span>View Scheme Details</span>
               <i class="fa-solid fa-arrow-right"></i>

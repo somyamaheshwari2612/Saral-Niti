@@ -763,3 +763,458 @@
   background: #FFEDD5 !important;
   border-color: #EA580C !important;
 }
+
+/* ==================================================
+   LAST-MILE PRE-FLIGHT AUDIT & VERIFICATION STYLES
+   ================================================== */
+.pre-audit-section {
+  background: linear-gradient(180deg, #F8FAFC 0%, #F1F5F9 100%);
+  border: 1px solid #CBD5E1;
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  margin: 20px 0;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+}
+
+.pre-audit-section .modal-section-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 8px;
+  color: #0F172A;
+  font-size: 15px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.pre-audit-badge {
+  background: #E0E7FF;
+  color: #3730A3;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.pre-audit-intro {
+  font-size: 13px;
+  color: #475569;
+  line-height: 1.5;
+  margin: 0 0 16px 0;
+}
+
+/* Audit Checkpoints Cards */
+.audit-checkpoints-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.audit-checkpoint-card {
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-left: 4px solid var(--saffron);
+  border-radius: 8px;
+  padding: 12px 14px;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.audit-checkpoint-card:hover {
+  transform: translateX(2px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.audit-checkpoint-card.risk-CRITICAL {
+  border-left-color: #DC2626;
+}
+
+.audit-checkpoint-card.risk-HIGH {
+  border-left-color: #EA580C;
+}
+
+.audit-checkpoint-card.risk-MEDIUM {
+  border-left-color: #D97706;
+}
+
+.audit-cp-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.audit-cp-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0F172A;
+}
+
+.audit-cp-dimension {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748B;
+  background: #F1F5F9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.audit-cp-trap {
+  font-size: 12px;
+  color: #334155;
+  line-height: 1.45;
+  margin-bottom: 6px;
+}
+
+.audit-cp-action {
+  font-size: 12px;
+  color: #1E40AF;
+  background: #EFF6FF;
+  padding: 6px 10px;
+  border-radius: 6px;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  line-height: 1.4;
+}
+
+/* Self-Check Widget */
+.pre-audit-widget {
+  background: #FFFFFF;
+  border: 1.5px solid #BFDBFE;
+  border-radius: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 10px rgba(37, 99, 235, 0.06);
+}
+
+.widget-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #E2E8F0;
+}
+
+.widget-heading {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1E3A8A;
+  margin: 0 0 2px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.widget-sub {
+  font-size: 12px;
+  color: #64748B;
+  margin: 0;
+}
+
+.widget-pill {
+  background: #DBEAFE;
+  color: #1D4ED8;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+}
+
+.pre-audit-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+@media (max-width: 640px) {
+  .pre-audit-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.audit-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.audit-form-group label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #334155;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.audit-form-group input,
+.audit-form-group select {
+  font-size: 12px;
+  padding: 8px 10px;
+  border: 1px solid #CBD5E1;
+  border-radius: 6px;
+  background: #F8FAFC;
+  color: #0F172A;
+  outline: none;
+  transition: border-color 0.15s, background-color 0.15s;
+}
+
+.audit-form-group input:focus,
+.audit-form-group select:focus {
+  border-color: #2563EB;
+  background: #FFFFFF;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+}
+
+.audit-form-row-extra {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+  background: #F8FAFC;
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid #E2E8F0;
+}
+
+.audit-checkbox-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 12px;
+  color: #334155;
+  cursor: pointer;
+  user-select: none;
+}
+
+.audit-checkbox-item input {
+  margin-top: 2px;
+  accent-color: #2563EB;
+}
+
+.widget-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.btn-audit-run {
+  background: linear-gradient(135deg, #1E3A8A 0%, #1E40AF 100%);
+  color: #FFFFFF;
+  border: none;
+  padding: 9px 18px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.btn-audit-run:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(30, 58, 138, 0.25);
+}
+
+.btn-npci-tool {
+  background: #F1F5F9;
+  color: #1E293B;
+  border: 1px solid #CBD5E1;
+  padding: 9px 14px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: background-color 0.15s;
+}
+
+.btn-npci-tool:hover {
+  background: #E2E8F0;
+  color: #0F172A;
+}
+
+/* Diagnostic Results Box */
+.pre-audit-results {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1.5px dashed #CBD5E1;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+.results-meter-box {
+  background: #F8FAFC;
+  border: 1px solid #E2E8F0;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.meter-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meter-score-num {
+  font-size: 26px;
+  font-weight: 800;
+  color: #0F172A;
+  line-height: 1;
+}
+
+.meter-status-badge {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  width: fit-content;
+}
+
+.badge-success {
+  background: #DCFCE7;
+  color: #166534;
+}
+
+.badge-warning {
+  background: #FEF3C7;
+  color: #92400E;
+}
+
+.badge-danger {
+  background: #FEE2E2;
+  color: #991B1B;
+}
+
+.meter-summary-text {
+  font-size: 12px;
+  color: #475569;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.results-breakdown-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.diag-item {
+  font-size: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  line-height: 1.4;
+}
+
+.diag-item-fail {
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  color: #991B1B;
+}
+
+.diag-item-warn {
+  background: #FFFBEB;
+  border: 1px solid #FDE68A;
+  color: #92400E;
+}
+
+.diag-item-pass {
+  background: #F0FDF4;
+  border: 1px solid #BBF7D0;
+  color: #166534;
+}
+
+.diag-item-title {
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.diag-item-remedy {
+  font-size: 11.5px;
+  font-weight: 600;
+  padding-top: 4px;
+  border-top: 1px dashed rgba(0, 0, 0, 0.1);
+  color: #1E3A8A;
+}
+
+.btn-checklist-print {
+  background: #F8FAFC;
+  color: #334155;
+  border: 1px solid #CBD5E1;
+  padding: 10px 16px;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+
+.btn-checklist-print:hover {
+  background: #E2E8F0;
+  color: #0F172A;
+}
+
+.elig-audit-btn {
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s;
+}
+
+.elig-audit-btn:hover {
+  background: #DBEAFE;
+  color: #1E40AF;
+}
+
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .pre-audit-results,
+  .pre-audit-results * {
+    visibility: visible;
+  }
+  .pre-audit-results {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 20px;
+    border: none;
+  }
+}
