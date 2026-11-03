@@ -304,6 +304,7 @@
         <ul>
           <li><a href="#base">Home Portal</a></li>
           <li><a href="#schemes">Browse All Schemes</a></li>
+          <li><a href="#" onclick="openEligibilityModal(); return false;">Check Eligibility</a></li>
           <li><a href="#" onclick="openDetector(); return false;">AI Scam Verifier</a></li>
           <li><a href="javascript:void(0)" onclick="toggleChat()">Chat with Assistant</a></li>
         </ul>
@@ -334,7 +335,7 @@
         </div>
       </div>
    
-      <!-- Contact / Development -->
+      <!-- Contact & Attribution -->
       <div class="footer-col">
         <h3>Developed By</h3>
         <p class="contact-info">
@@ -345,8 +346,11 @@
           <i class="fa-solid fa-envelope"></i> dushyantsharma1937@gmail.com
         </a>
         <div class="disclaimer-note">
-          Saral Niti is an independent citizen discovery platform. Always verify final guidelines on respective ministry websites.
+          Saral Niti is an independent citizen discovery platform. Always verify final guidelines on respective official ministry websites.
         </div>
+        <p class="attribution-note" style="font-size: 11px; color: var(--slate-400); margin-top: 8px; line-height: 1.4;">
+          Scheme data curated from <a href="https://www.myscheme.gov.in" target="_blank" rel="noopener noreferrer" style="color:var(--saffron); text-decoration:underline;">myScheme.gov.in</a> (MeitY & Digital India) and open dataset by <a href="https://github.com/Aryan-Pardeshi/gov-myscheme-dataset" target="_blank" rel="noopener noreferrer" style="color:var(--saffron); text-decoration:underline;">Aryan Pardeshi</a>.
+        </p>
       </div>
    
     </div>
@@ -360,6 +364,7 @@
     </div>
   </div>
 </footer>
+
 <!-- ══════════════ SCHEME DETAIL MODAL ══════════════ -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOnOverlay(event)" role="dialog" aria-modal="true">
   <div class="modal">
@@ -608,6 +613,7 @@
     </div>
   </div>
 </div>
+
 
 
   <script src="./js/main.js"></script>

@@ -49,23 +49,20 @@ def schemes_page():
 def project_page():
     return render_template("base.html")
 
-# MongoDB connection test
+# Database connection and health test
 @app.route("/test-db")
 def test_db():
     try:
-        client = get_client()
-        if client is None:
-            return {"message": "MongoDB connection failed", "error": "No MongoDB client available"}, 500
-        client.admin.command("ping")
         collection = get_schemes_collection()
         count = collection.count_documents({}) if collection is not None else 0
         return {
-            "message": "MongoDB connected successfully",
+            "message": "Database connected successfully",
             "schemes_in_db": count,
-            "status": "ok"
+            "status": "ok",
+            "engine": "sqlite3_fts5"
         }
     except Exception as e:
-        return {"message": "MongoDB connection failed", "error": str(e)}, 500
+        return {"message": "Database connection failed", "error": str(e)}, 500
 
 # Register blueprints
 from routes.schemes import schemes_bp
