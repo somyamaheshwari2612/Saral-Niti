@@ -112,7 +112,7 @@ Rule-based conversational scheme assistant supporting word-boundary token matchi
 ## 🛡️ AI Fraud Detector Endpoints
 
 ### 6. Verify Scheme URL
-Analyzes a URL using LLaMA 3.3 70B via Groq to identify phishing domains and fraudulent government scheme portals.
+Analyzes a URL using Google Gemini (Flash Lite) to identify phishing domains and fraudulent government scheme portals.
 
 - **URL:** `/api/detect-url`
 - **Method:** `POST`

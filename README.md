@@ -14,7 +14,7 @@
 [![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
 [![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white)](https://www.w3.org/Style/CSS/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-[![Groq](https://img.shields.io/badge/Groq%20AI-F55036?style=flat-square&logo=lightning&logoColor=white)](https://groq.com/)
+[![Gemini](https://img.shields.io/badge/Google%20Gemini-4285F4?style=flat-square&logo=google&logoColor=white)](https://aistudio.google.com/)
 [![Render](https://img.shields.io/badge/Render-46E3B7?style=flat-square&logo=render&logoColor=white)](https://render.com/)
 
 Built with ❤️ by a team of 4 — GLA University, Mathura
@@ -67,7 +67,7 @@ India has 3,000+ central and state government welfare schemes — yet a large sh
 | 🔍 **Search & Filter** | Real-time keyword search and 10-category filtering across 50+ schemes |
 | 📋 **Scheme Details** | Eligibility, benefits, ministry, and direct apply links in a modal view |
 | 🤖 **Chatbot** | Rule-based assistant that recommends schemes based on user intent |
-| 🛡️ **Fraud Detector** | Groq (LLaMA 3.3 70B)-powered URL & document checker — flags REAL / FAKE / SUSPICIOUS |
+| 🛡️ **Fraud Detector** | Google Gemini (Flash Lite)-powered URL & document checker — flags REAL / FAKE / SUSPICIOUS |
 | 🌙 **Dark Mode** | Toggle with preference saved across sessions |
 | 📱 **Responsive UI** | Fully usable on mobile and desktop |
 
@@ -85,7 +85,7 @@ India has 3,000+ central and state government welfare schemes — yet a large sh
 `MongoDB Atlas` · `PyMongo`
 
 **AI / LLM**
-`Groq API` — `LLaMA 3.3 70B`
+`Google Gemini API` — `Gemini 2.5/3.5 Flash Lite`
 
 **DevOps & CI/CD**
 `GitHub Actions` · `Render` · `pytest`
@@ -146,7 +146,7 @@ Saral-Niti/
 | `GET` | `/api/search?q=` | Search schemes by keyword |
 | `GET` | `/api/filter?category=` | Filter schemes by category |
 | `POST` | `/api/chatbot` | Chatbot assistance query |
-| `POST` | `/api/detect-url` | Scam URL detection (Groq LLaMA 3.3 70B) |
+| `POST` | `/api/detect-url` | Scam URL detection (Google Gemini Flash Lite) |
 | `POST` | `/api/detect-file` | Document validator (PDF/TXT) |
 | `GET` | `/api/live/schemes` | Live upstream scheme lookup |
 
@@ -177,7 +177,7 @@ pip install -r backend/requirements.txt
 ```bash
 cp .env.example backend/.env
 ```
-Fill in your `MONGO_URI` and `GROQ_API_KEY`.
+Fill in your `MONGO_URI` and `GEMINI_API_KEY`.
 
 **4. Seed the database**
 ```bash
@@ -195,7 +195,7 @@ App will be live at `http://127.0.0.1:5000`
 ## ☁️ Deployment Options
 
 ### Separate Deployment (Recommended)
-- **Backend on Render:** Point root directory to `backend`, start command `gunicorn app:app`, and set `MONGO_URI` & `GROQ_API_KEY` in Render environment settings.
+- **Backend on Render:** Point root directory to `backend`, start command `gunicorn app:app`, and set `MONGO_URI` & `GEMINI_API_KEY` in Render environment settings.
 - **Frontend on Vercel / Netlify:** Point root directory to `frontend`, no build command needed. The frontend automatically routes API calls to the live backend.
 
 ### Unified Deployment (Monolithic)

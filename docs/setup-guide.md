@@ -8,7 +8,7 @@ This guide walks through setting up **Saral Niti** locally, seeding the database
 
 - **Python 3.10+** (Tested on Python 3.11, 3.12, 3.14)
 - **MongoDB Atlas** account (or local MongoDB server on `localhost:27017`)
-- **Groq API Key** (Free from [console.groq.com](https://console.groq.com/keys)) for LLaMA 3.3 70B scam detection
+- **Google Gemini API Key** (Free from [aistudio.google.com](https://aistudio.google.com/app/apikey)) for AI scam detection
 
 ---
 
@@ -43,7 +43,8 @@ cp .env.example backend/.env
 Open `backend/.env` and update:
 ```env
 MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/saral_niti_db?retryWrites=true&w=majority
-GROQ_API_KEY=gsk_your_groq_api_key_here
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-2.5-flash-lite
 FLASK_ENV=development
 PORT=5000
 ```
@@ -88,7 +89,7 @@ Saral Niti is engineered to deploy the backend API and the frontend client indep
 - **Start Command:** `gunicorn app:app`
 - **Environment Variables on Render:**
   - `MONGO_URI`: Your production MongoDB Atlas connection string
-  - `GROQ_API_KEY`: Your Groq API key
+  - `GEMINI_API_KEY`: Your Google Gemini API key
 
 ### B. Frontend Deployment (Vercel / Netlify / Cloudflare Pages)
 - **Platform:** Vercel, Netlify, or GitHub Pages

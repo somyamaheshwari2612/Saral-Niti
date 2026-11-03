@@ -4,7 +4,7 @@ python-dotenv
 requests
 flask-cors
 gunicorn
-groq
+google-genai
 pdfplumber
 pytest
 pytest-flask

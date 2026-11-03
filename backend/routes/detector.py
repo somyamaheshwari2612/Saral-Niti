@@ -1,5 +1,6 @@
 import os
 import re
+import requests
 from flask import Blueprint, request, jsonify
 from dotenv import load_dotenv
 
@@ -9,11 +10,11 @@ load_dotenv(os.path.join(base_dir, '..', '.env'))
 
 # Optional/guarded imports so app can start even if optional dependencies are not installed
 try:
-    from groq import Groq
-    GROQ_AVAILABLE = True
+    from google import genai
+    GENAI_AVAILABLE = True
 except ImportError:
-    Groq = None
-    GROQ_AVAILABLE = False
+    genai = None
+    GENAI_AVAILABLE = False
 
 try:
     import pdfplumber
@@ -24,17 +25,74 @@ except ImportError:
 
 detector_bp = Blueprint('detector', __name__)
 
-def get_groq_client():
-    if not GROQ_AVAILABLE or Groq is None:
-        return None
-    api_key = os.getenv("GROQ_API_KEY")
+def get_api_key():
+    """Retrieve Gemini API Key (supports GROQ_API_KEY as fallback)"""
+    return os.getenv("GEMINI_API_KEY") or os.getenv("GROQ_API_KEY")
+
+def get_model_name():
+    """Retrieve Gemini Model Name (defaults to gemini-2.5-flash-lite)"""
+    model = os.getenv("GEMINI_MODEL", "gemini-2.5-flash-lite").strip()
+    return model.lower().replace(" ", "-")
+
+def call_gemini(prompt):
+    """Generate content with Gemini using official SDK or direct REST API fallback"""
+    api_key = get_api_key()
     if not api_key:
-        return None
-    try:
-        return Groq(api_key=api_key)
-    except Exception as e:
-        print(f"Failed to initialize Groq client: {e}")
-        return None
+        return None, "Error: GEMINI_API_KEY is not configured in backend/.env"
+
+    model_name = get_model_name()
+
+    # 1. Try official google-genai SDK if installed
+    if GENAI_AVAILABLE and genai is not None:
+        try:
+            client = genai.Client(api_key=api_key)
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt
+            )
+            if response and response.text:
+                return response.text, None
+        except Exception:
+            pass  # Fall back to direct REST API
+
+    # 2. Direct REST API via requests (zero extra dependencies required)
+    models_to_try = [model_name]
+    for fallback in ["gemini-2.5-flash-lite", "gemini-2.0-flash-lite", "gemini-1.5-flash"]:
+        if fallback not in models_to_try:
+            models_to_try.append(fallback)
+
+    last_error = None
+    for model in models_to_try:
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
+        headers = {"Content-Type": "application/json"}
+        payload = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }],
+            "generationConfig": {
+                "temperature": 0.2
+            }
+        }
+        try:
+            res = requests.post(url, headers=headers, json=payload, timeout=20)
+            if res.status_code == 200:
+                data = res.json()
+                candidates = data.get("candidates", [])
+                if candidates and "content" in candidates[0]:
+                    parts = candidates[0]["content"].get("parts", [])
+                    if parts and "text" in parts[0]:
+                        return parts[0]["text"], None
+            elif res.status_code == 404:
+                last_error = f"Model '{model}' not found on Gemini API."
+                continue
+            else:
+                err_data = res.json().get("error", {})
+                last_error = err_data.get("message", res.text)
+        except Exception as e:
+            last_error = str(e)
+
+    return None, f"Error: {last_error or 'Failed to generate response from Gemini'}"
+
 
 def parse_verdict(text):
     """Accurately extract verdict from LLM output, handling markdown and plain formats."""
@@ -58,14 +116,8 @@ def parse_verdict(text):
 
     return "suspicious"
 
-def predict_fake_or_real(text):
-    if not GROQ_AVAILABLE:
-        return "Error: groq library is not installed on the server", "error"
-    client = get_groq_client()
-    if not client:
-        return "Error: GROQ_API_KEY is not configured", "error"
 
-    # Truncate content to 3000 chars to avoid exceeding context limits
+def predict_fake_or_real(text):
     truncated_text = text[:3000]
     prompt = f"""
         You are an expert in detecting fraud, scams, and fake government schemes.
@@ -76,26 +128,14 @@ def predict_fake_or_real(text):
         Result: REAL or FAKE
         Reason: <clear explanation in 2-4 lines>
         """
-    try:
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2
-        )
-        content = response.choices[0].message.content
-        verdict = parse_verdict(content)
-        return content, verdict
-    except Exception as e:
-        return f"Error: {str(e)}", "error"
+    content, error = call_gemini(prompt)
+    if error:
+        return error, "error"
+    verdict = parse_verdict(content)
+    return content, verdict
 
 
 def url_detection(url):
-    if not GROQ_AVAILABLE:
-        return "Error: groq library is not installed on the server", "error"
-    client = get_groq_client()
-    if not client:
-        return "Error: GROQ_API_KEY is not configured", "error"
-
     prompt = f"""
         You are a senior cybersecurity analyst. Detect if this is a FAKE GOVERNMENT SCHEME URL.
         Analyze this URL: {url}
@@ -122,17 +162,11 @@ def url_detection(url):
         - Phishing keywords: free-money, apply-now, kyc-update, instant-loan
         - Too many hyphens = red flag
         """
-    try:
-        response = client.chat.completions.create(
-            model="llama-3.3-70b-versatile",
-            messages=[{"role": "user", "content": prompt}],
-            temperature=0.2
-        )
-        content = response.choices[0].message.content
-        verdict = parse_verdict(content)
-        return content, verdict
-    except Exception as e:
-        return f"Error: {str(e)}", "error"
+    content, error = call_gemini(prompt)
+    if error:
+        return error, "error"
+    verdict = parse_verdict(content)
+    return content, verdict
 
 
 @detector_bp.route("/api/detect-url", methods=['POST'])
@@ -145,7 +179,7 @@ def api_detect_url():
         return jsonify({"error": "URL must start with http:// or https://"}), 400
     result_text, verdict = url_detection(url)
     if verdict == "error":
-        status_code = 503 if ("GROQ_API_KEY" in result_text or "not installed" in result_text) else 502
+        status_code = 503 if "API_KEY" in result_text else 502
         return jsonify({
             "error": result_text,
             "result": result_text,
@@ -155,6 +189,7 @@ def api_detect_url():
         "result": result_text,
         "verdict": verdict
     })
+
 
 MAX_FILE_SIZE = 5 * 1024 * 1024  # 5 MB
 
@@ -179,7 +214,7 @@ def api_detect_file():
                 return jsonify({"error": "PDF processing library (pdfplumber) is not installed on the server"}), 503
             with pdfplumber.open(file) as pdf:
                 extracted_text = "".join([
-                    page.extract_text() or "" for page in pdf.pages[:10]  # Limit to first 10 pages
+                    page.extract_text() or "" for page in pdf.pages[:10]
                 ])
         elif file.filename.lower().endswith(".txt"):
             extracted_text = file.read().decode("UTF-8", errors="ignore")
@@ -189,7 +224,7 @@ def api_detect_file():
             return jsonify({"error": "File is empty or text could not be extracted"}), 400
         result_text, verdict = predict_fake_or_real(extracted_text)
         if verdict == "error":
-            status_code = 503 if ("GROQ_API_KEY" in result_text or "not installed" in result_text) else 502
+            status_code = 503 if "API_KEY" in result_text else 502
             return jsonify({
                 "error": result_text,
                 "result": result_text,
