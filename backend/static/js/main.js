@@ -6,6 +6,28 @@ const SCHEMES_API = '';
 const ML_API      = '';
 
 let allSchemes = [];
+let currentSchemesList = [];
+
+// Helper: Escape HTML entities to prevent XSS injection
+function escapeHtml(str) {
+  if (str === null || str === undefined) return '';
+  return String(str)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// Helper: Sanitize URL to only allow valid http/https schemes
+function sanitizeUrl(url) {
+  if (!url) return '#';
+  const clean = String(url).trim();
+  if (/^https?:\/\//i.test(clean)) {
+    return clean;
+  }
+  return '#';
+}
 
 // Debounce helper to prevent excessive API requests on keystroke
 function debounce(func, delay = 300) {
@@ -23,8 +45,18 @@ async function loadSchemes() {
   try {
     const res = await fetch(`${SCHEMES_API}/api/schemes`);
     const data = await res.json();
+    if (!res.ok || data.error) {
+      document.getElementById('schemesGrid').innerHTML = `
+        <div class="no-results">
+          <h3>Could not load schemes</h3>
+          <p>${escapeHtml(data.error || 'Database connection error')}</p>
+        </div>`;
+      document.getElementById('resultsCount').textContent = 'Server error';
+      return;
+    }
     allSchemes = data.schemes || [];
-    document.getElementById('totalCount').textContent = allSchemes.length + '+';
+    const totalEl = document.getElementById('totalCount');
+    if (totalEl) totalEl.textContent = allSchemes.length + '+';
     renderSchemes(allSchemes);
   } catch (err) {
     document.getElementById('schemesGrid').innerHTML = `
@@ -68,19 +100,21 @@ function renderSkeletons() {
 }
 
 // ══════════════════════════════════════════════════
-//  RENDER CARDS
+//  RENDER CARDS (XSS-safe with data attributes)
 // ══════════════════════════════════════════════════
 function renderSchemes(schemes) {
   const grid = document.getElementById('schemesGrid');
   const count = document.getElementById('resultsCount');
   const resetBtn = document.getElementById('resetBtn');
 
+  currentSchemesList = Array.isArray(schemes) ? schemes : [];
+
   if (resetBtn) {
-    const isFiltered = schemes.length !== allSchemes.length;
+    const isFiltered = currentSchemesList.length !== allSchemes.length;
     resetBtn.style.display = isFiltered ? 'inline-flex' : 'none';
   }
 
-  if (!schemes.length) {
+  if (!currentSchemesList.length) {
     grid.innerHTML = `
       <div class="no-results">
         <h3>No schemes found matching your search</h3>
@@ -90,31 +124,64 @@ function renderSchemes(schemes) {
     return;
   }
 
-  count.innerHTML = `Showing <strong>${schemes.length}</strong> verified scheme${schemes.length !== 1 ? 's' : ''}`;
-  grid.innerHTML = schemes.map(s => {
+  count.innerHTML = `Showing <strong>${currentSchemesList.length}</strong> verified scheme${currentSchemesList.length !== 1 ? 's' : ''}`;
+  grid.innerHTML = currentSchemesList.map((s, idx) => {
     const icon = CATEGORY_ICONS[s.category] || '🏛';
+    const safeCat = escapeHtml(s.category || 'general');
+    const safeTitle = escapeHtml(s.title || '');
+    const safeDesc = escapeHtml(s.description || '');
+    const safeBenefits = escapeHtml(s.benefits || '');
+    const safeMinistry = escapeHtml(s.ministry || '');
+    const safeUrl = sanitizeUrl(s.application_url);
+
     return `
-    <div class="scheme-card" onclick="openModal(${JSON.stringify(s).replace(/"/g, '&quot;')})">
+    <div class="scheme-card" data-index="${idx}" tabindex="0" role="button" aria-label="View details for ${safeTitle}">
       <div>
         <div class="card-top">
-          <span class="category-badge cat-${s.category}">${icon} ${s.category}</span>
+          <span class="category-badge cat-${safeCat}">${icon} ${safeCat}</span>
           <div class="active-dot" title="Active Scheme"></div>
         </div>
-        <div class="card-title">${s.title}</div>
-        <div class="card-desc">${s.description}</div>
+        <div class="card-title">${safeTitle}</div>
+        <div class="card-desc">${safeDesc}</div>
         <div class="card-benefit">
-          <i class="fa-solid fa-gift" style="margin-right:4px;"></i> ${s.benefits}
+          <i class="fa-solid fa-gift" style="margin-right:4px;"></i> ${safeBenefits}
         </div>
       </div>
       <div class="card-footer">
-        <span class="ministry-name" title="${s.ministry}"><i class="fa-solid fa-building-columns"></i> ${s.ministry}</span>
-        <a href="${s.application_url}" target="_blank" rel="noopener noreferrer" class="apply-btn" onclick="event.stopPropagation()">
+        <span class="ministry-name" title="${safeMinistry}"><i class="fa-solid fa-building-columns"></i> ${safeMinistry}</span>
+        <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="apply-btn" onclick="event.stopPropagation()">
           <span>Apply</span>
           <i class="fa-solid fa-arrow-up-right-from-square"></i>
         </a>
       </div>
     </div>
   `}).join('');
+}
+
+// Scheme card delegated click and keyboard handlers
+const schemesGridEl = document.getElementById('schemesGrid');
+if (schemesGridEl) {
+  schemesGridEl.addEventListener('click', (e) => {
+    const card = e.target.closest('.scheme-card');
+    if (!card) return;
+    if (e.target.closest('.apply-btn')) return;
+    const idx = parseInt(card.getAttribute('data-index'), 10);
+    if (!isNaN(idx) && currentSchemesList[idx]) {
+      openModal(currentSchemesList[idx]);
+    }
+  });
+
+  schemesGridEl.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      const card = e.target.closest('.scheme-card');
+      if (!card || e.target.closest('.apply-btn')) return;
+      e.preventDefault();
+      const idx = parseInt(card.getAttribute('data-index'), 10);
+      if (!isNaN(idx) && currentSchemesList[idx]) {
+        openModal(currentSchemesList[idx]);
+      }
+    }
+  });
 }
 
 // ══════════════════════════════════════════════════
@@ -127,9 +194,19 @@ async function handleSearch() {
   try {
     const res = await fetch(`${SCHEMES_API}/api/search?q=${encodeURIComponent(q)}`);
     const data = await res.json();
+    if (!res.ok || data.error) {
+      document.getElementById('schemesGrid').innerHTML = `
+        <div class="no-results">
+          <h3>Search Error</h3>
+          <p>${escapeHtml(data.error || 'Failed to search schemes')}</p>
+        </div>`;
+      document.getElementById('resultsCount').innerHTML = 'Error searching schemes';
+      return;
+    }
     renderSchemes(data.schemes || []);
   } catch {
     document.getElementById('schemesGrid').innerHTML = `<div class="no-results"><h3>Search failed</h3><p>Please check your connection and try again</p></div>`;
+    document.getElementById('resultsCount').textContent = 'Connection error';
   }
 }
 
@@ -172,39 +249,65 @@ async function filterByCategory(category, btn) {
 
   renderSkeletons();
   try {
-    const res = await fetch(`${SCHEMES_API}/api/filter?category=${category}`);
+    const res = await fetch(`${SCHEMES_API}/api/filter?category=${encodeURIComponent(category)}`);
     const data = await res.json();
+    if (!res.ok || data.error) {
+      document.getElementById('schemesGrid').innerHTML = `
+        <div class="no-results">
+          <h3>Filter Error</h3>
+          <p>${escapeHtml(data.error || 'Failed to filter schemes')}</p>
+        </div>`;
+      document.getElementById('resultsCount').innerHTML = 'Error filtering schemes';
+      return;
+    }
     renderSchemes(data.schemes || []);
   } catch {
-    document.getElementById('schemesGrid').innerHTML = `<div class="no-results"><h3>Filter failed</h3></div>`;
+    document.getElementById('schemesGrid').innerHTML = `<div class="no-results"><h3>Filter failed</h3><p>Please check your connection and try again</p></div>`;
+    document.getElementById('resultsCount').textContent = 'Connection error';
   }
 }
 
 // ══════════════════════════════════════════════════
-//  SCHEME DETAIL MODAL & SHARE
+//  SCHEME DETAIL MODAL & SHARE (XSS-safe)
 // ══════════════════════════════════════════════════
 let currentModalScheme = null;
 
 function openModal(s) {
+  if (!s) return;
   currentModalScheme = s;
   const icon = CATEGORY_ICONS[s.category] || '🏛';
-  document.getElementById('modalCategory').textContent = icon + ' ' + s.category.toUpperCase();
-  document.getElementById('modalTitle').textContent = s.title;
-  document.getElementById('modalMinistry').textContent = s.ministry + (s.launched_year ? ' • Launched ' + s.launched_year : '');
-  document.getElementById('modalDesc').textContent = s.description;
-  document.getElementById('modalBenefits').textContent = s.benefits;
-  document.getElementById('modalApplyBtn').href = s.application_url;
+  const catEl = document.getElementById('modalCategory');
+  const titleEl = document.getElementById('modalTitle');
+  const minEl = document.getElementById('modalMinistry');
+  const descEl = document.getElementById('modalDesc');
+  const benEl = document.getElementById('modalBenefits');
+  const applyEl = document.getElementById('modalApplyBtn');
+  const eligEl = document.getElementById('modalEligibility');
+  const tagsEl = document.getElementById('modalTags');
+
+  if (catEl) catEl.textContent = icon + ' ' + (s.category || '').toUpperCase();
+  if (titleEl) titleEl.textContent = s.title || '';
+  if (minEl) minEl.textContent = (s.ministry || '') + (s.launched_year ? ' • Launched ' + s.launched_year : '');
+  if (descEl) descEl.textContent = s.description || '';
+  if (benEl) benEl.textContent = s.benefits || '';
+  if (applyEl) applyEl.href = sanitizeUrl(s.application_url);
 
   const e = s.eligibility || {};
-  document.getElementById('modalEligibility').innerHTML = `
-    <div class="elig-item"><div class="elig-label">Age Range</div><div class="elig-value">${e.min_age ?? 0} – ${e.max_age ?? 'No limit'} years</div></div>
-    <div class="elig-item"><div class="elig-label">Gender</div><div class="elig-value">${e.gender ?? 'All Citizens'}</div></div>
-    <div class="elig-item"><div class="elig-label">Income Limit</div><div class="elig-value">${e.income_limit ? '₹' + e.income_limit.toLocaleString('en-IN') + ' / year' : 'No income cap'}</div></div>
-    <div class="elig-item"><div class="elig-label">Coverage State</div><div class="elig-value">${e.state ?? 'All India'}</div></div>
-  `;
+  const incomeStr = e.income_limit ? '₹' + Number(e.income_limit).toLocaleString('en-IN') + ' / year' : 'No income cap';
+  if (eligEl) {
+    eligEl.innerHTML = `
+      <div class="elig-item"><div class="elig-label">Age Range</div><div class="elig-value">${escapeHtml(e.min_age ?? 0)} – ${escapeHtml(e.max_age ?? 'No limit')} years</div></div>
+      <div class="elig-item"><div class="elig-label">Gender</div><div class="elig-value">${escapeHtml(e.gender ?? 'All Citizens')}</div></div>
+      <div class="elig-item"><div class="elig-label">Income Limit</div><div class="elig-value">${escapeHtml(incomeStr)}</div></div>
+      <div class="elig-item"><div class="elig-label">Coverage State</div><div class="elig-value">${escapeHtml(e.state ?? 'All India')}</div></div>
+    `;
+  }
 
-  document.getElementById('modalTags').innerHTML = (s.tags || []).map(t => `<span class="tag">#${t}</span>`).join('');
-  document.getElementById('modalOverlay').classList.add('open');
+  if (tagsEl) {
+    tagsEl.innerHTML = (s.tags || []).map(t => `<span class="tag">#${escapeHtml(t)}</span>`).join('');
+  }
+  const overlay = document.getElementById('modalOverlay');
+  if (overlay) overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 
@@ -215,7 +318,8 @@ function shareOnWhatsApp() {
 }
 
 function closeModal() {
-  document.getElementById('modalOverlay').classList.remove('open');
+  const overlay = document.getElementById('modalOverlay');
+  if (overlay) overlay.classList.remove('open');
   document.body.style.overflow = '';
 }
 
@@ -227,23 +331,38 @@ function closeModalOnOverlay(e) {
 //  URL DETECTOR — OPEN / CLOSE
 // ══════════════════════════════════════════════════
 function openDetector() {
-  document.getElementById('detOverlay').classList.add('open');
+  const overlay = document.getElementById('detOverlay');
+  if (overlay) overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
 }
 
 function closeDetector() {
-  document.getElementById('detOverlay').classList.remove('open');
+  const overlay = document.getElementById('detOverlay');
+  if (overlay) overlay.classList.remove('open');
   document.body.style.overflow = '';
-  document.getElementById('urlInput').value = '';
-  document.getElementById('fileInput').value = '';
-  document.getElementById('fileName').style.display = 'none';
-  document.getElementById('fileName').textContent = '';
+
+  const urlInput = document.getElementById('urlInput');
+  const fileInput = document.getElementById('fileInput');
+  const fileName = document.getElementById('fileName');
+  if (urlInput) urlInput.value = '';
+  if (fileInput) fileInput.value = '';
+  if (fileName) {
+    fileName.style.display = 'none';
+    fileName.textContent = '';
+  }
+
   ['url', 'file'].forEach(t => {
-    document.getElementById(t + 'Spinner').classList.remove('show');
-    document.getElementById(t + 'Result').classList.remove('show');
-    document.getElementById(t + 'ResultBox').textContent = '';
-    document.getElementById(t + 'ResultBox').className = 'det-result-box';
-    document.getElementById(t + 'Btn').disabled = false;
+    const sp = document.getElementById(t + 'Spinner');
+    const res = document.getElementById(t + 'Result');
+    const box = document.getElementById(t + 'ResultBox');
+    const btn = document.getElementById(t + 'Btn');
+    if (sp) sp.classList.remove('show');
+    if (res) res.classList.remove('show');
+    if (box) {
+      box.textContent = '';
+      box.className = 'det-result-box';
+    }
+    if (btn) btn.disabled = false;
   });
 }
 
@@ -256,8 +375,10 @@ function closeDetectorOnOverlay(e) {
 // ══════════════════════════════════════════════════
 function switchDetectorTab(tab) {
   ['url', 'file'].forEach(t => {
-    document.getElementById('tab-' + t).classList.toggle('active', t === tab);
-    document.getElementById('panel-' + t).classList.toggle('active', t === tab);
+    const tabEl = document.getElementById('tab-' + t);
+    const panelEl = document.getElementById('panel-' + t);
+    if (tabEl) tabEl.classList.toggle('active', t === tab);
+    if (panelEl) panelEl.classList.toggle('active', t === tab);
   });
 }
 
@@ -278,7 +399,8 @@ function onFileSelected(input) {
 //  ANALYZE URL
 // ══════════════════════════════════════════════════
 async function analyzeURL() {
-  const url = document.getElementById('urlInput').value.trim();
+  const urlEl = document.getElementById('urlInput');
+  const url = urlEl ? urlEl.value.trim() : '';
   if (!url) { alert('Please enter a URL first.'); return; }
   if (!url.startsWith('http://') && !url.startsWith('https://')) {
     alert('URL must start with http:// or https://');
@@ -294,15 +416,15 @@ async function analyzeURL() {
       body: JSON.stringify({ url })
     });
     const data = await res.json();
-    if (data.error) {
-      showDetectorResult('url', '❌ Error: ' + data.error, 'fake');
+    if (!res.ok || data.error || data.verdict === 'error') {
+      showDetectorResult('url', '❌ ' + (data.error || data.result || 'Analysis failed'), 'suspicious');
     } else {
       showDetectorResult('url', data.result, classifyResult(data.result, data.verdict));
     }
   } catch (err) {
     showDetectorResult('url',
       '❌ Could not connect to backend server.\n\nError: ' + err.message,
-      'fake'
+      'suspicious'
     );
   } finally {
     setDetectorLoading('url', false);
@@ -314,7 +436,7 @@ async function analyzeURL() {
 // ══════════════════════════════════════════════════
 async function analyzeFile() {
   const fileInput = document.getElementById('fileInput');
-  if (!fileInput.files.length) { alert('Please select a file first.'); return; }
+  if (!fileInput || !fileInput.files.length) { alert('Please select a file first.'); return; }
 
   const file = fileInput.files[0];
   const ext = file.name.split('.').pop().toLowerCase();
@@ -331,15 +453,15 @@ async function analyzeFile() {
       body: formData
     });
     const data = await res.json();
-    if (data.error) {
-      showDetectorResult('file', '❌ Error: ' + data.error, 'fake');
+    if (!res.ok || data.error || data.verdict === 'error') {
+      showDetectorResult('file', '❌ ' + (data.error || data.result || 'Analysis failed'), 'suspicious');
     } else {
       showDetectorResult('file', data.result, classifyResult(data.result, data.verdict));
     }
   } catch (err) {
     showDetectorResult('file',
       '❌ Could not connect to backend server.\n\nError: ' + err.message,
-      'fake'
+      'suspicious'
     );
   } finally {
     setDetectorLoading('file', false);
@@ -350,30 +472,40 @@ async function analyzeFile() {
 //  HELPERS
 // ══════════════════════════════════════════════════
 function setDetectorLoading(type, loading) {
-  document.getElementById(type + 'Btn').disabled = loading;
-  document.getElementById(type + 'Spinner').classList.toggle('show', loading);
-  if (loading) document.getElementById(type + 'Result').classList.remove('show');
+  const btn = document.getElementById(type + 'Btn');
+  const spinner = document.getElementById(type + 'Spinner');
+  const result = document.getElementById(type + 'Result');
+  if (btn) btn.disabled = loading;
+  if (spinner) spinner.classList.toggle('show', loading);
+  if (loading && result) result.classList.remove('show');
 }
 
 function showDetectorResult(type, text, cssClass) {
   const box = document.getElementById(type + 'ResultBox');
-  box.textContent = text;
-  box.className = 'det-result-box ' + (cssClass || 'suspicious');
-  document.getElementById(type + 'Result').classList.add('show');
+  const result = document.getElementById(type + 'Result');
+  if (box) {
+    box.textContent = text;
+    box.className = 'det-result-box ' + (cssClass || 'suspicious');
+  }
+  if (result) result.classList.add('show');
 }
 
 function classifyResult(text, verdict) {
-  if (verdict) return verdict.toLowerCase();
+  if (verdict) {
+    const v = String(verdict).toLowerCase();
+    if (v === 'error') return 'suspicious';
+    return v;
+  }
   if (!text) return 'suspicious';
   
-  // Look for explicit Result: REAL/FAKE/SUSPICIOUS line
-  const resultMatch = text.match(/Result:\s*(REAL|FAKE|SUSPICIOUS)/i);
+  // Look for explicit Result: REAL/FAKE/SUSPICIOUS line (supports markdown bold)
+  const resultMatch = text.match(/Result[^\w\n]*\s*[*_#`]*\s*(REAL|FAKE|SUSPICIOUS)/i);
   if (resultMatch) {
     return resultMatch[1].toLowerCase();
   }
   
   // Look for Risk Level: LOW/MEDIUM/HIGH line
-  const riskMatch = text.match(/Risk Level:\s*(LOW|MEDIUM|HIGH)/i);
+  const riskMatch = text.match(/Risk\s*Level[^\w\n]*\s*[*_#`]*\s*(LOW|MEDIUM|HIGH)/i);
   if (riskMatch) {
     const r = riskMatch[1].toUpperCase();
     if (r === 'LOW') return 'real';
@@ -416,10 +548,10 @@ function toggleDarkMode() {
   document.documentElement.classList.toggle('dark-mode');
   const icon = document.getElementById('darkIcon');
   if (document.documentElement.classList.contains('dark-mode')) {
-    icon.classList.replace('fa-moon', 'fa-sun');
+    if (icon) icon.classList.replace('fa-moon', 'fa-sun');
     localStorage.setItem('darkMode', 'on');
   } else {
-    icon.classList.replace('fa-sun', 'fa-moon');
+    if (icon) icon.classList.replace('fa-sun', 'fa-moon');
     localStorage.setItem('darkMode', 'off');
   }
 }
@@ -428,7 +560,8 @@ function toggleDarkMode() {
 window.addEventListener('DOMContentLoaded', () => {
   if (localStorage.getItem('darkMode') === 'on') {
     document.documentElement.classList.add('dark-mode');
-    document.getElementById('darkIcon').classList.replace('fa-moon', 'fa-sun');
+    const icon = document.getElementById('darkIcon');
+    if (icon) icon.classList.replace('fa-moon', 'fa-sun');
   }
 });
 
@@ -438,6 +571,6 @@ window.addEventListener('DOMContentLoaded', () => {
 function toggleMenu() {
   const links = document.querySelector('.nav-links');
   const burger = document.querySelector('.hamburger');
-  links.classList.toggle('open');
+  if (links) links.classList.toggle('open');
   if (burger) burger.classList.toggle('open');
 }
