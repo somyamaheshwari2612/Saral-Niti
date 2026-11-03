@@ -25,6 +25,8 @@ def get_all_schemes():
 @schemes_bp.route("/api/schemes/<id>", methods=["GET"])
 def get_scheme_by_id(id):
     try:
+        if not ObjectId.is_valid(id):
+            return jsonify({"error": "Invalid scheme ID format"}), 400
         schemes_collection = get_schemes_collection()
         if schemes_collection is None:
             return jsonify({"error": "Database not connected"}), 500

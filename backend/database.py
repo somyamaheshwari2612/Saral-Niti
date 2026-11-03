@@ -1,8 +1,10 @@
-﻿import os
+import os
 from pymongo import MongoClient
 from dotenv import load_dotenv
 
-load_dotenv()
+# Ensure .env is loaded reliably regardless of current working directory
+base_dir = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(base_dir, ".env"))
 
 _client = None
 _db = None

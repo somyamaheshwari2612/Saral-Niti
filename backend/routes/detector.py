@@ -1,16 +1,32 @@
-
-from flask import Blueprint, request, jsonify
-from groq import Groq
-import pdfplumber
-from dotenv import load_dotenv
 import os
 import re
+from flask import Blueprint, request, jsonify
+from dotenv import load_dotenv
 
-load_dotenv()
+# Ensure .env is loaded reliably regardless of current working directory
+base_dir = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(base_dir, '..', '.env'))
+
+# Optional/guarded imports so app can start even if optional dependencies are not installed
+try:
+    from groq import Groq
+    GROQ_AVAILABLE = True
+except ImportError:
+    Groq = None
+    GROQ_AVAILABLE = False
+
+try:
+    import pdfplumber
+    PDFPLUMBER_AVAILABLE = True
+except ImportError:
+    pdfplumber = None
+    PDFPLUMBER_AVAILABLE = False
 
 detector_bp = Blueprint('detector', __name__)
 
 def get_groq_client():
+    if not GROQ_AVAILABLE or Groq is None:
+        return None
     api_key = os.getenv("GROQ_API_KEY")
     if not api_key:
         return None
@@ -21,17 +37,17 @@ def get_groq_client():
         return None
 
 def parse_verdict(text):
-    """Accurately extract verdict from LLM output to prevent false positives"""
+    """Accurately extract verdict from LLM output, handling markdown and plain formats."""
     if not text:
         return "suspicious"
     
-    # Check for explicit Result: REAL / FAKE / SUSPICIOUS line
-    result_match = re.search(r"Result:\s*(REAL|FAKE|SUSPICIOUS)", text, re.IGNORECASE)
+    # Check for explicit Result: REAL / FAKE / SUSPICIOUS line (supports markdown bold, headers, etc.)
+    result_match = re.search(r"Result[^\w\n]*\s*[*_#`]*\s*(REAL|FAKE|SUSPICIOUS)", text, re.IGNORECASE)
     if result_match:
         return result_match.group(1).lower()
 
     # Fallback to Risk Level line
-    risk_match = re.search(r"Risk Level:\s*(LOW|MEDIUM|HIGH)", text, re.IGNORECASE)
+    risk_match = re.search(r"Risk\s*Level[^\w\n]*\s*[*_#`]*\s*(LOW|MEDIUM|HIGH)", text, re.IGNORECASE)
     if risk_match:
         risk = risk_match.group(1).upper()
         if risk == "LOW":
@@ -43,9 +59,11 @@ def parse_verdict(text):
     return "suspicious"
 
 def predict_fake_or_real(text):
+    if not GROQ_AVAILABLE:
+        return "Error: groq library is not installed on the server", "error"
     client = get_groq_client()
     if not client:
-        return "Error: GROQ_API_KEY is not configured", "suspicious"
+        return "Error: GROQ_API_KEY is not configured", "error"
 
     # Truncate content to 3000 chars to avoid exceeding context limits
     truncated_text = text[:3000]
@@ -68,13 +86,15 @@ def predict_fake_or_real(text):
         verdict = parse_verdict(content)
         return content, verdict
     except Exception as e:
-        return f"Error: {str(e)}", "fake"
+        return f"Error: {str(e)}", "error"
 
 
 def url_detection(url):
+    if not GROQ_AVAILABLE:
+        return "Error: groq library is not installed on the server", "error"
     client = get_groq_client()
     if not client:
-        return "Error: GROQ_API_KEY is not configured", "suspicious"
+        return "Error: GROQ_API_KEY is not configured", "error"
 
     prompt = f"""
         You are a senior cybersecurity analyst. Detect if this is a FAKE GOVERNMENT SCHEME URL.
@@ -112,7 +132,7 @@ def url_detection(url):
         verdict = parse_verdict(content)
         return content, verdict
     except Exception as e:
-        return f"Error: {str(e)}", "fake"
+        return f"Error: {str(e)}", "error"
 
 
 @detector_bp.route("/api/detect-url", methods=['POST'])
@@ -124,6 +144,13 @@ def api_detect_url():
     if not url.startswith(('http://', 'https://')):
         return jsonify({"error": "URL must start with http:// or https://"}), 400
     result_text, verdict = url_detection(url)
+    if verdict == "error":
+        status_code = 503 if ("GROQ_API_KEY" in result_text or "not installed" in result_text) else 502
+        return jsonify({
+            "error": result_text,
+            "result": result_text,
+            "verdict": "error"
+        }), status_code
     return jsonify({
         "result": result_text,
         "verdict": verdict
@@ -148,6 +175,8 @@ def api_detect_file():
 
     try:
         if file.filename.lower().endswith(".pdf"):
+            if not PDFPLUMBER_AVAILABLE or pdfplumber is None:
+                return jsonify({"error": "PDF processing library (pdfplumber) is not installed on the server"}), 503
             with pdfplumber.open(file) as pdf:
                 extracted_text = "".join([
                     page.extract_text() or "" for page in pdf.pages[:10]  # Limit to first 10 pages
@@ -159,6 +188,13 @@ def api_detect_file():
         if not extracted_text.strip():
             return jsonify({"error": "File is empty or text could not be extracted"}), 400
         result_text, verdict = predict_fake_or_real(extracted_text)
+        if verdict == "error":
+            status_code = 503 if ("GROQ_API_KEY" in result_text or "not installed" in result_text) else 502
+            return jsonify({
+                "error": result_text,
+                "result": result_text,
+                "verdict": "error"
+            }), status_code
         return jsonify({
             "result": result_text,
             "verdict": verdict

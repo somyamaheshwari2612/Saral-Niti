@@ -1,17 +1,16 @@
-from flask import Flask, render_template  # ← render_template ADD kiya
-from flask_cors import CORS
-from pymongo import MongoClient
-from dotenv import load_dotenv
 import os
+from flask import Flask, render_template
+from flask_cors import CORS
+from dotenv import load_dotenv
 
+# Ensure .env is loaded reliably regardless of current working directory
+base_dir = os.path.dirname(os.path.abspath(__file__))
+load_dotenv(os.path.join(base_dir, ".env"))
 
-# Load .env file
-load_dotenv()
-
-# ← template_folder aur static_folder ADD kiya
-app = Flask(__name__,
-    template_folder='templates',
-    static_folder='static'
+app = Flask(
+    __name__,
+    template_folder=os.path.join(base_dir, "templates"),
+    static_folder=os.path.join(base_dir, "static")
 )
 CORS(app)
 
@@ -47,7 +46,7 @@ def test_db():
     except Exception as e:
         return {"message": "MongoDB connection failed", "error": str(e)}, 500
 
-# Register blueprints — kuch nahi badla
+# Register blueprints
 from routes.schemes import schemes_bp
 from routes.search import search_bp
 from routes.filter import filter_bp
@@ -63,4 +62,6 @@ app.register_blueprint(chatbot_bp)
 app.register_blueprint(detector_bp)
 
 if __name__ == "__main__":
-    app.run(debug=True, port=5000)  # port same hai
+    port = int(os.getenv("PORT", 5000))
+    debug = os.getenv("FLASK_ENV") == "development" or os.getenv("FLASK_DEBUG") == "1"
+    app.run(debug=debug, port=port)
