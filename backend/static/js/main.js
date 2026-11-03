@@ -266,52 +266,269 @@ function quickSearch(term) {
   }
 }
 
-function resetFilters() {
-  const input = document.getElementById('searchInput');
-  if (input) input.value = '';
-  const allBtn = document.querySelector('.filter-btn');
-  if (allBtn) filterByCategory('all', allBtn);
+// ══════════════════════════════════════════════════
+//  MULTI-DIMENSIONAL & CATEGORY FILTERING ENGINE
+// ══════════════════════════════════════════════════
+function toggleAdvancedFilterDrawer() {
+  const drawer = document.getElementById('advFilterDrawer');
+  const btn = document.getElementById('advFilterToggleBtn');
+  if (!drawer) return;
+  const isHidden = drawer.style.display === 'none' || drawer.style.display === '';
+  drawer.style.display = isHidden ? 'block' : 'none';
+  if (btn) btn.classList.toggle('active', isHidden);
 }
 
-const searchEl = document.getElementById('searchInput');
-if (searchEl) {
-  const debouncedSearch = debounce(() => handleSearch(), 300);
-  searchEl.addEventListener('input', debouncedSearch);
-  searchEl.addEventListener('keydown', e => {
-    if (e.key === 'Enter') handleSearch();
-  });
-}
-
-// ══════════════════════════════════════════════════
-//  FILTER BY CATEGORY
-// ══════════════════════════════════════════════════
-async function filterByCategory(category, btn) {
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+function setQuickBenefit(type, btn) {
+  document.querySelectorAll('.quick-pill').forEach(p => p.classList.remove('active'));
   if (btn) btn.classList.add('active');
+  const sel = document.getElementById('filterBenefitType');
+  if (sel) sel.value = type;
+  applyAdvancedFilters();
+}
+
+function handleAdvancedFilterSubmit(e) {
+  if (e) e.preventDefault();
+  applyAdvancedFilters();
+}
+
+function getFilterPayload() {
+  const form = document.getElementById('advFilterForm');
+  const activeCatBtn = document.querySelector('.filter-btn.active');
+  const category = activeCatBtn ? (activeCatBtn.getAttribute('data-category') || 'all') : 'all';
+
+  if (!form) return { category: category !== 'all' ? category : '' };
+
+  const formData = new FormData(form);
+  const vulnerabilities = [];
+  form.querySelectorAll('input[name="vulnerabilities"]:checked').forEach(cb => {
+    vulnerabilities.push(cb.value);
+  });
+
+  const ageVal = formData.get('age');
+  const age = ageVal && String(ageVal).trim() !== '' ? Number(ageVal) : null;
+
+  return {
+    category: category !== 'all' ? category : '',
+    age: age,
+    age_group: (formData.get('age_group') || '').trim(),
+    gender: (formData.get('gender') || '').trim(),
+    social_category: (formData.get('social_category') || '').trim(),
+    vulnerabilities: vulnerabilities,
+    state: (formData.get('state') || '').trim(),
+    location_type: (formData.get('location_type') || '').trim(),
+    domicile_status: (formData.get('domicile_status') || '').trim(),
+    district: (formData.get('district') || '').trim(),
+    income_range: (formData.get('income_range') || '').trim(),
+    ration_card: (formData.get('ration_card') || '').trim(),
+    housing_status: (formData.get('housing_status') || '').trim(),
+    land_ownership: (formData.get('land_ownership') || '').trim(),
+    education_level: (formData.get('education_level') || '').trim(),
+    occupation: (formData.get('occupation') || '').trim(),
+    targeted_profession: (formData.get('targeted_profession') || '').trim(),
+    benefit_type: (formData.get('benefit_type') || '').trim(),
+    applicant_type: (formData.get('applicant_type') || '').trim(),
+    business_stage: (formData.get('business_stage') || '').trim(),
+    business_sector: (formData.get('business_sector') || '').trim(),
+    page: 1,
+    page_size: 0
+  };
+}
+
+function updateActiveFilterChips(payload) {
+  const chipsContainer = document.getElementById('activeFilterChips');
+  const activeBar = document.getElementById('activeFiltersBar');
+  const countBadge = document.getElementById('advFilterCountBadge');
+  const resetBtn = document.getElementById('resetBtn');
+
+  if (!chipsContainer || !activeBar) return;
+
+  const chips = [];
+
+  if (payload.category && payload.category !== 'all') {
+    chips.push({ key: 'category', label: `Sector: ${payload.category}` });
+  }
+  if (payload.age) {
+    chips.push({ key: 'age', label: `Age: ${payload.age} yrs` });
+  }
+  if (payload.age_group) {
+    chips.push({ key: 'age_group', label: `Stage: ${payload.age_group}` });
+  }
+  if (payload.gender) {
+    chips.push({ key: 'gender', label: `Gender: ${payload.gender}` });
+  }
+  if (payload.social_category) {
+    chips.push({ key: 'social_category', label: `Category: ${payload.social_category.toUpperCase()}` });
+  }
+  (payload.vulnerabilities || []).forEach(v => {
+    chips.push({ key: 'vulnerability', val: v, label: `Priority: ${v}` });
+  });
+  if (payload.state) {
+    chips.push({ key: 'state', label: `State: ${payload.state}` });
+  }
+  if (payload.location_type) {
+    chips.push({ key: 'location_type', label: `Location: ${payload.location_type}` });
+  }
+  if (payload.domicile_status) {
+    chips.push({ key: 'domicile_status', label: `Domicile: ${payload.domicile_status}` });
+  }
+  if (payload.district) {
+    chips.push({ key: 'district', label: `District: ${payload.district}` });
+  }
+  if (payload.income_range) {
+    chips.push({ key: 'income_range', label: `Income: ${payload.income_range.replace(/_/g, ' ')}` });
+  }
+  if (payload.ration_card) {
+    chips.push({ key: 'ration_card', label: `Ration: ${payload.ration_card.toUpperCase()}` });
+  }
+  if (payload.housing_status) {
+    chips.push({ key: 'housing_status', label: `Housing: ${payload.housing_status}` });
+  }
+  if (payload.land_ownership) {
+    chips.push({ key: 'land_ownership', label: `Land: ${payload.land_ownership}` });
+  }
+  if (payload.education_level) {
+    chips.push({ key: 'education_level', label: `Edu: ${payload.education_level}` });
+  }
+  if (payload.occupation) {
+    chips.push({ key: 'occupation', label: `Occupation: ${payload.occupation}` });
+  }
+  if (payload.targeted_profession) {
+    chips.push({ key: 'targeted_profession', label: `Profession: ${payload.targeted_profession}` });
+  }
+  if (payload.benefit_type) {
+    chips.push({ key: 'benefit_type', label: `Benefit: ${payload.benefit_type.toUpperCase()}` });
+  }
+  if (payload.applicant_type) {
+    chips.push({ key: 'applicant_type', label: `Applicant: ${payload.applicant_type.toUpperCase()}` });
+  }
+  if (payload.business_stage) {
+    chips.push({ key: 'business_stage', label: `Stage: ${payload.business_stage}` });
+  }
+  if (payload.business_sector) {
+    chips.push({ key: 'business_sector', label: `Sector: ${payload.business_sector}` });
+  }
+
+  if (chips.length > 0) {
+    activeBar.style.display = 'flex';
+    if (resetBtn) resetBtn.style.display = 'inline-flex';
+    if (countBadge) {
+      countBadge.style.display = 'inline-block';
+      countBadge.textContent = chips.length;
+    }
+    chipsContainer.innerHTML = chips.map(c => `
+      <span class="active-chip">
+        ${escapeHtml(c.label)}
+        <button type="button" class="active-chip-remove" onclick="removeActiveFilter('${escapeHtml(c.key)}', '${escapeHtml(c.val || '')}')" aria-label="Remove filter">✕</button>
+      </span>
+    `).join('');
+  } else {
+    activeBar.style.display = 'none';
+    if (countBadge) countBadge.style.display = 'none';
+    if (resetBtn) resetBtn.style.display = 'none';
+    chipsContainer.innerHTML = '';
+  }
+}
+
+function removeActiveFilter(key, val) {
+  if (key === 'category') {
+    const allBtn = document.querySelector('.filter-btn[data-category="all"]') || document.querySelector('.filter-btn');
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    if (allBtn) allBtn.classList.add('active');
+  } else if (key === 'vulnerability') {
+    const cb = document.querySelector(`input[name="vulnerabilities"][value="${val}"]`);
+    if (cb) cb.checked = false;
+  } else if (key === 'age') {
+    const inp = document.getElementById('filterAge');
+    if (inp) inp.value = '';
+  } else if (key === 'benefit_type') {
+    const sel = document.getElementById('filterBenefitType');
+    if (sel) sel.value = '';
+    document.querySelectorAll('.quick-pill').forEach(p => p.classList.remove('active'));
+    const allPill = document.querySelector('.quick-pill');
+    if (allPill) allPill.classList.add('active');
+  } else {
+    const el = document.getElementById('filter' + key.charAt(0).toUpperCase() + key.slice(1)) ||
+               document.querySelector(`[name="${key}"]`);
+    if (el) el.value = '';
+  }
+  applyAdvancedFilters();
+}
+
+async function applyAdvancedFilters() {
+  const payload = getFilterPayload();
+  updateActiveFilterChips(payload);
+
   const searchInput = document.getElementById('searchInput');
   if (searchInput) searchInput.value = '';
 
-  if (category === 'all') { renderSchemes(allSchemes); return; }
+  const hasActiveFilters = Object.entries(payload).some(([k, v]) => {
+    if (k === 'page' || k === 'page_size') return false;
+    if (Array.isArray(v)) return v.length > 0;
+    return v !== null && v !== '' && v !== 'all';
+  });
+
+  if (!hasActiveFilters) {
+    renderSchemes(allSchemes);
+    return;
+  }
 
   renderSkeletons();
   try {
-    const res = await fetch(`${SCHEMES_API}/api/filter?category=${encodeURIComponent(category)}`);
+    const res = await fetch(`${SCHEMES_API}/api/filter`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
     const data = await res.json();
     if (!res.ok || data.error) {
       document.getElementById('schemesGrid').innerHTML = `
         <div class="no-results">
           <h3>Filter Error</h3>
-          <p>${escapeHtml(data.error || 'Failed to filter schemes')}</p>
+          <p>${escapeHtml(data.error || 'Failed to apply filters')}</p>
         </div>`;
-      document.getElementById('resultsCount').innerHTML = 'Error filtering schemes';
+      document.getElementById('resultsCount').innerHTML = 'Error applying filters';
       return;
     }
     renderSchemes(data.schemes || []);
-  } catch {
-    document.getElementById('schemesGrid').innerHTML = `<div class="no-results"><h3>Filter failed</h3><p>Please check your connection and try again</p></div>`;
+  } catch (err) {
+    document.getElementById('schemesGrid').innerHTML = `
+      <div class="no-results">
+        <h3>Filter failed</h3>
+        <p>Please check your connection and try again</p>
+      </div>`;
     document.getElementById('resultsCount').textContent = 'Connection error';
   }
 }
+
+async function filterByCategory(category, btn) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  if (btn) btn.classList.add('active');
+  applyAdvancedFilters();
+}
+
+function resetAllFilters() {
+  const form = document.getElementById('advFilterForm');
+  if (form) form.reset();
+
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  const allCatBtn = document.querySelector('.filter-btn[data-category="all"]') || document.querySelector('.filter-btn');
+  if (allCatBtn) allCatBtn.classList.add('active');
+
+  document.querySelectorAll('.quick-pill').forEach(p => p.classList.remove('active'));
+  const allQuickPill = document.querySelector('.quick-pill');
+  if (allQuickPill) allQuickPill.classList.add('active');
+
+  const searchInput = document.getElementById('searchInput');
+  if (searchInput) searchInput.value = '';
+
+  updateActiveFilterChips({ category: 'all' });
+  renderSchemes(allSchemes);
+}
+
+function resetFilters() {
+  resetAllFilters();
+}
+
 
 // ══════════════════════════════════════════════════
 //  SCHEME DETAIL MODAL & SHARE (XSS-safe)
@@ -620,8 +837,17 @@ async function handleEligibilitySubmit(e) {
     income: incomeVal ? Number(incomeVal) : null,
     caste: document.getElementById('eligCaste').value,
     occupation: document.getElementById('eligOccupation').value,
-    is_student: document.getElementById('eligIsStudent').checked,
-    is_differently_abled: document.getElementById('eligIsDisabled').checked
+    education_level: document.getElementById('eligEducation')?.value || '',
+    ration_card: document.getElementById('eligRation')?.value || '',
+    housing_status: document.getElementById('eligHousing')?.value || '',
+    land_ownership: document.getElementById('eligLand')?.value || '',
+    is_student: Boolean(document.getElementById('eligIsStudent')?.checked),
+    is_differently_abled: Boolean(document.getElementById('eligIsDisabled')?.checked),
+    vulnerabilities: [
+      ...(document.getElementById('eligIsDisabled')?.checked ? ['disability'] : []),
+      ...(document.getElementById('eligIsWidow')?.checked ? ['widow'] : []),
+      ...(document.getElementById('eligIsSingleWomen')?.checked ? ['single_women'] : [])
+    ]
   };
 
   btn.disabled = true;

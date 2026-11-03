@@ -5,59 +5,432 @@
       <div class="section-badge">
         <i class="fa-solid fa-shapes"></i> Category Directory
       </div>
-      <h2 class="section-title">Explore Welfare Schemes by Sector</h2>
-      <p class="section-sub">Filter verified government initiatives tailored to your demographic and sector needs</p>
+      <h2 class="section-title">Explore Welfare Schemes by Sector & Needs</h2>
+      <p class="section-sub">Filter verified government initiatives tailored to your demographic, location, socio-economic and business needs</p>
     </div>
   </div>
 
-  <!-- CATEGORY FILTERS -->
+  <!-- CATEGORY FILTERS (Scrollable) -->
   <div class="filters-scroll-wrap">
     <div class="filters">
-      <button class="filter-btn active" onclick="filterByCategory('all', this)">
+      <button class="filter-btn active" data-category="all" onclick="filterByCategory('all', this)">
         <span>✨ All Categories</span>
       </button>
-      <button class="filter-btn" onclick="filterByCategory('agriculture', this)">
+      <button class="filter-btn" data-category="agriculture" onclick="filterByCategory('agriculture', this)">
         <span>🌾 Agriculture</span>
       </button>
-      <button class="filter-btn" onclick="filterByCategory('health', this)">
+      <button class="filter-btn" data-category="health" onclick="filterByCategory('health', this)">
         <span>🏥 Healthcare</span>
       </button>
-      <button class="filter-btn" onclick="filterByCategory('education', this)">
+      <button class="filter-btn" data-category="education" onclick="filterByCategory('education', this)">
         <span>📚 Education</span>
       </button>
-      <button class="filter-btn" onclick="filterByCategory('housing', this)">
+      <button class="filter-btn" data-category="housing" onclick="filterByCategory('housing', this)">
         <span>🏠 Housing</span>
       </button>
-      <button class="filter-btn" onclick="filterByCategory('employment', this)">
+      <button class="filter-btn" data-category="employment" onclick="filterByCategory('employment', this)">
         <span>💼 Employment</span>
       </button>
-      <button class="filter-btn" onclick="filterByCategory('women', this)">
+      <button class="filter-btn" data-category="women" onclick="filterByCategory('women', this)">
         <span>👩 Women & Child</span>
       </button>
-      <button class="filter-btn" onclick="filterByCategory('financial', this)">
+      <button class="filter-btn" data-category="financial" onclick="filterByCategory('financial', this)">
         <span>💰 Financial Aid</span>
       </button>
-      <button class="filter-btn" onclick="filterByCategory('elderly', this)">
+      <button class="filter-btn" data-category="elderly" onclick="filterByCategory('elderly', this)">
         <span>👴 Senior Citizens</span>
       </button>
-      <button class="filter-btn" onclick="filterByCategory('youth', this)">
+      <button class="filter-btn" data-category="youth" onclick="filterByCategory('youth', this)">
         <span>🧑 Youth & Skill</span>
       </button>
-      <button class="filter-btn" onclick="filterByCategory('disability', this)">
+      <button class="filter-btn" data-category="disability" onclick="filterByCategory('disability', this)">
         <span>♿ Divyangjan</span>
       </button>
     </div>
+  </div>
+
+  <!-- FILTER CONTROLS TOOLBAR -->
+  <div class="filter-controls-bar">
+    <div class="filter-bar-left">
+      <button class="adv-filter-toggle-btn" id="advFilterToggleBtn" onclick="toggleAdvancedFilterDrawer()">
+        <i class="fa-solid fa-sliders"></i>
+        <span>Advanced Filters</span>
+        <span class="filter-count-badge" id="advFilterCountBadge" style="display:none;">0</span>
+      </button>
+
+      <!-- Quick Benefit Filter Pills -->
+      <div class="quick-benefit-pills">
+        <button class="quick-pill active" onclick="setQuickBenefit('', this)">All Types</button>
+        <button class="quick-pill" onclick="setQuickBenefit('dbt', this)"><i class="fa-solid fa-money-bill-transfer"></i> Direct Cash (DBT)</button>
+        <button class="quick-pill" onclick="setQuickBenefit('subsidy', this)"><i class="fa-solid fa-tag"></i> Subsidies</button>
+        <button class="quick-pill" onclick="setQuickBenefit('loan', this)"><i class="fa-solid fa-credit-card"></i> Loans & Credit</button>
+        <button class="quick-pill" onclick="setQuickBenefit('scholarship', this)"><i class="fa-solid fa-graduation-cap"></i> Scholarships</button>
+        <button class="quick-pill" onclick="setQuickBenefit('in_kind', this)"><i class="fa-solid fa-box-open"></i> In-Kind</button>
+        <button class="quick-pill" onclick="setQuickBenefit('insurance', this)"><i class="fa-solid fa-shield-halved"></i> Insurance</button>
+      </div>
+    </div>
+
+    <div class="filter-bar-right">
+      <button class="reset-filter-btn" id="resetBtn" onclick="resetAllFilters()" style="display:none;">
+        <i class="fa-solid fa-rotate-left"></i> Reset All Filters
+      </button>
+    </div>
+  </div>
+
+  <!-- COLLAPSIBLE ADVANCED FILTER DRAWER -->
+  <div class="adv-filter-drawer" id="advFilterDrawer" style="display: none;">
+    <div class="adv-filter-header">
+      <div class="adv-filter-title-wrap">
+        <h3 class="adv-filter-title"><i class="fa-solid fa-sliders"></i> Multi-Dimensional Scheme Filters</h3>
+        <p class="adv-filter-subtitle">Combine demographic, geographic, financial, and enterprise criteria for precise matching</p>
+      </div>
+      <button class="drawer-close-btn" onclick="toggleAdvancedFilterDrawer()" aria-label="Close filters">✕</button>
+    </div>
+
+    <form id="advFilterForm" onsubmit="handleAdvancedFilterSubmit(event)">
+      <div class="adv-filter-grid">
+        <!-- 1. Demographic & Identity -->
+        <div class="filter-card">
+          <div class="filter-card-header">
+            <i class="fa-solid fa-user-check"></i>
+            <h4>1. Demographic & Identity</h4>
+          </div>
+          <div class="filter-fields">
+            <div class="form-group-compact">
+              <label for="filterAge">Age (Years) or Life-Stage</label>
+              <div class="input-split">
+                <input type="number" id="filterAge" name="age" min="0" max="120" placeholder="e.g. 25">
+                <select id="filterAgeGroup" name="age_group">
+                  <option value="">Life Stage...</option>
+                  <option value="child">Child (0–14)</option>
+                  <option value="student">Student (15–24)</option>
+                  <option value="working_age">Working Age (25–59)</option>
+                  <option value="senior">Senior Citizen (60+)</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group-compact">
+              <label for="filterGender">Gender</label>
+              <select id="filterGender" name="gender">
+                <option value="">All Genders</option>
+                <option value="male">Male</option>
+                <option value="female">Female</option>
+                <option value="transgender">Transgender</option>
+              </select>
+            </div>
+
+            <div class="form-group-compact">
+              <label for="filterSocialCategory">Social Category</label>
+              <select id="filterSocialCategory" name="social_category">
+                <option value="">All Categories</option>
+                <option value="general">General</option>
+                <option value="obc">OBC (Other Backward Class)</option>
+                <option value="sc">SC (Scheduled Caste)</option>
+                <option value="st">ST (Scheduled Tribe)</option>
+                <option value="minority">Minority Communities</option>
+                <option value="dnt">Denotified Tribes (DNT / NT)</option>
+              </select>
+            </div>
+
+            <div class="form-group-compact">
+              <label>Special Vulnerability Status</label>
+              <div class="checkbox-pill-grid">
+                <label class="check-pill">
+                  <input type="checkbox" name="vulnerabilities" value="disability">
+                  <span>♿ Persons with Disabilities (Divyangjan)</span>
+                </label>
+                <label class="check-pill">
+                  <input type="checkbox" name="vulnerabilities" value="widow">
+                  <span>Widows</span>
+                </label>
+                <label class="check-pill">
+                  <input type="checkbox" name="vulnerabilities" value="orphan">
+                  <span>Orphans</span>
+                </label>
+                <label class="check-pill">
+                  <input type="checkbox" name="vulnerabilities" value="destitute">
+                  <span>Destitute / Homeless</span>
+                </label>
+                <label class="check-pill">
+                  <input type="checkbox" name="vulnerabilities" value="single_women">
+                  <span>Single Women</span>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. Geographic & Domicile -->
+        <div class="filter-card">
+          <div class="filter-card-header">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <h4>2. Geographic & Domicile</h4>
+          </div>
+          <div class="filter-fields">
+            <div class="form-group-compact">
+              <label for="filterState">State / Union Territory</label>
+              <select id="filterState" name="state">
+                <option value="">All India (Central + State)</option>
+                <option value="Andhra Pradesh">Andhra Pradesh</option>
+                <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                <option value="Assam">Assam</option>
+                <option value="Bihar">Bihar</option>
+                <option value="Chhattisgarh">Chhattisgarh</option>
+                <option value="Goa">Goa</option>
+                <option value="Gujarat">Gujarat</option>
+                <option value="Haryana">Haryana</option>
+                <option value="Himachal Pradesh">Himachal Pradesh</option>
+                <option value="Jharkhand">Jharkhand</option>
+                <option value="Karnataka">Karnataka</option>
+                <option value="Kerala">Kerala</option>
+                <option value="Madhya Pradesh">Madhya Pradesh</option>
+                <option value="Maharashtra">Maharashtra</option>
+                <option value="Manipur">Manipur</option>
+                <option value="Meghalaya">Meghalaya</option>
+                <option value="Mizoram">Mizoram</option>
+                <option value="Nagaland">Nagaland</option>
+                <option value="Odisha">Odisha</option>
+                <option value="Punjab">Punjab</option>
+                <option value="Rajasthan">Rajasthan</option>
+                <option value="Sikkim">Sikkim</option>
+                <option value="Tamil Nadu">Tamil Nadu</option>
+                <option value="Telangana">Telangana</option>
+                <option value="Tripura">Tripura</option>
+                <option value="Uttar Pradesh">Uttar Pradesh</option>
+                <option value="Uttarakhand">Uttarakhand</option>
+                <option value="West Bengal">West Bengal</option>
+                <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                <option value="Chandigarh">Chandigarh</option>
+                <option value="Dadra and Nagar Haveli and Daman and Diu">Dadra & Nagar Haveli / Daman & Diu</option>
+                <option value="Delhi">Delhi (NCT)</option>
+                <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                <option value="Ladakh">Ladakh</option>
+                <option value="Lakshadweep">Lakshadweep</option>
+                <option value="Puducherry">Puducherry</option>
+              </select>
+            </div>
+
+            <div class="form-group-compact">
+              <label for="filterLocationType">Location Type</label>
+              <select id="filterLocationType" name="location_type">
+                <option value="">All Locations</option>
+                <option value="rural">Rural (Gram / Village / Agriculture)</option>
+                <option value="urban">Urban (City / Municipality / Slum)</option>
+                <option value="semi_urban">Semi-Urban (Peri-Urban / Tehsil / Nagar)</option>
+                <option value="tribal">Tribal Areas (Schedule V / VI)</option>
+              </select>
+            </div>
+
+            <div class="form-group-compact">
+              <label for="filterDomicileStatus">Domicile Status</label>
+              <select id="filterDomicileStatus" name="domicile_status">
+                <option value="">Any Domicile Status</option>
+                <option value="native">Native Resident (State Schemes)</option>
+                <option value="migrant">Migrant Worker (Portable Central Schemes)</option>
+              </select>
+            </div>
+
+            <div class="form-group-compact">
+              <label for="filterDistrict">District / Block / Municipality (Optional)</label>
+              <input type="text" id="filterDistrict" name="district" placeholder="e.g. Varanasi, Pune, Ranchi...">
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. Socio-Economic & Financial -->
+        <div class="filter-card">
+          <div class="filter-card-header">
+            <i class="fa-solid fa-coins"></i>
+            <h4>3. Socio-Economic & Financial</h4>
+          </div>
+          <div class="filter-fields">
+            <div class="form-group-compact">
+              <label for="filterIncomeRange">Annual Household Income</label>
+              <select id="filterIncomeRange" name="income_range">
+                <option value="">Any Income Level</option>
+                <option value="under_1lakh">Under ₹1 Lakh / year (BPL / Antyodaya)</option>
+                <option value="1_to_2.5lakh">₹1 Lakh – ₹2.5 Lakh / year</option>
+                <option value="2.5_to_8lakh">₹2.5 Lakh – ₹8 Lakh / year (EWS/OBC-NCL)</option>
+                <option value="above_8lakh">Above ₹8 Lakh / year</option>
+              </select>
+            </div>
+
+            <div class="form-group-compact">
+              <label for="filterRationCard">Ration Card Holding</label>
+              <select id="filterRationCard" name="ration_card">
+                <option value="">Any / No Ration Card</option>
+                <option value="aay">Antyodaya Anna Yojana (AAY - Poorest)</option>
+                <option value="bpl">Below Poverty Line (BPL Card)</option>
+                <option value="phh">Priority Household (PHH Card)</option>
+              </select>
+            </div>
+
+            <div class="form-group-compact">
+              <label for="filterHousingStatus">Housing Status</label>
+              <select id="filterHousingStatus" name="housing_status">
+                <option value="">Any Housing Status</option>
+                <option value="homeless">Homeless / Destitute / Shelter</option>
+                <option value="kutcha">Kutcha House (Thatch, Mud, Temporary)</option>
+                <option value="pucca">Pucca House (Permanent structure)</option>
+              </select>
+            </div>
+
+            <div class="form-group-compact">
+              <label for="filterLandOwnership">Land Ownership</label>
+              <select id="filterLandOwnership" name="land_ownership">
+                <option value="">Any Land Holding</option>
+                <option value="landless">Landless / Agricultural Laborer</option>
+                <option value="marginal">Marginal Farmer (&lt; 1 Hectare / 2.5 Acres)</option>
+                <option value="small">Small Farmer (1–2 Hectares / 2.5–5 Acres)</option>
+                <option value="large">Large Farmer (&gt; 2 Hectares)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4. Education & Occupation -->
+        <div class="filter-card">
+          <div class="filter-card-header">
+            <i class="fa-solid fa-graduation-cap"></i>
+            <h4>4. Education & Occupation</h4>
+          </div>
+          <div class="filter-fields">
+            <div class="form-group-compact">
+              <label for="filterEducationLevel">Education Level</label>
+              <select id="filterEducationLevel" name="education_level">
+                <option value="">Any Education Level</option>
+                <option value="illiterate">Illiterate / No Formal Schooling</option>
+                <option value="below_10th">Below 10th (Primary / Middle School)</option>
+                <option value="10th">10th Pass (Matriculation / Secondary)</option>
+                <option value="12th">12th Pass (Higher Secondary / 10+2)</option>
+                <option value="graduate">Graduate (Degree / Bachelors)</option>
+                <option value="postgraduate">Postgraduate (Masters / Doctorate)</option>
+                <option value="vocational">Vocational / ITI / Polytechnic</option>
+              </select>
+            </div>
+
+            <div class="form-group-compact">
+              <label for="filterOccupation">Occupational Category</label>
+              <select id="filterOccupation" name="occupation">
+                <option value="">Any Occupation</option>
+                <option value="student">Student / Scholar / Aspirant</option>
+                <option value="unemployed">Unemployed / Jobseeker</option>
+                <option value="daily_wage">Daily Wage Laborer / Construction</option>
+                <option value="farmer">Farmer / Cultivator / Agriculture</option>
+                <option value="artisan">Artisan / Craftsperson</option>
+                <option value="street_vendor">Street Vendor / Hawker</option>
+                <option value="self_employed">Self-Employed / Entrepreneur</option>
+                <option value="domestic_worker">Domestic Worker / Helper</option>
+              </select>
+            </div>
+
+            <div class="form-group-compact">
+              <label for="filterTargetedProfession">Targeted Professions (Unorganized Sector)</label>
+              <select id="filterTargetedProfession" name="targeted_profession">
+                <option value="">Any Targeted Sector</option>
+                <option value="gig_worker">Gig & Platform Delivery Workers</option>
+                <option value="sanitation">Sanitation Workers & Safai Karamcharis</option>
+                <option value="fisherfolk">Fisherfolk & Marine Workers</option>
+                <option value="handloom_weaver">Handloom Weavers & Khadi Artisans</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. Benefit Type ("What I Need") -->
+        <div class="filter-card">
+          <div class="filter-card-header">
+            <i class="fa-solid fa-gift"></i>
+            <h4>5. Benefit Type ("What I Need")</h4>
+          </div>
+          <div class="filter-fields">
+            <div class="form-group-compact">
+              <label for="filterBenefitType">Primary Benefit Required</label>
+              <select id="filterBenefitType" name="benefit_type">
+                <option value="">All Benefit Types</option>
+                <option value="dbt">Direct Cash Transfers (DBT): Pensions, Maternity, Stipends</option>
+                <option value="subsidy">Subsidies: Agri equipment, Solar, Fertilizers, EVs</option>
+                <option value="loan">Credit & Loans: Mudra, Collateral-free, Interest Subvention</option>
+                <option value="scholarship">Education & Training: Scholarships, Coaching, Skill Courses</option>
+                <option value="in_kind">In-Kind Benefits: Free Rations, Laptops, Bicycles, Kits</option>
+                <option value="insurance">Insurance & Health: Medical cover, Life, Crop Insurance</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. Enterprise & Business (MSMEs & Startups) -->
+        <div class="filter-card">
+          <div class="filter-card-header">
+            <i class="fa-solid fa-briefcase"></i>
+            <h4>6. Enterprise & Business</h4>
+          </div>
+          <div class="filter-fields">
+            <div class="form-group-compact">
+              <label for="filterApplicantType">Applicant Type</label>
+              <select id="filterApplicantType" name="applicant_type">
+                <option value="">Individual / Citizen</option>
+                <option value="shg">Self-Help Group (SHG / Women Group)</option>
+                <option value="fpo">Farmer Producer Organization (FPO / FPC)</option>
+                <option value="cooperative">Cooperative Society / Federation</option>
+                <option value="msme">Registered MSME / Udyam Enterprise</option>
+              </select>
+            </div>
+
+            <div class="form-group-compact">
+              <label for="filterBusinessStage">Business Stage</label>
+              <select id="filterBusinessStage" name="business_stage">
+                <option value="">Any Stage</option>
+                <option value="ideation">Ideation / Prototype / Incubation</option>
+                <option value="pre_revenue">Pre-Revenue / Seed / Proof of Concept</option>
+                <option value="growth">Growth / Scaling / Expansion</option>
+              </select>
+            </div>
+
+            <div class="form-group-compact">
+              <label for="filterBusinessSector">Sector</label>
+              <select id="filterBusinessSector" name="business_sector">
+                <option value="">All Sectors</option>
+                <option value="agriculture">Agriculture & Agro-Processing</option>
+                <option value="manufacturing">Manufacturing & Fabrication</option>
+                <option value="services">Services & Logistics</option>
+                <option value="handloom">Handloom, Textiles & Handicrafts</option>
+                <option value="tech">Tech, Software & Electronics</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DRAWER ACTIONS -->
+      <div class="adv-filter-actions">
+        <button type="submit" class="btn-primary" id="advFilterSubmitBtn">
+          <i class="fa-solid fa-check"></i>
+          <span>Apply Filters</span>
+        </button>
+        <button type="button" class="btn-secondary" onclick="resetAllFilters()">
+          <i class="fa-solid fa-rotate-left"></i>
+          <span>Clear All</span>
+        </button>
+        <button type="button" class="btn-ghost" onclick="toggleAdvancedFilterDrawer()">
+          <span>Close</span>
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- ACTIVE FILTERS BADGE BAR -->
+  <div class="active-filters-bar" id="activeFiltersBar" style="display: none;">
+    <div class="active-filters-label">Active Filters:</div>
+    <div class="active-filter-chips" id="activeFilterChips"></div>
+    <button class="clear-all-link" onclick="resetAllFilters()">Clear All</button>
   </div>
 
   <!-- RESULTS META BAR -->
   <div class="results-bar">
     <div class="results-count" id="resultsCount">
       <i class="fa-solid fa-circle-notch fa-spin"></i> Discovering schemes...
-    </div>
-    <div class="results-actions">
-      <button class="reset-filter-btn" id="resetBtn" onclick="resetFilters()" style="display:none;">
-        <i class="fa-solid fa-rotate-left"></i> Reset Filter
-      </button>
     </div>
   </div>
 

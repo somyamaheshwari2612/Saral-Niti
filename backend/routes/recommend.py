@@ -21,6 +21,9 @@ def evaluate_eligibility(scheme, profile):
         }
     """
     eligibility = scheme.get("eligibility", {}) or {}
+    tags = [t.lower() for t in (scheme.get("tags") or [])]
+    desc_blob = f"{scheme.get('title', '')} {scheme.get('description', '')} {' '.join(tags)}".lower()
+
     reasons = []
     unmet = []
 
@@ -83,9 +86,9 @@ def evaluate_eligibility(scheme, profile):
             pass
 
     # 5. Caste / Social Category Check
-    citizen_caste = (profile.get("caste") or "").strip().lower()
+    citizen_caste = (profile.get("caste") or profile.get("social_category") or "").strip().lower()
     scheme_caste = eligibility.get("caste", []) or []
-    if isinstance(scheme_caste, list) and scheme_caste and citizen_caste:
+    if isinstance(scheme_caste, list) and scheme_caste and citizen_caste and citizen_caste != "all":
         scheme_caste_lower = [c.lower() for c in scheme_caste]
         if citizen_caste not in scheme_caste_lower and "all" not in scheme_caste_lower:
             unmet.append(f"Reserved category: Available for {', '.join(scheme_caste).upper()}.")
@@ -104,7 +107,6 @@ def evaluate_eligibility(scheme, profile):
         elif is_student and ("student" in scheme_occ_lower or "youth" in scheme_occ_lower):
             occ_matched = True
         elif not citizen_occ and not is_student:
-            # Not specified in profile
             occ_matched = True
 
         if occ_matched:
@@ -112,6 +114,38 @@ def evaluate_eligibility(scheme, profile):
                 reasons.append(f"Occupation match: {citizen_occ.capitalize()}.")
         else:
             unmet.append(f"Target occupation: Tailored for {', '.join(scheme_occ).capitalize()}.")
+
+    # 7. Vulnerabilities / Disability
+    is_disabled = profile.get("is_differently_abled", False)
+    vulnerabilities = profile.get("vulnerabilities") or []
+    if isinstance(vulnerabilities, str):
+        vulnerabilities = [vulnerabilities]
+    if is_disabled and "disability" not in vulnerabilities:
+        vulnerabilities.append("disability")
+
+    for vuln in vulnerabilities:
+        v = vuln.lower()
+        if v in ("disability", "differently_abled") and any(k in desc_blob for k in ["disability", "divyang", "handicap", "udid"]):
+            reasons.append("Prioritizes Divyangjan / Persons with Disabilities.")
+        elif v == "widow" and ("widow" in desc_blob or "destitute women" in desc_blob):
+            reasons.append("Specifically covers Widows and single heads of household.")
+        elif v == "orphan" and ("orphan" in desc_blob or "abandoned child" in desc_blob):
+            reasons.append("Tailored for Orphans and vulnerable children.")
+        elif v == "destitute" and ("destitute" in desc_blob or "homeless" in desc_blob):
+            reasons.append("Dedicated welfare for destitute and homeless individuals.")
+
+    # 8. Socio-Economic Status (Ration Card, Housing, Land)
+    ration_card = (profile.get("ration_card") or "").strip().lower()
+    if ration_card in ("bpl", "aay", "phh") and any(k in desc_blob for k in ["bpl", "ration card", "antyodaya", "priority household"]):
+        reasons.append(f"Aligned with {ration_card.upper()} food security & welfare status.")
+
+    housing = (profile.get("housing_status") or "").strip().lower()
+    if housing in ("homeless", "kutcha") and any(k in desc_blob for k in ["housing", "shelter", "kutcha", "pm awas"]):
+        reasons.append("Provides housing / shelter assistance for vulnerable shelter status.")
+
+    land = (profile.get("land_ownership") or "").strip().lower()
+    if land in ("landless", "marginal", "small") and any(k in desc_blob for k in ["landless", "marginal farmer", "small farmer", "kisan"]):
+        reasons.append(f"Targeted support for {land.capitalize()} agricultural holdings.")
 
     # Scoring & Status Determination
     total_checks = len(reasons) + len(unmet)
@@ -122,7 +156,6 @@ def evaluate_eligibility(scheme, profile):
         score = 100
         status = "eligible"
     elif len(unmet) == 1 and ("occupation" in unmet[0].lower() or "target" in unmet[0].lower()):
-        # Demographic fits, but occupation might need verification
         score = 75
         status = "partial"
     elif len(unmet) == 1:
@@ -159,10 +192,17 @@ def recommend_schemes():
             "gender": data.get("gender"),
             "state": data.get("state"),
             "income": data.get("income"),
-            "caste": data.get("caste"),
+            "caste": data.get("caste") or data.get("social_category"),
             "occupation": data.get("occupation"),
             "is_student": bool(data.get("is_student")),
-            "is_differently_abled": bool(data.get("is_differently_abled"))
+            "is_differently_abled": bool(data.get("is_differently_abled")),
+            "vulnerabilities": data.get("vulnerabilities") or [],
+            "ration_card": data.get("ration_card"),
+            "housing_status": data.get("housing_status"),
+            "land_ownership": data.get("land_ownership"),
+            "education_level": data.get("education_level"),
+            "location_type": data.get("location_type"),
+            "domicile_status": data.get("domicile_status")
         }
 
         # Validation on age & income types if passed
@@ -215,7 +255,7 @@ def recommend_schemes():
             "total_evaluated": len(raw_schemes),
             "matched_count": len(evaluated),
             "profile": {
-                k: v for k, v in profile.items() if v is not None and v != ""
+                k: v for k, v in profile.items() if v is not None and v != "" and v is not False and v != []
             },
             "recommendations": evaluated
         }), 200

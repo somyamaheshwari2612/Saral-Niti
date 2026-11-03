@@ -30,20 +30,39 @@
           <div class="form-group">
             <label for="eligState"><i class="fa-solid fa-location-dot"></i> State / UT</label>
             <select id="eligState" name="state">
-              <option value="all">All India</option>
-              <option value="Maharashtra">Maharashtra</option>
-              <option value="Uttar Pradesh">Uttar Pradesh</option>
+              <option value="all">All India (Central + State)</option>
+              <option value="Andhra Pradesh">Andhra Pradesh</option>
+              <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+              <option value="Assam">Assam</option>
               <option value="Bihar">Bihar</option>
-              <option value="Madhya Pradesh">Madhya Pradesh</option>
-              <option value="Rajasthan">Rajasthan</option>
-              <option value="Karnataka">Karnataka</option>
-              <option value="Tamil Nadu">Tamil Nadu</option>
+              <option value="Chhattisgarh">Chhattisgarh</option>
+              <option value="Goa">Goa</option>
               <option value="Gujarat">Gujarat</option>
-              <option value="West Bengal">West Bengal</option>
-              <option value="Kerala">Kerala</option>
-              <option value="Punjab">Punjab</option>
               <option value="Haryana">Haryana</option>
+              <option value="Himachal Pradesh">Himachal Pradesh</option>
+              <option value="Jharkhand">Jharkhand</option>
+              <option value="Karnataka">Karnataka</option>
+              <option value="Kerala">Kerala</option>
+              <option value="Madhya Pradesh">Madhya Pradesh</option>
+              <option value="Maharashtra">Maharashtra</option>
+              <option value="Manipur">Manipur</option>
+              <option value="Meghalaya">Meghalaya</option>
+              <option value="Mizoram">Mizoram</option>
+              <option value="Nagaland">Nagaland</option>
+              <option value="Odisha">Odisha</option>
+              <option value="Punjab">Punjab</option>
+              <option value="Rajasthan">Rajasthan</option>
+              <option value="Sikkim">Sikkim</option>
+              <option value="Tamil Nadu">Tamil Nadu</option>
+              <option value="Telangana">Telangana</option>
+              <option value="Tripura">Tripura</option>
+              <option value="Uttar Pradesh">Uttar Pradesh</option>
+              <option value="Uttarakhand">Uttarakhand</option>
+              <option value="West Bengal">West Bengal</option>
               <option value="Delhi">Delhi (NCT)</option>
+              <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+              <option value="Ladakh">Ladakh</option>
+              <option value="Puducherry">Puducherry</option>
             </select>
           </div>
 
@@ -59,6 +78,8 @@
               <option value="obc">OBC</option>
               <option value="sc">SC</option>
               <option value="st">ST</option>
+              <option value="minority">Minority Communities</option>
+              <option value="dnt">Denotified Tribes (DNT)</option>
             </select>
           </div>
 
@@ -69,9 +90,55 @@
               <option value="farmer">Farmer / Agricultural Worker</option>
               <option value="student">Student / Aspirant</option>
               <option value="unemployed">Unemployed / Jobseeker</option>
+              <option value="daily_wage">Daily Wage / Construction Worker</option>
               <option value="salaried">Salaried Employee</option>
               <option value="self_employed">Self Employed / Artisan</option>
               <option value="business">Small Business / MSME Owner</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="eligEducation"><i class="fa-solid fa-graduation-cap"></i> Education Level</label>
+            <select id="eligEducation" name="education_level">
+              <option value="">Any Education Level</option>
+              <option value="illiterate">Illiterate / No Formal Schooling</option>
+              <option value="below_10th">Below 10th (Primary / Middle)</option>
+              <option value="10th">10th Pass (Matriculation)</option>
+              <option value="12th">12th Pass (10+2 / Intermediate)</option>
+              <option value="graduate">Graduate (Degree / Bachelors)</option>
+              <option value="postgraduate">Postgraduate (Masters / PhD)</option>
+              <option value="vocational">Vocational / ITI / Polytechnic</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="eligRation"><i class="fa-solid fa-id-card"></i> Ration Card Holding</label>
+            <select id="eligRation" name="ration_card">
+              <option value="">None / Not Applicable</option>
+              <option value="aay">Antyodaya Anna Yojana (AAY)</option>
+              <option value="bpl">Below Poverty Line (BPL)</option>
+              <option value="phh">Priority Household (PHH)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="eligHousing"><i class="fa-solid fa-house"></i> Housing Status</label>
+            <select id="eligHousing" name="housing_status">
+              <option value="">Any Housing Status</option>
+              <option value="homeless">Homeless / Destitute / Shelter</option>
+              <option value="kutcha">Kutcha House (Temporary / Mud)</option>
+              <option value="pucca">Pucca House (Permanent structure)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="eligLand"><i class="fa-solid fa-tractor"></i> Land Holding</label>
+            <select id="eligLand" name="land_ownership">
+              <option value="">None / Not a Farmer</option>
+              <option value="landless">Landless / Agri Laborer</option>
+              <option value="marginal">Marginal Farmer (&lt; 1 Hectare)</option>
+              <option value="small">Small Farmer (1–2 Hectares)</option>
+              <option value="large">Large Farmer (&gt; 2 Hectares)</option>
             </select>
           </div>
         </div>
@@ -83,7 +150,15 @@
           </label>
           <label class="checkbox-label">
             <input type="checkbox" id="eligIsDisabled" name="is_differently_abled">
-            <span>Divyangjan (Differently-abled citizen)</span>
+            <span>♿ Persons with Disabilities (Divyangjan)</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="eligIsWidow" name="is_widow">
+            <span>Widow</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="eligIsSingleWomen" name="is_single_women">
+            <span>Single Woman / Destitute</span>
           </label>
         </div>
 
@@ -107,4 +182,3 @@
     </div>
   </div>
 </div>
-

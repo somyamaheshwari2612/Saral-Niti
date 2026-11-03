@@ -394,6 +394,146 @@ def test_parse_verdict():
     assert parse_verdict(tricky_real) == "real"
 
 
+# Test 24 - Advanced Multi-Filter: Demographic and Identity
+def test_filter_demographics(client=None):
+    c = client or get_test_client()
+    # Age + Female + Widow
+    res = c.post('/api/filter', json={
+        "demographics": {
+            "age": 45,
+            "gender": "female",
+            "vulnerabilities": ["widow"]
+        }
+    })
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["status"] == "ok"
+    assert data["total_matched"] > 0
+    assert len(data["schemes"]) > 0
+
+    # Transgender filter
+    res_trans = c.post('/api/filter', json={"gender": "transgender"})
+    assert res_trans.status_code == 200
+    assert res_trans.get_json()["total_matched"] > 0
+
+    # Minority and DNT categories
+    res_min = c.post('/api/filter', json={"social_category": "minority"})
+    assert res_min.status_code == 200
+    assert res_min.get_json()["total_matched"] > 0
+
+    res_dnt = c.post('/api/filter', json={"social_category": "dnt"})
+    assert res_dnt.status_code == 200
+    assert res_dnt.get_json()["total_matched"] > 0
+
+
+# Test 25 - Advanced Multi-Filter: Geographic & Domicile
+def test_filter_geographic_domicile(client=None):
+    c = client or get_test_client()
+    # State + Rural location type
+    res_geo = c.post('/api/filter', json={
+        "geographic": {
+            "state": "Maharashtra",
+            "location_type": "rural"
+        }
+    })
+    assert res_geo.status_code == 200
+    data = res_geo.get_json()
+    assert data["status"] == "ok"
+    assert data["total_matched"] > 0
+
+    # Domicile migrant worker
+    res_mig = c.post('/api/filter', json={"domicile_status": "migrant"})
+    assert res_mig.status_code == 200
+    assert res_mig.get_json()["total_matched"] > 0
+
+
+# Test 26 - Advanced Multi-Filter: Socio-Economic & Financial
+def test_filter_socio_economic(client=None):
+    c = client or get_test_client()
+    # BPL Ration card
+    res_bpl = c.post('/api/filter', json={"ration_card": "bpl"})
+    assert res_bpl.status_code == 200
+    assert res_bpl.get_json()["total_matched"] > 0
+
+    # Antyodaya Anna Yojana (AAY)
+    res_aay = c.post('/api/filter', json={"ration_card": "aay"})
+    assert res_aay.status_code == 200
+    assert res_aay.get_json()["total_matched"] > 0
+
+    # Housing Kutcha / Homeless
+    res_house = c.post('/api/filter', json={"housing_status": "kutcha"})
+    assert res_house.status_code == 200
+    assert res_house.get_json()["total_matched"] > 0
+
+    # Land ownership: marginal farmer
+    res_land = c.post('/api/filter', json={"land_ownership": "marginal"})
+    assert res_land.status_code == 200
+    assert res_land.get_json()["total_matched"] > 0
+
+
+# Test 27 - Advanced Multi-Filter: Education & Occupation
+def test_filter_education_occupation(client=None):
+    c = client or get_test_client()
+    # Vocational / ITI
+    res_voc = c.post('/api/filter', json={"education_level": "vocational"})
+    assert res_voc.status_code == 200
+    assert res_voc.get_json()["total_matched"] > 0
+
+    # Targeted profession: Handloom weaver
+    res_weave = c.post('/api/filter', json={"targeted_profession": "handloom_weaver"})
+    assert res_weave.status_code == 200
+    assert res_weave.get_json()["total_matched"] > 0
+
+    # Targeted profession: Gig worker & Sanitation
+    res_gig = c.post('/api/filter', json={"targeted_profession": "gig_worker"})
+    assert res_gig.status_code == 200
+    assert res_gig.get_json()["total_matched"] > 0
+
+    res_san = c.post('/api/filter', json={"targeted_profession": "sanitation"})
+    assert res_san.status_code == 200
+    assert res_san.get_json()["total_matched"] > 0
+
+
+# Test 28 - Advanced Multi-Filter: Benefit Types ("What I Need")
+def test_filter_benefit_types(client=None):
+    c = client or get_test_client()
+    for b_type in ["dbt", "subsidy", "loan", "scholarship", "in_kind", "insurance"]:
+        res = c.post('/api/filter', json={"benefit_type": b_type})
+        assert res.status_code == 200
+        data = res.get_json()
+        assert data["status"] == "ok"
+        assert data["total_matched"] > 0
+
+
+# Test 29 - Advanced Multi-Filter: Enterprise & MSME
+def test_filter_enterprise(client=None):
+    c = client or get_test_client()
+    # MSME + Tech sector
+    res_msme = c.post('/api/filter', json={
+        "enterprise": {
+            "applicant_type": "msme",
+            "business_sector": "tech"
+        }
+    })
+    assert res_msme.status_code == 200
+    assert res_msme.get_json()["total_matched"] > 0
+
+    # SHG
+    res_shg = c.post('/api/filter', json={"applicant_type": "shg"})
+    assert res_shg.status_code == 200
+    assert res_shg.get_json()["total_matched"] > 0
+
+
+# Test 30 - GET /api/filter with query parameters
+def test_filter_get_with_query_params(client=None):
+    c = client or get_test_client()
+    res = c.get('/api/filter?benefit_type=dbt&location_type=rural&category=agriculture')
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["status"] == "ok"
+    assert data["total_matched"] > 0
+
+
 # ══════════════════════════════════════════════════
 #  DIRECT TEST RUNNER (Works without pytest installed)
 # ══════════════════════════════════════════════════
@@ -424,6 +564,13 @@ if __name__ == "__main__":
         test_recommend_invalid_inputs,
         test_live_routes_resilience,
         test_parse_verdict,
+        test_filter_demographics,
+        test_filter_geographic_domicile,
+        test_filter_socio_economic,
+        test_filter_education_occupation,
+        test_filter_benefit_types,
+        test_filter_enterprise,
+        test_filter_get_with_query_params,
     ]
 
     passed = 0
