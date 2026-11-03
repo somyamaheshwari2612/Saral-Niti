@@ -50,6 +50,12 @@
     <ul class="nav-links">
       <li><a href="#base" class="nav-link active">Home</a></li>
       <li><a href="#schemes" class="nav-link" onclick="filterByCategory('all', document.querySelector('.filter-btn'))">Browse Schemes</a></li>
+      <li>
+        <button class="nav-eligibility-btn" onclick="openEligibilityModal()">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>Check Eligibility</span>
+        </button>
+      </li>
       <li><a href="#Contact" class="nav-link">About</a></li>
       <li>
         <button class="nav-detector-btn" onclick="openDetector()">
@@ -73,6 +79,7 @@
     </button>
   </nav>
 </header>
+
  
  <!-- ══════════════ HERO SECTION ══════════════ -->
 <section class="hero">
@@ -110,6 +117,9 @@
       <!-- TRENDING CHIPS -->
       <div class="trending-searches">
         <span class="trending-label"><i class="fa-solid fa-fire"></i> Popular:</span>
+        <button class="trend-chip trend-chip-highlight" onclick="openEligibilityModal()">
+          <i class="fa-solid fa-wand-magic-sparkles"></i> <strong>Check Eligibility</strong>
+        </button>
         <button class="trend-chip" onclick="quickSearch('farmer')">🌾 PM Kisan</button>
         <button class="trend-chip" onclick="quickSearch('ayushman')">🏥 Ayushman Bharat</button>
         <button class="trend-chip" onclick="quickSearch('scholarship')">📚 Scholarships</button>
@@ -162,6 +172,7 @@
     </div>
   </div>
 </section>
+
  <!-- ══════════════ SCHEMES EXPLORER SECTION ══════════════ -->
 <main class="main" id="schemes">
   <div class="section-header">
@@ -263,6 +274,7 @@
     </div>
   </div>
 </main>
+
  
  <!-- ══════════════ MODERN FOOTER ══════════════ -->
 <footer class="footer-wrap" id="Contact">
@@ -356,6 +368,10 @@
       <div class="modal-category" id="modalCategory"></div>
       <h2 class="modal-title" id="modalTitle"></h2>
       <div class="modal-ministry" id="modalMinistry"></div>
+      <div class="modal-trust-bar">
+        <span class="trust-badge" id="modalVerified"><i class="fa-solid fa-circle-check"></i> Verified Scheme</span>
+        <span class="trust-level" id="modalLevel">Central Government</span>
+      </div>
     </div>
     
     <div class="modal-body">
@@ -377,10 +393,22 @@
         <div class="eligibility-grid" id="modalEligibility"></div>
       </div>
 
+      <!-- REQUIRED DOCUMENTS -->
+      <div class="modal-section">
+        <div class="modal-section-title"><i class="fa-solid fa-file-shield"></i> Required Documents</div>
+        <div class="docs-wrap" id="modalDocs"></div>
+      </div>
+
       <!-- TAGS -->
       <div class="modal-section">
         <div class="modal-section-title"><i class="fa-solid fa-tags"></i> Related Tags</div>
         <div class="tags-wrap" id="modalTags"></div>
+      </div>
+
+      <!-- TRUST & DISCLAIMER -->
+      <div class="modal-disclaimer-box">
+        <i class="fa-solid fa-circle-exclamation"></i>
+        <span><strong>Citizen Advisory:</strong> Informational only. Official terms, deadlines, and benefits must be verified on the official portal before applying. Saral Niti does not charge fees or guarantee approvals.</span>
       </div>
     </div>
 
@@ -398,6 +426,7 @@
     </div>
   </div>
 </div>
+
 <!-- ══════════════ URL DETECTOR MODAL ══════════════ -->
 <div class="det-overlay" id="detOverlay" onclick="closeDetectorOnOverlay(event)">
   <div class="det-modal">
@@ -469,6 +498,117 @@
     </div>
   </div>
 </div>
+
+<!-- ══════════════ ELIGIBILITY CHECKER MODAL ══════════════ -->
+<div class="modal-overlay" id="eligibilityOverlay" onclick="closeEligibilityOnOverlay(event)" role="dialog" aria-modal="true">
+  <div class="modal eligibility-modal">
+    <div class="modal-header">
+      <button class="modal-close" onclick="closeEligibilityModal()" aria-label="Close modal">✕</button>
+      <div class="modal-category"><i class="fa-solid fa-wand-magic-sparkles"></i> Personalization Engine</div>
+      <h2 class="modal-title">Find Schemes You Are Eligible For</h2>
+      <div class="modal-ministry">Instant, rules-based welfare scheme recommendations with transparent matching criteria</div>
+    </div>
+    
+    <div class="modal-body">
+      <!-- FORM -->
+      <form id="eligibilityForm" onsubmit="handleEligibilitySubmit(event)">
+        <div class="elig-form-grid">
+          <div class="form-group">
+            <label for="eligAge"><i class="fa-solid fa-cake-candles"></i> Age (Years)</label>
+            <input type="number" id="eligAge" name="age" min="0" max="120" placeholder="e.g. 24" required>
+          </div>
+
+          <div class="form-group">
+            <label for="eligGender"><i class="fa-solid fa-venus-mars"></i> Gender</label>
+            <select id="eligGender" name="gender">
+              <option value="all">Any / Prefer not to say</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="transgender">Transgender</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="eligState"><i class="fa-solid fa-location-dot"></i> State / UT</label>
+            <select id="eligState" name="state">
+              <option value="all">All India</option>
+              <option value="Maharashtra">Maharashtra</option>
+              <option value="Uttar Pradesh">Uttar Pradesh</option>
+              <option value="Bihar">Bihar</option>
+              <option value="Madhya Pradesh">Madhya Pradesh</option>
+              <option value="Rajasthan">Rajasthan</option>
+              <option value="Karnataka">Karnataka</option>
+              <option value="Tamil Nadu">Tamil Nadu</option>
+              <option value="Gujarat">Gujarat</option>
+              <option value="West Bengal">West Bengal</option>
+              <option value="Kerala">Kerala</option>
+              <option value="Punjab">Punjab</option>
+              <option value="Haryana">Haryana</option>
+              <option value="Delhi">Delhi (NCT)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="eligIncome"><i class="fa-solid fa-indian-rupee-sign"></i> Annual Family Income (₹)</label>
+            <input type="number" id="eligIncome" name="income" min="0" step="5000" placeholder="e.g. 200000">
+          </div>
+
+          <div class="form-group">
+            <label for="eligCaste"><i class="fa-solid fa-users"></i> Social Category</label>
+            <select id="eligCaste" name="caste">
+              <option value="general">General</option>
+              <option value="obc">OBC</option>
+              <option value="sc">SC</option>
+              <option value="st">ST</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="eligOccupation"><i class="fa-solid fa-briefcase"></i> Primary Occupation</label>
+            <select id="eligOccupation" name="occupation">
+              <option value="">Select occupation...</option>
+              <option value="farmer">Farmer / Agricultural Worker</option>
+              <option value="student">Student / Aspirant</option>
+              <option value="unemployed">Unemployed / Jobseeker</option>
+              <option value="salaried">Salaried Employee</option>
+              <option value="self_employed">Self Employed / Artisan</option>
+              <option value="business">Small Business / MSME Owner</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="elig-checkboxes">
+          <label class="checkbox-label">
+            <input type="checkbox" id="eligIsStudent" name="is_student">
+            <span>Currently enrolled student</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="eligIsDisabled" name="is_differently_abled">
+            <span>Divyangjan (Differently-abled citizen)</span>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="eligSubmitBtn">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Find Eligible Schemes</span>
+          </button>
+          <button type="button" class="btn-secondary" onclick="closeEligibilityModal()">Cancel</button>
+        </div>
+      </form>
+
+      <!-- RESULTS CONTAINER -->
+      <div id="eligResultsWrap" style="display: none; margin-top: 24px;">
+        <div class="elig-results-header">
+          <h3 id="eligResultsTitle">Matched Schemes</h3>
+          <p id="eligResultsSub">Schemes ranked by eligibility fit and verification status</p>
+        </div>
+        <div id="eligResultsList" class="elig-results-grid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
 
   <script src="./js/main.js"></script>
   <script src="./js/chatbot.js"></script>

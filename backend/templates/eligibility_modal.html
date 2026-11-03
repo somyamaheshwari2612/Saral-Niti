@@ -1,0 +1,110 @@
+<!-- ══════════════ ELIGIBILITY CHECKER MODAL ══════════════ -->
+<div class="modal-overlay" id="eligibilityOverlay" onclick="closeEligibilityOnOverlay(event)" role="dialog" aria-modal="true">
+  <div class="modal eligibility-modal">
+    <div class="modal-header">
+      <button class="modal-close" onclick="closeEligibilityModal()" aria-label="Close modal">✕</button>
+      <div class="modal-category"><i class="fa-solid fa-wand-magic-sparkles"></i> Personalization Engine</div>
+      <h2 class="modal-title">Find Schemes You Are Eligible For</h2>
+      <div class="modal-ministry">Instant, rules-based welfare scheme recommendations with transparent matching criteria</div>
+    </div>
+    
+    <div class="modal-body">
+      <!-- FORM -->
+      <form id="eligibilityForm" onsubmit="handleEligibilitySubmit(event)">
+        <div class="elig-form-grid">
+          <div class="form-group">
+            <label for="eligAge"><i class="fa-solid fa-cake-candles"></i> Age (Years)</label>
+            <input type="number" id="eligAge" name="age" min="0" max="120" placeholder="e.g. 24" required>
+          </div>
+
+          <div class="form-group">
+            <label for="eligGender"><i class="fa-solid fa-venus-mars"></i> Gender</label>
+            <select id="eligGender" name="gender">
+              <option value="all">Any / Prefer not to say</option>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="transgender">Transgender</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="eligState"><i class="fa-solid fa-location-dot"></i> State / UT</label>
+            <select id="eligState" name="state">
+              <option value="all">All India</option>
+              <option value="Maharashtra">Maharashtra</option>
+              <option value="Uttar Pradesh">Uttar Pradesh</option>
+              <option value="Bihar">Bihar</option>
+              <option value="Madhya Pradesh">Madhya Pradesh</option>
+              <option value="Rajasthan">Rajasthan</option>
+              <option value="Karnataka">Karnataka</option>
+              <option value="Tamil Nadu">Tamil Nadu</option>
+              <option value="Gujarat">Gujarat</option>
+              <option value="West Bengal">West Bengal</option>
+              <option value="Kerala">Kerala</option>
+              <option value="Punjab">Punjab</option>
+              <option value="Haryana">Haryana</option>
+              <option value="Delhi">Delhi (NCT)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="eligIncome"><i class="fa-solid fa-indian-rupee-sign"></i> Annual Family Income (₹)</label>
+            <input type="number" id="eligIncome" name="income" min="0" step="5000" placeholder="e.g. 200000">
+          </div>
+
+          <div class="form-group">
+            <label for="eligCaste"><i class="fa-solid fa-users"></i> Social Category</label>
+            <select id="eligCaste" name="caste">
+              <option value="general">General</option>
+              <option value="obc">OBC</option>
+              <option value="sc">SC</option>
+              <option value="st">ST</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="eligOccupation"><i class="fa-solid fa-briefcase"></i> Primary Occupation</label>
+            <select id="eligOccupation" name="occupation">
+              <option value="">Select occupation...</option>
+              <option value="farmer">Farmer / Agricultural Worker</option>
+              <option value="student">Student / Aspirant</option>
+              <option value="unemployed">Unemployed / Jobseeker</option>
+              <option value="salaried">Salaried Employee</option>
+              <option value="self_employed">Self Employed / Artisan</option>
+              <option value="business">Small Business / MSME Owner</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="elig-checkboxes">
+          <label class="checkbox-label">
+            <input type="checkbox" id="eligIsStudent" name="is_student">
+            <span>Currently enrolled student</span>
+          </label>
+          <label class="checkbox-label">
+            <input type="checkbox" id="eligIsDisabled" name="is_differently_abled">
+            <span>Divyangjan (Differently-abled citizen)</span>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn-primary" id="eligSubmitBtn">
+            <i class="fa-solid fa-magnifying-glass"></i>
+            <span>Find Eligible Schemes</span>
+          </button>
+          <button type="button" class="btn-secondary" onclick="closeEligibilityModal()">Cancel</button>
+        </div>
+      </form>
+
+      <!-- RESULTS CONTAINER -->
+      <div id="eligResultsWrap" style="display: none; margin-top: 24px;">
+        <div class="elig-results-header">
+          <h3 id="eligResultsTitle">Matched Schemes</h3>
+          <p id="eligResultsSub">Schemes ranked by eligibility fit and verification status</p>
+        </div>
+        <div id="eligResultsList" class="elig-results-grid"></div>
+      </div>
+    </div>
+  </div>
+</div>
+

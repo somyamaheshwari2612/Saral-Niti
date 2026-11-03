@@ -329,7 +329,52 @@ def test_live_routes_resilience(client=None):
     assert res_id.status_code == 400
 
 
-# Test 19 - Detector verdict parser correctly handles plain and markdown formats
+# Test 21 - Recommendation engine ranks schemes based on profile
+def test_recommend_schemes(client=None):
+    c = client or get_test_client()
+    profile = {
+        "age": 28,
+        "gender": "male",
+        "state": "all",
+        "income": 120000,
+        "caste": "obc",
+        "occupation": "farmer"
+    }
+    res = c.post('/api/recommend', json=profile)
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["status"] == "ok"
+    assert data["matched_count"] > 0
+    recs = data["recommendations"]
+    assert len(recs) > 0
+    first = recs[0]
+    assert "match_score" in first
+    assert "reasons" in first
+    assert "scheme" in first
+    assert first["match_score"] >= 60
+
+
+# Test 22 - Recommendation engine rejects invalid profile values
+def test_recommend_invalid_inputs(client=None):
+    c = client or get_test_client()
+    # Negative age
+    res_age = c.post('/api/recommend', json={"age": -5})
+    assert res_age.status_code == 400
+
+    # Age above limit
+    res_age2 = c.post('/api/recommend', json={"age": 200})
+    assert res_age2.status_code == 400
+
+    # Negative income
+    res_inc = c.post('/api/recommend', json={"income": -500})
+    assert res_inc.status_code == 400
+
+    # Non-dict body
+    res_body = c.post('/api/recommend', data="invalid", content_type="application/json")
+    assert res_body.status_code == 400
+
+
+# Test 23 - Detector verdict parser correctly handles plain and markdown formats
 def test_parse_verdict():
     real_sample = "Analysis:\nResult: REAL\nRisk Level: LOW\nScheme Targeted: PM Kisan\nCitizen Advisory: Safe"
     assert parse_verdict(real_sample) == "real"
@@ -375,6 +420,8 @@ if __name__ == "__main__":
         test_detect_url_invalid_types,
         test_detect_file_missing,
         test_api_404_json,
+        test_recommend_schemes,
+        test_recommend_invalid_inputs,
         test_live_routes_resilience,
         test_parse_verdict,
     ]

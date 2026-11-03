@@ -150,6 +150,71 @@ Scans uploaded circulars, PDFs, or notification texts up to 5MB to determine aut
 
 ---
 
+## 🎯 Personalization & Eligibility Engine
+
+### 8. Match & Recommend Schemes
+Deterministically evaluates a citizen demographic and financial profile against all active welfare schemes, returning ranked recommendations with transparent matching criteria.
+
+- **URL:** `/api/recommend`
+- **Method:** `POST`
+- **Content-Type:** `application/json`
+- **Body:**
+```json
+{
+  "age": 24,
+  "gender": "male",
+  "state": "Maharashtra",
+  "income": 200000,
+  "caste": "obc",
+  "occupation": "farmer",
+  "is_student": false,
+  "is_differently_abled": false
+}
+```
+- **Response:** `200 OK`
+```json
+{
+  "status": "ok",
+  "total_evaluated": 50,
+  "matched_count": 8,
+  "profile": {
+    "age": 24,
+    "gender": "male",
+    "state": "Maharashtra",
+    "income": 200000,
+    "caste": "obc",
+    "occupation": "farmer"
+  },
+  "recommendations": [
+    {
+      "match_score": 100,
+      "status": "eligible",
+      "reasons": [
+        "Open to all States and Union Territories (All India).",
+        "Age 24 falls within eligible range (18–No upper limit years).",
+        "Social category (OBC) is eligible.",
+        "Occupation match: Farmer."
+      ],
+      "unmet_criteria": [],
+      "scheme": {
+        "title": "PM Kisan Samman Nidhi",
+        "benefits": "Rs.6000 per year in 3 installments of Rs.2000",
+        "application_url": "https://pmkisan.gov.in",
+        "level": "central",
+        "last_verified_at": "2026-03-01",
+        "documents_required": [
+          "Aadhaar Card",
+          "Land Ownership Records (Khasra/Khatauni)",
+          "Bank Account Passbook"
+        ]
+      }
+    }
+  ]
+}
+```
+
+---
+
 ## 🔌 Live Integration (External Upstream)
 
 - **GET `/api/live/schemes?q=`**: Queries live public scheme APIs with graceful 503 fallback if upstream service is unreachable.

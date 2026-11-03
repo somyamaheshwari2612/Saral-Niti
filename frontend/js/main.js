@@ -311,6 +311,21 @@ function openModal(s) {
   if (tagsEl) {
     tagsEl.innerHTML = (s.tags || []).map(t => `<span class="tag">#${escapeHtml(t)}</span>`).join('');
   }
+
+  const levelEl = document.getElementById('modalLevel');
+  const verEl = document.getElementById('modalVerified');
+  const docsEl = document.getElementById('modalDocs');
+
+  if (levelEl) levelEl.textContent = (s.level === 'state' ? 'State Government' : 'Central Government');
+  if (verEl) verEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Verified Data • ${escapeHtml(s.last_verified_at || '2026')}`;
+
+  if (docsEl) {
+    const docs = Array.isArray(s.documents_required) && s.documents_required.length > 0
+      ? s.documents_required
+      : ['Aadhaar Card', 'Bank Account Details'];
+    docsEl.innerHTML = docs.map(d => `<span class="doc-pill"><i class="fa-solid fa-file-check"></i> ${escapeHtml(d)}</span>`).join('');
+  }
+
   const overlay = document.getElementById('modalOverlay');
   if (overlay) overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
@@ -525,9 +540,135 @@ function classifyResult(text, verdict) {
   return 'suspicious';
 }
 
+// ══════════════════════════════════════════════════
+//  PERSONALIZATION / ELIGIBILITY CHECKER
+// ══════════════════════════════════════════════════
+let currentEligRecommendations = [];
+
+function openEligibilityModal() {
+  const overlay = document.getElementById('eligibilityOverlay');
+  if (overlay) overlay.classList.add('open');
+  document.body.style.overflow = 'hidden';
+}
+
+function closeEligibilityModal() {
+  const overlay = document.getElementById('eligibilityOverlay');
+  if (overlay) overlay.classList.remove('open');
+  document.body.style.overflow = '';
+}
+
+function closeEligibilityOnOverlay(e) {
+  if (e.target === document.getElementById('eligibilityOverlay')) closeEligibilityModal();
+}
+
+async function handleEligibilitySubmit(e) {
+  e.preventDefault();
+  const btn = document.getElementById('eligSubmitBtn');
+  const resultsWrap = document.getElementById('eligResultsWrap');
+  const resultsList = document.getElementById('eligResultsList');
+  const resultsTitle = document.getElementById('eligResultsTitle');
+  const resultsSub = document.getElementById('eligResultsSub');
+
+  const ageVal = document.getElementById('eligAge').value;
+  const incomeVal = document.getElementById('eligIncome').value;
+
+  const payload = {
+    age: ageVal ? Number(ageVal) : null,
+    gender: document.getElementById('eligGender').value,
+    state: document.getElementById('eligState').value,
+    income: incomeVal ? Number(incomeVal) : null,
+    caste: document.getElementById('eligCaste').value,
+    occupation: document.getElementById('eligOccupation').value,
+    is_student: document.getElementById('eligIsStudent').checked,
+    is_differently_abled: document.getElementById('eligIsDisabled').checked
+  };
+
+  btn.disabled = true;
+  btn.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> <span>Matching Schemes...</span>`;
+
+  try {
+    const res = await fetch(`${SCHEMES_API}/api/recommend`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      alert(data.error || 'Failed to match schemes. Please check your inputs.');
+      return;
+    }
+
+    currentEligRecommendations = data.recommendations || [];
+    resultsWrap.style.display = 'block';
+    resultsTitle.textContent = `Found ${currentEligRecommendations.length} Matching Schemes`;
+    resultsSub.textContent = `Evaluated against ${data.total_evaluated} official welfare initiatives.`;
+
+    if (currentEligRecommendations.length === 0) {
+      resultsList.innerHTML = `
+        <div class="no-results" style="padding: 24px; text-align: center;">
+          <i class="fa-solid fa-folder-open" style="font-size: 32px; color: var(--slate-400); margin-bottom: 8px;"></i>
+          <h4>No direct matches found</h4>
+          <p>Try broadening your criteria (e.g. state 'All India' or leaving income blank).</p>
+        </div>`;
+      return;
+    }
+
+    resultsList.innerHTML = currentEligRecommendations.map((rec, idx) => {
+      const s = rec.scheme;
+      const isEligible = rec.status === 'eligible';
+      const scoreBadgeClass = isEligible ? 'eligible' : 'partial';
+      const scoreBadgeText = isEligible ? `${rec.match_score}% Match • Eligible` : `${rec.match_score}% • Partial Match`;
+
+      const reasonsHtml = (rec.reasons || []).map(r => `<li><i class="fa-solid fa-check"></i> ${escapeHtml(r)}</li>`).join('');
+      const unmetHtml = (rec.unmet_criteria || []).map(u => `<li><i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(u)}</li>`).join('');
+
+      return `
+        <div class="elig-result-card">
+          <div class="elig-card-top">
+            <span class="category-badge cat-${escapeHtml(s.category || 'general')}">${escapeHtml(s.category || 'Welfare')}</span>
+            <span class="match-score-badge ${scoreBadgeClass}">${scoreBadgeText}</span>
+          </div>
+          <div class="elig-card-title">${escapeHtml(s.title)}</div>
+          <div class="elig-card-ministry"><i class="fa-solid fa-building-columns"></i> ${escapeHtml(s.ministry || 'Government of India')}</div>
+          
+          ${reasonsHtml ? `<ul class="elig-reasons-list">${reasonsHtml}</ul>` : ''}
+          ${unmetHtml ? `<ul class="elig-unmet-list">${unmetHtml}</ul>` : ''}
+
+          <div class="elig-card-action">
+            <button type="button" class="elig-view-btn" onclick="openEligScheme(${idx})">
+              <span>View Scheme Details</span>
+              <i class="fa-solid fa-arrow-right"></i>
+            </button>
+          </div>
+        </div>
+      `;
+    }).join('');
+
+    resultsWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  } catch (err) {
+    alert('Network error while connecting to recommendation engine.');
+  } finally {
+    btn.disabled = false;
+    btn.innerHTML = `<i class="fa-solid fa-magnifying-glass"></i> <span>Find Eligible Schemes</span>`;
+  }
+}
+
+function openEligScheme(idx) {
+  if (currentEligRecommendations[idx]) {
+    closeEligibilityModal();
+    openModal(currentEligRecommendations[idx].scheme);
+  }
+}
+
 // ESC closes any modal
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') { closeModal(); closeDetector(); }
+  if (e.key === 'Escape') {
+    closeModal();
+    closeDetector();
+    closeEligibilityModal();
+  }
 });
 
 // ══════════════════════════════════════════════════

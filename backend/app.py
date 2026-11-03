@@ -74,6 +74,7 @@ from routes.filter import filter_bp
 from routes.live import live_bp
 from routes.chatbot import chatbot_bp
 from routes.detector import detector_bp
+from routes.recommend import recommend_bp
 
 app.register_blueprint(schemes_bp)
 app.register_blueprint(search_bp)
@@ -81,6 +82,7 @@ app.register_blueprint(filter_bp)
 app.register_blueprint(live_bp)
 app.register_blueprint(chatbot_bp)
 app.register_blueprint(detector_bp)
+app.register_blueprint(recommend_bp)
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))
