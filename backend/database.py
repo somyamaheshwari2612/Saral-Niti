@@ -11,7 +11,18 @@ from dotenv import load_dotenv
 base_dir = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(base_dir, ".env"))
 
-DATA_DIR = os.path.join(base_dir, "data")
+# Resolve unified data directory (checks backend/data and root data/)
+DATA_DIR = os.getenv("SQLITE_DATA_DIR")
+if not DATA_DIR:
+    cand_backend = os.path.join(base_dir, "data")
+    cand_root = os.path.abspath(os.path.join(base_dir, "..", "data"))
+    if os.path.exists(os.path.join(cand_backend, "schemes.json")):
+        DATA_DIR = cand_backend
+    elif os.path.exists(os.path.join(cand_root, "schemes.json")):
+        DATA_DIR = cand_root
+    else:
+        DATA_DIR = cand_backend
+
 DB_PATH = os.getenv("SQLITE_DB_PATH", os.path.join(DATA_DIR, "schemes.db"))
 JSON_PATH = os.path.join(DATA_DIR, "schemes.json")
 

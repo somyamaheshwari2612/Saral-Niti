@@ -4,10 +4,16 @@ __pycache__
 venv
 *.db
 *.sqlite3
-gov_myscheme_data.csv
+data/*.csv
+data/*.jsonl
+data/*.db
+data/*.sqlite3
 archive/
 for_future/
 for_future*
+gov_myscheme_data.csv
+structured.csv
+train.jsonl
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

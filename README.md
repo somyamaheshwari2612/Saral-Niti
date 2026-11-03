@@ -62,16 +62,31 @@ India provides thousands of central and state government welfare schemes — yet
 
 ## 🏛️ Data Sources & Attribution
 
-Saral Niti relies on officially licensed open government data and open-source civic technology contributions:
+Saral Niti consolidates all civic and governmental datasets into a unified directory (`data/`), attributing all official authorities, civic researchers, and open data contributors:
 
-1. **Primary Official Reference**:
-   - **[myScheme Portal (myscheme.gov.in)](https://www.myscheme.gov.in/)**: National Citizen Welfare Scheme Discovery Platform by the **National e-Governance Division (NeGD)**, **Digital India Corporation (DIC)**, and **MeitY**, Government of India.
-2. **Dataset Compilation & Normalization**:
-   - Merged and normalized **4,847 verified schemes** from the Kaggle myScheme Open Dataset and the curated GitHub `gov-myscheme-dataset`, deduplicated via title, ministry, and canonical slugs.
-3. **Open Government Data Framework**:
-   - Aligned with the **Government Open Data License – India ([data.gov.in](https://data.gov.in/))** promoting proactive public access to civic information.
-4. **Citizen Advisory & Disclaimer**:
-   - *Saral Niti is an independent, non-commercial civic-tech portal for public informational discovery. It does not collect user Aadhaar data, charge fees, or guarantee official approvals. Citizens are always linked directly to official `.gov.in` / `.nic.in` portals.*
+### 1. Official Platform & System of Record
+* **[myScheme Portal (myscheme.gov.in)](https://www.myscheme.gov.in/)**: The national citizen welfare discovery platform developed by the **National e-Governance Division (NeGD)**, **Digital India Corporation (DIC)**, and the **Ministry of Electronics and Information Technology (MeitY)**, Government of India.
+* **[data.gov.in (Open Government Data)](https://www.data.gov.in/)**: Supplementary datasets and APIs aligned with the **Government Open Data License – India (GODL-India)**.
+
+### 2. Verified Datasets & Retrieval Corpora (`data/`)
+* **[Indian Government Schemes Data – July 2026](https://www.kaggle.com/datasets/ojaashampiholi/indian-government-schemes-data)** (`data/structured.csv`):
+  * **Curator**: Ojaas Hampiholi (Kaggle)
+  * **Scope**: 3,534 schemes (488 central, 3,046 state/UT) with 19 structured columns including section-wise eligibility, benefits, application process, documents, references, and FAQs. Current as of July 27, 2026.
+* **[BharatSchemes v1](https://huggingface.co/datasets/Banothuarpitha/bharatschemes-v1)** (`data/train.jsonl`):
+  * **Curator**: Banothu Arpitha (Hugging Face)
+  * **Scope**: 2,029 persona-driven, instruction-following citizen Q&A pairs used for few-shot prompt tuning, vernacular conversational evaluation, and RAG answer quality benchmarks.
+* **[MyScheme Welfare Schemes & FAQs](https://www.kaggle.com/datasets/elchemist/myscheme-india-govt-welfare-schemes)** (`data/schemes.csv` & `data/schemes_faqs.csv`):
+  * **Curator**: Elchemist (Kaggle)
+  * **Scope**: 4,670 central and state welfare schemes plus 51,435 official FAQ question-answer pairs for deep question-to-scheme retrieval.
+* **[gov-myscheme-dataset](https://github.com/Aryan-Pardeshi/gov-myscheme-dataset)** (`data/gov_myscheme_data.csv`):
+  * **Curator**: Aryan Pardeshi (GitHub)
+  * **Scope**: Cleaned dataset of 2,066 schemes used for cross-dataset schema reconciliation and URL verification.
+* **Canonical Production Seed** (`data/schemes.json`):
+  * Deduplicated, normalized master dataset of **4,847 verified schemes** powering the local SQLite + FTS5 database engine.
+
+### 3. Legal Compliance & Terms of Use
+* In strict adherence with [myScheme's Terms of Use](https://www.myscheme.gov.in/terms-of-use), Saral Niti does not employ automated recurring scrapers or unauthorized crawling. All data is managed through verified open snapshots, attributed to official sources, and accompanied by direct official `.gov.in` / `.nic.in` application links.
+* *Saral Niti is an independent civic-tech portal for informational discovery. It does not collect sensitive citizen Aadhaar information, charge fees, or claim guaranteed eligibility approvals.*
 
 ---
 
@@ -151,6 +166,13 @@ Saral-Niti/
 │   ├── js/                    # Main client & voice chatbot scripts
 │   ├── index.html             # Production-ready static client
 │   └── vercel.json            # Vercel deployment and routing configuration
+├── data/                      # Unified data repository (schemes, FAQs, instruction sets)
+│   ├── schemes.json           # Canonical master dataset (4,847 verified schemes)
+│   ├── structured.csv         # July 2026 Kaggle dataset (3,534 schemes with section fields)
+│   ├── train.jsonl            # BharatSchemes v1 instruction dataset (2,029 Q&A pairs)
+│   ├── schemes_faqs.csv       # MyScheme 51,435 official question-answer pairs
+│   ├── gov_myscheme_data.csv  # Curated secondary dataset (2,066 schemes)
+│   └── README.md              # Dataset catalog and schema dictionary
 ├── docs/                      # Documentation
 ├── render.yaml                # Render Blueprint deployment configuration
 ├── .env.example               # Environment variables template
