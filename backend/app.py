@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template
+from flask import Flask, render_template, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
 
@@ -12,7 +12,28 @@ app = Flask(
     template_folder=os.path.join(base_dir, "templates"),
     static_folder=os.path.join(base_dir, "static")
 )
+# Protect against unbounded request body buffering (6MB max payload)
+app.config['MAX_CONTENT_LENGTH'] = 6 * 1024 * 1024
 CORS(app)
+
+# ══════════════════════════════════════════════════
+#  GLOBAL ERROR HANDLERS (JSON-safe for APIs)
+# ══════════════════════════════════════════════════
+@app.errorhandler(413)
+def request_entity_too_large(error):
+    return jsonify({"error": "Payload too large. Maximum allowed size is 6MB."}), 413
+
+@app.errorhandler(404)
+def not_found(error):
+    if request.path.startswith("/api/") or request.is_json or "application/json" in request.headers.get("Accept", ""):
+        return jsonify({"error": "Resource not found"}), 404
+    return render_template("base.html"), 404
+
+@app.errorhandler(500)
+def internal_server_error(error):
+    if request.path.startswith("/api/") or request.is_json or "application/json" in request.headers.get("Accept", ""):
+        return jsonify({"error": "Internal server error"}), 500
+    return render_template("base.html"), 500
 
 from database import get_client, get_schemes_collection
 

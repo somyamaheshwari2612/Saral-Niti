@@ -246,25 +246,77 @@ def test_chatbot_missing_body(client=None):
     assert res.status_code == 400
 
 
-# Test 15 - Detector rejects invalid URLs
+# Test 15 - Chatbot rejects invalid payload types (numbers, None, excessive length)
+def test_chatbot_invalid_types(client=None):
+    c = client or get_test_client()
+    # Non-string message (integer)
+    res_int = c.post('/api/chatbot', json={"message": 12345})
+    assert res_int.status_code == 400
+    assert "non-empty string" in res_int.get_json().get("error", "")
+
+    # Null message
+    res_null = c.post('/api/chatbot', json={"message": None})
+    assert res_null.status_code == 400
+
+    # Whitespace message
+    res_space = c.post('/api/chatbot', json={"message": "    "})
+    assert res_space.status_code == 400
+
+    # Exceeding length limit (500 chars)
+    res_long = c.post('/api/chatbot', json={"message": "a" * 501})
+    assert res_long.status_code == 400
+
+
+# Test 16 - Detector rejects invalid URLs
 def test_detect_url_invalid(client=None):
     c = client or get_test_client()
     res = c.post('/api/detect-url', json={"url": "not-a-valid-url"})
     assert res.status_code == 400
 
 
-# Test 16 - Detector rejects missing URL payload
+# Test 17 - Detector rejects missing URL payload
 def test_detect_url_missing(client=None):
     c = client or get_test_client()
     res = c.post('/api/detect-url', json={})
     assert res.status_code == 400
 
 
-# Test 17 - Detector file endpoint rejects missing file
+# Test 18 - Detector rejects invalid URL types (numbers, null, excessive length)
+def test_detect_url_invalid_types(client=None):
+    c = client or get_test_client()
+    # Non-string URL (integer)
+    res_int = c.post('/api/detect-url', json={"url": 99999})
+    assert res_int.status_code == 400
+    assert "non-empty string" in res_int.get_json().get("error", "")
+
+    # Null URL
+    res_null = c.post('/api/detect-url', json={"url": None})
+    assert res_null.status_code == 400
+
+    # Whitespace URL
+    res_space = c.post('/api/detect-url', json={"url": "    "})
+    assert res_space.status_code == 400
+
+    # Exceeding URL length limit (2048 chars)
+    res_long = c.post('/api/detect-url', json={"url": "https://gov.in/" + "a" * 2050})
+    assert res_long.status_code == 400
+
+
+# Test 19 - Detector file endpoint rejects missing file
 def test_detect_file_missing(client=None):
     c = client or get_test_client()
     res = c.post('/api/detect-file')
     assert res.status_code == 400
+
+
+# Test 20 - API routes return JSON for 404
+def test_api_404_json(client=None):
+    c = client or get_test_client()
+    res = c.get('/api/non-existent-endpoint')
+    assert res.status_code == 404
+    data = res.get_json()
+    assert data is not None
+    assert "error" in data
 
 
 # Test 18 - Live routes handle upstream gracefully
@@ -317,9 +369,12 @@ if __name__ == "__main__":
         test_chatbot,
         test_chatbot_word_boundary,
         test_chatbot_missing_body,
+        test_chatbot_invalid_types,
         test_detect_url_invalid,
         test_detect_url_missing,
+        test_detect_url_invalid_types,
         test_detect_file_missing,
+        test_api_404_json,
         test_live_routes_resilience,
         test_parse_verdict,
     ]

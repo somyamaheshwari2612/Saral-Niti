@@ -29,13 +29,20 @@ DEFAULT_RESPONSE = "I'm not sure about that. Try asking about schemes for farmer
 
 @chatbot_bp.route('/api/chatbot', methods=['POST'])
 def chatbot_reply():
-    """Rule-based chatbot endpoint with word-boundary matching"""
-    data = request.get_json()
+    """Rule-based chatbot endpoint with word-boundary matching and input hardening"""
+    data = request.get_json(silent=True)
     
-    if not data or 'message' not in data:
+    if not isinstance(data, dict) or 'message' not in data:
         return jsonify({"error": "No message provided"}), 400
 
-    user_message = data['message'].lower().strip()
+    raw_message = data.get('message')
+    if not isinstance(raw_message, str) or not raw_message.strip():
+        return jsonify({"error": "Message must be a non-empty string"}), 400
+
+    if len(raw_message) > 500:
+        return jsonify({"error": "Message too long (max 500 characters)"}), 400
+
+    user_message = raw_message.lower().strip()
 
     # Match rules with word boundaries to avoid substring false positives
     reply = DEFAULT_RESPONSE

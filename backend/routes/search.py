@@ -24,23 +24,30 @@ def search_schemes():
                 "schemes": []
             })
 
-        # 3. Escape regex special characters to prevent regex injection
-        safe_query = re.escape(query)
-
-        filter = {
-            "$or": [
-                {"title": {"$regex": safe_query, "$options": "i"}},
-                {"description": {"$regex": safe_query, "$options": "i"}},
-                {"tags": {"$regex": safe_query, "$options": "i"}},
-                {"ministry": {"$regex": safe_query, "$options": "i"}}
-            ]
-        }
-
         schemes_collection = get_schemes_collection()
         if schemes_collection is None:
             return jsonify({"error": "Database not connected"}), 500
 
-        results = list(schemes_collection.find(filter).limit(50))
+        results = []
+        try:
+            # 1. Try indexed full-text search first (leverages MongoDB text index)
+            results = list(schemes_collection.find({"$text": {"$search": query}}).limit(50))
+        except Exception:
+            results = []
+
+        # 2. If no text index match (e.g. partial prefix or text index missing), fallback to safe regex
+        if not results:
+            safe_query = re.escape(query)
+            filter_query = {
+                "$or": [
+                    {"title": {"$regex": safe_query, "$options": "i"}},
+                    {"description": {"$regex": safe_query, "$options": "i"}},
+                    {"tags": {"$regex": safe_query, "$options": "i"}},
+                    {"ministry": {"$regex": safe_query, "$options": "i"}}
+                ]
+            }
+            results = list(schemes_collection.find(filter_query).limit(50))
+
         results = [scheme_to_dict(s) for s in results]
         return jsonify({
             "status": "ok",
