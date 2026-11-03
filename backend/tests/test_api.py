@@ -534,6 +534,20 @@ def test_filter_get_with_query_params(client=None):
     assert data["total_matched"] > 0
 
 
+# Test 31 - Chatbot Code-Mixed Vernacular & RAG Grounding
+def test_chatbot_code_mixed_rag(client=None):
+    c = client or get_test_client()
+    res = c.post('/api/chatbot', json={"message": "kisan ke liye fasal bima aur loan"})
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["status"] == "ok"
+    assert "reply" in data
+    assert len(data["reply"]) > 10
+    assert "matched_schemes" in data
+    assert "extracted_slots" in data
+    assert "suggested_followups" in data
+
+
 # ══════════════════════════════════════════════════
 #  DIRECT TEST RUNNER (Works without pytest installed)
 # ══════════════════════════════════════════════════
@@ -571,6 +585,7 @@ if __name__ == "__main__":
         test_filter_benefit_types,
         test_filter_enterprise,
         test_filter_get_with_query_params,
+        test_chatbot_code_mixed_rag,
     ]
 
     passed = 0

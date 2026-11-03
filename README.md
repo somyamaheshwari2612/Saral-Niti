@@ -1,7 +1,7 @@
 # 🇮🇳 Saral Niti
 ### Government Schemes Discovery Platform
 
-**Bridging the gap between citizens and government schemes through a simple, searchable platform.**
+**Bridging the gap between citizens and government welfare schemes through a fast, transparent, and voice-enabled discovery platform.**
 
 [![Run Tests](https://github.com/somyamaheshwari2612/Saral-Niti/actions/workflows/test.yml/badge.svg)](https://github.com/somyamaheshwari2612/Saral-Niti/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
@@ -9,8 +9,8 @@
 [![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-000000?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![SQLite](https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white)](https://www.sqlite.org/)
-[![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white)](https://www.w3.org/Style/CSS/)
-[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+[![Vercel](https://img.shields.io/badge/Vercel-000000?style=flat-square&logo=vercel&logoColor=white)](https://vercel.com/)
+[![Render](https://img.shields.io/badge/Render-46E3B7?style=flat-square&logo=render&logoColor=white)](https://render.com/)
 [![Gemini](https://img.shields.io/badge/Google%20Gemini-4285F4?style=flat-square&logo=google&logoColor=white)](https://aistudio.google.com/)
 
 Built with ❤️ by a team of 4 — GLA University, Mathura
@@ -20,14 +20,13 @@ Built with ❤️ by a team of 4 — GLA University, Mathura
 ## 📑 Table of Contents
 
 - [About the Project](#-about-the-project)
-- [Features](#-features)
+- [Key Features](#-key-features)
 - [Data Sources & Attribution](#-data-sources--attribution)
 - [Tech Stack](#️-tech-stack)
-- [Team & Responsibilities](#-team--responsibilities)
+- [Architecture & Deployment](#-architecture--deployment)
 - [Project Structure](#-project-structure)
 - [API Endpoints](#-api-endpoints)
 - [Getting Started Locally](#-getting-started-locally)
-- [Deployment Architecture](#-deployment-architecture)
 - [Testing](#-testing)
 - [Roadmap](#-roadmap)
 - [License](#-license)
@@ -36,29 +35,28 @@ Built with ❤️ by a team of 4 — GLA University, Mathura
 
 ## 📖 About the Project
 
-India has 3,000+ central and state government welfare schemes — yet a large share of eligible citizens never discover them because existing portals are complex and hard to navigate.
+India provides thousands of central and state government welfare schemes — yet millions of eligible citizens miss out on critical benefits because official portals can be fragmented and complex to navigate.
 
-**Saral Niti** (Hindi for *"Simple Policy"*) solves this by offering:
-- A clean, lightning-fast scheme browser powered by **2,100+ verified schemes**
-- Rules-first **Personalized Eligibility Calculator** with transparent matching criteria
-- Sub-millisecond full-text search (SQLite FTS5)
-- Category-based filtering across 10 vital sectors
-- A conversational citizen assistant for guided discovery
-- An AI-powered tool to flag fake scheme URLs and documents using Google Gemini
+**Saral Niti** (Hindi for *"Simple Policy"*) solves this challenge by providing:
+- A searchable database of **4,847+ deduplicated, verified schemes** across all 36 States & Union Territories
+- A **Multi-Dimensional Filter Engine** spanning demographics, geography, socio-economic standing, education, trades, benefit types, and MSME sectors
+- A **Voice-Enabled Vernacular RAG Chatbot** supporting speech recognition, speech synthesis, code-mixed Hinglish queries, and verified official citations
+- A rules-first **Personalized Eligibility Calculator** explaining exactly why a citizen qualifies or which criteria remain unmet
+- An AI-powered **Scam & Fraud Detector** analyzing suspicious URLs and documents via Google Gemini
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
 | Feature | Description |
 |---|---|
-| 🔍 **Search & Filter** | Real-time keyword search and 10-category filtering across 2,100+ schemes |
-| 🎯 **Eligibility Checker** | Transparent rules-first engine matching age, income, caste, state, and occupation |
-| 📋 **Scheme Details** | Verified benefits, required documents, ministry, and direct official apply links |
-| 🤖 **Chatbot** | Rule-based assistant that recommends schemes based on user intent |
-| 🛡️ **Fraud Detector** | Google Gemini (Flash Lite)-powered URL & document checker — flags REAL / FAKE / SUSPICIOUS |
-| 🌙 **Dark Mode** | Toggle with preference saved across sessions and zero white-flash (FOUC) |
-| 📱 **Responsive UI** | Modern, clean layout fully optimized for mobile and desktop |
+| 🔍 **High-Speed Scheme Explorer** | Sub-millisecond keyword search (SQLite FTS5) with batch pagination (24 cards/page) |
+| 🎛️ **Multi-Dimensional Filters** | Interactive 6-card drawer filtering age, social categories (SC/ST/OBC/Minority/DNT), vulnerabilities, location, ration card, education, and trades |
+| 🎙️ **Voice-First Vernacular Chatbot** | Browser-native Speech-to-Text and Text-to-Speech in Hindi/English, code-mixed NLU, and SQLite FTS5 RAG grounding |
+| 🎯 **Personalized Eligibility Calculator** | Multi-factor questionnaire assessing citizen profile with transparent reasons and zero hallucinations |
+| 🛡️ **Scam & Fake Scheme Detector** | URL and PDF/document validator powered by Google Gemini (`gemini-3.5-flash-lite`) |
+| 🌙 **Theme & Accessibility** | Dark mode with persistent session state and zero flash of unstyled content (FOUC) |
+| 🚀 **Decoupled Deployment** | Pure static client ready for **Vercel**; lightweight Python REST backend ready for **Render** |
 
 ---
 
@@ -66,44 +64,58 @@ India has 3,000+ central and state government welfare schemes — yet a large sh
 
 Saral Niti relies on officially licensed open government data and open-source civic technology contributions:
 
-1. **Primary Official Source**:
-   - **[myScheme Portal (myscheme.gov.in)](https://www.myscheme.gov.in/)**: National Citizen Welfare Scheme Discovery Platform, spearheaded by the **National e-Governance Division (NeGD)**, **Digital India Corporation (DIC)**, and the **Ministry of Electronics and Information Technology (MeitY)**, Government of India.
-2. **Dataset Compilation & Curation**:
-   - **[gov-myscheme-dataset](https://github.com/Aryan-Pardeshi/gov-myscheme-dataset)**: Open-source collection of 2,066 national and state welfare schemes curated by Aryan Pardeshi, licensed for informational and research applications.
+1. **Primary Official Reference**:
+   - **[myScheme Portal (myscheme.gov.in)](https://www.myscheme.gov.in/)**: National Citizen Welfare Scheme Discovery Platform by the **National e-Governance Division (NeGD)**, **Digital India Corporation (DIC)**, and **MeitY**, Government of India.
+2. **Dataset Compilation & Normalization**:
+   - Merged and normalized **4,847 verified schemes** from the Kaggle myScheme Open Dataset and the curated GitHub `gov-myscheme-dataset`, deduplicated via title, ministry, and canonical slugs.
 3. **Open Government Data Framework**:
-   - In alignment with the **Government Open Data License – India ([data.gov.in](https://data.gov.in/))**, promoting proactive public access to non-sensitive government information.
+   - Aligned with the **Government Open Data License – India ([data.gov.in](https://data.gov.in/))** promoting proactive public access to civic information.
 4. **Citizen Advisory & Disclaimer**:
-   - *Saral Niti is an independent civic-tech portal created for public discovery. It is not an application submission gateway, does not charge fees, and does not guarantee eligibility approvals. Citizens are always directed to verify official deadlines, eligibility, and rules on respective official `.gov.in` / `.nic.in` portals before applying.*
+   - *Saral Niti is an independent, non-commercial civic-tech portal for public informational discovery. It does not collect user Aadhaar data, charge fees, or guarantee official approvals. Citizens are always linked directly to official `.gov.in` / `.nic.in` portals.*
 
 ---
 
 ## 🛠️ Tech Stack
 
-**Frontend**
-`HTML5` · `Modular CSS3` · `Vanilla JavaScript (ES6+)`
-
-**Backend**
-`Python 3` · `Flask` · `Flask-CORS` · `Gunicorn`
-
-**Database & Search Engine**
-`SQLite3 with FTS5` (Sub-millisecond Full-Text Search) · `Canonical JSON Dataset` (Git-tracked)
-
-**AI / Security**
-`Google Gemini REST API` (`gemini-2.5-flash-lite` / `gemini-3.5-flash-lite`)
-
-**DevOps & CI/CD**
-`GitHub Actions` · Automated Unit Test Suite
+* **Frontend**: HTML5, Modular CSS3, Vanilla JavaScript (ES6+), Web Speech API (`SpeechRecognition` & `speechSynthesis`)
+* **Backend**: Python 3.11+, Flask, Flask-CORS, Gunicorn, Requests, PDFPlumber
+* **Database & Search**: SQLite3 with FTS5 Full-Text Search (zero cloud DB dependencies, sub-millisecond queries)
+* **AI & Grounding**: Google Gemini REST API (`gemini-3.5-flash-lite`)
+* **Hosting**:
+  * **Frontend**: Vercel (`frontend/vercel.json`)
+  * **Backend**: Render (`render.yaml`)
 
 ---
 
-## 🧑‍💻 Team & Responsibilities
+## 🌐 Architecture & Deployment
 
-| Name | Role | Branch | Key Contributions |
-|---|---|---|---|
-| **Savita** | Backend Developer | `backend` | Flask app, REST API routes, data endpoints |
-| **Aryan Singhal** | Database Engineer | `database` | Schema design, SQLite FTS5 query engine, data layer, unit tests |
-| **Dushyant Sharma** | Frontend Developer | `frontend` | UI/UX, modular design system, dark mode, fraud detector UI |
-| **Somya Maheshwari** | Deployment & Integration | `deployment` | Chatbot, recommendation engine, dataset normalization, repo management |
+Saral Niti is cleanly decoupled into two independent deployment units:
+
+```
++------------------------------------+          +------------------------------------+
+|         FRONTEND (Vercel)          |          |          BACKEND (Render)          |
+|  - Static HTML, CSS, Vanilla JS    |  HTTPS   |  - Flask REST API                  |
+|  - Web Speech ASR & TTS            | -------> |  - SQLite FTS5 Engine (4,847 rows) |
+|  - vercel.json rewrite routing     |          |  - Gemini 3.5 Flash Lite RAG       |
++------------------------------------+          +------------------------------------+
+```
+
+### Deploy Frontend on Vercel
+1. In Vercel, import the repository and select **`frontend`** as the Root Directory.
+2. Under Environment Variables (or in `frontend/index.html` `<meta name="backend-api" content="...">`), specify your Render backend URL:
+   ```
+   SARAL_API_BASE=https://your-backend.onrender.com
+   ```
+3. Deploy! Vercel handles global edge CDN delivery and routing via `vercel.json`.
+
+### Deploy Backend on Render
+1. In Render, select **New > Blueprint** and link your repository (or create a Web Service using `render.yaml`).
+2. Set Root Directory to **`backend`**.
+3. Environment variables:
+   * `PYTHON_VERSION`: `3.11.9`
+   * `GEMINI_MODEL`: `gemini-3.5-flash-lite`
+   * `GEMINI_API_KEY`: Your Google Gemini API Key
+4. Render runs `pip install -r requirements.txt && python scripts/seed_db.py` to auto-seed SQLite FTS5 in ~0.25 seconds, then launches via `gunicorn app:app`.
 
 ---
 
@@ -113,31 +125,35 @@ Saral Niti relies on officially licensed open government data and open-source ci
 Saral-Niti/
 ├── .github/
 │   └── workflows/
-│       └── test.yml         # CI — runs unit tests on every push
+│       └── test.yml           # GitHub Actions CI automated testing
 ├── backend/
 │   ├── data/
-│   │   ├── schemes.json     # Canonical dataset (2,100+ verified schemes)
-│   │   └── schemes.db       # High-speed SQLite + FTS5 database (auto-seeded)
-│   ├── models/              # Scheme data model & validation
-│   ├── routes/              # API blueprints (schemes, search, filter, recommend, detector, chatbot)
-│   ├── scripts/             # Seeding & normalization tools
-│   ├── static/              # CSS + JS assets (monolithic mode)
-│   ├── templates/           # Jinja2 HTML templates
-│   ├── tests/               # Unit test suite (mocked & offline-ready)
-│   ├── app.py               # Flask entry point & REST API
-│   ├── database.py          # SQLite FTS5 engine & collection adapter
-│   ├── Procfile             # Cloud PaaS start command
-│   └── requirements.txt
-├── frontend/                # Standalone frontend (ready for Vercel / Netlify / Cloudflare)
-│   ├── css/                 # Modular CSS stylesheets
-│   ├── js/                  # App logic & chatbot client
-│   └── index.html           # Production-ready static client
-├── docs/
-│   ├── api-reference.md     # Full REST API documentation
-│   └── setup-guide.md       # Step-by-step setup and deployment guide
-├── gov_myscheme_data.csv    # Raw 2,066 scheme source dataset
-├── .env.example             # Template for environment variables
-├── Procfile                 # Root start command for cloud PaaS
+│   │   ├── schemes.json       # Canonical dataset (4,847 verified schemes)
+│   │   └── schemes.db         # Local SQLite + FTS5 search index (auto-generated)
+│   ├── routes/
+│   │   ├── chatbot.py         # Vernacular NLU, Speech RAG & Gemini synthesizer
+│   │   ├── detector.py        # Fraud & scam detector (Gemini 3.5 Flash Lite)
+│   │   ├── filter.py          # Multi-dimensional 6-category filtering engine
+│   │   ├── recommend.py       # Deterministic rules-first eligibility calculator
+│   │   └── schemes.py         # Scheme lookup and search endpoints
+│   ├── scripts/
+│   │   ├── build_frontend.py  # Synchronizes standalone frontend distribution
+│   │   └── seed_db.py         # Fast database seeder
+│   ├── static/                # Monolithic assets (CSS, JS)
+│   ├── templates/             # Jinja2 templates (Schemes explorer, Modals)
+│   ├── tests/
+│   │   └── test_api.py        # Comprehensive test suite (33 unit tests)
+│   ├── app.py                 # Flask REST application entry point
+│   ├── database.py            # SQLite FTS5 thread-local database manager
+│   └── requirements.txt       # Production dependencies (pure Flask, no MongoDB)
+├── frontend/                  # Standalone decoupled frontend (for Vercel)
+│   ├── css/                   # Modular CSS stylesheets
+│   ├── js/                    # Main client & voice chatbot scripts
+│   ├── index.html             # Production-ready static client
+│   └── vercel.json            # Vercel deployment and routing configuration
+├── docs/                      # Documentation
+├── render.yaml                # Render Blueprint deployment configuration
+├── .env.example               # Environment variables template
 ├── .gitignore
 ├── LICENSE
 └── README.md
@@ -149,17 +165,15 @@ Saral-Niti/
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/schemes` | Get all active schemes (2,100+ records) |
-| `GET` | `/api/schemes/:id` | Get scheme by ID or slug |
-| `GET` | `/api/search?q=` | High-speed FTS5 keyword search (<1ms) |
-| `GET` | `/api/filter?category=` | Filter schemes by category |
+| `GET` | `/api/schemes` | Returns active verified schemes |
+| `GET` | `/api/schemes/:id` | Returns single scheme record by ID or slug |
+| `GET` | `/api/search?q=` | High-speed SQLite FTS5 keyword search (<5ms) |
+| `GET` | `/api/filter` | Category or query-param filtering with pagination |
+| `POST` | `/api/filter` | Multi-dimensional filtering across all 6 categories |
 | `POST` | `/api/recommend` | Personalized multi-factor eligibility evaluation |
-| `POST` | `/api/chatbot` | Citizen welfare assistant query |
+| `POST` | `/api/chatbot` | Vernacular code-mixed NLU & RAG welfare assistant |
 | `POST` | `/api/detect-url` | Scam URL detection (Google Gemini Flash Lite) |
 | `POST` | `/api/detect-file` | Document validator (PDF/TXT) |
-| `GET` | `/api/live/schemes` | Live upstream scheme lookup |
-
-See [docs/api-reference.md](docs/api-reference.md) for full request/response schemas.
 
 ---
 
@@ -186,39 +200,41 @@ pip install -r backend/requirements.txt
 ```
 
 **4. Set up environment variables**
-Create `backend/.env` with your Gemini API key:
+Copy `.env.example` to `backend/.env`:
 ```env
 GEMINI_API_KEY="your_google_gemini_api_key_here"
+GEMINI_MODEL="gemini-3.5-flash-lite"
 ```
 
 **5. Start the application**
 ```bash
 python backend/app.py
 ```
-Open **`http://127.0.0.1:5000`** in your browser. The database auto-seeds from `schemes.json` on first run in under 1 second. Zero database configuration required!
+Open **`http://127.0.0.1:5000`** in your browser. The database auto-seeds in under 1 second!
 
 ---
 
 ## 🧪 Testing
 
-The automated test suite runs offline without external dependencies:
+The automated test suite runs completely offline without external cloud dependencies:
 
 ```bash
 python backend/tests/test_api.py
 ```
 
-All **25 unit tests** verify routes, input validation, search performance, and personalization rules.
+All **33 unit tests** verify API routes, input sanitization, multi-dimensional filters, Hinglish NLU, and eligibility evaluation.
 
 ---
 
 ## 🗺️ Roadmap
 
-- [x] Expand database from 50 to 2,100+ central and state schemes
-- [x] Implement rules-first personalized eligibility engine (`/api/recommend`)
-- [x] Eliminate white flash (FOUC) on dark mode toggle
-- [x] Build decoupled frontend distribution for independent hosting
-- [ ] Multilingual support (Hindi + regional languages)
-- [ ] React Native / Flutter mobile application
+- [x] Merge Kaggle & GitHub datasets into 4,847 verified schemes
+- [x] Migrate to high-speed local SQLite FTS5 search
+- [x] Implement multi-dimensional 6-category filtering engine
+- [x] Build voice-enabled vernacular RAG chatbot (Web Speech API + Gemini 3.5 Flash Lite)
+- [x] Decouple frontend for independent Vercel hosting
+- [ ] Add conversational accessibility co-pilot mode with quick-tap slot chips (see `for_future/`)
+- [ ] Direct WhatsApp bot interface for rural citizen outreach
 
 ---
 

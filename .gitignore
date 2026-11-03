@@ -6,6 +6,8 @@ venv
 *.sqlite3
 gov_myscheme_data.csv
 archive/
+for_future/
+for_future*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
