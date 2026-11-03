@@ -1,11 +1,11 @@
 // ══════════════════════════════════════════════════
 //  CONFIG
-//  Automatically handles monolithic, local separate dev, and cloud-separated deployments
+//  Automatically handles monolithic, local dev, and separate deployments
 // ══════════════════════════════════════════════════
 const BACKEND_URL = (typeof window !== 'undefined' && window.SARAL_API_BASE) || (
-  typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? (window.location.port === '5000' ? '' : 'http://127.0.0.1:5000')
-    : (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com') ? '' : 'https://saral-niti-backend.onrender.com')
+  typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') && window.location.port !== '5000'
+    ? 'http://127.0.0.1:5000'
+    : ''
 );
 const SCHEMES_API = BACKEND_URL;
 const ML_API      = BACKEND_URL;

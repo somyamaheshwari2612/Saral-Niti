@@ -5,7 +5,6 @@
 
 **Bridging the gap between citizens and government schemes through a simple, searchable platform.**
 
-[![Live App](https://img.shields.io/badge/Live%20App-Visit%20Now-FF6B00?style=for-the-badge)](https://saral-niti-backend.onrender.com)
 [![Run Tests](https://github.com/somyamaheshwari2612/Saral-Niti/actions/workflows/test.yml/badge.svg)](https://github.com/somyamaheshwari2612/Saral-Niti/actions/workflows/test.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge)](LICENSE)
 
@@ -15,7 +14,6 @@
 [![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white)](https://www.w3.org/Style/CSS/)
 [![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![Gemini](https://img.shields.io/badge/Google%20Gemini-4285F4?style=flat-square&logo=google&logoColor=white)](https://aistudio.google.com/)
-[![Render](https://img.shields.io/badge/Render-46E3B7?style=flat-square&logo=render&logoColor=white)](https://render.com/)
 
 Built with ❤️ by a team of 4 — GLA University, Mathura
 
@@ -26,14 +24,13 @@ Built with ❤️ by a team of 4 — GLA University, Mathura
 ## 📑 Table of Contents
 
 - [About the Project](#-about-the-project)
-- [Live Demo](#-live-demo)
 - [Features](#-features)
 - [Tech Stack](#️-tech-stack)
 - [Team & Responsibilities](#-team--responsibilities)
 - [Project Structure](#-project-structure)
 - [API Endpoints](#-api-endpoints)
 - [Getting Started Locally](#-getting-started-locally)
-- [Deployment (Independent Frontend & Backend)](#-deployment-options)
+- [Deployment Architecture](#-deployment-architecture)
 - [Testing](#-testing)
 - [Roadmap](#-roadmap)
 - [License](#-license)
@@ -48,15 +45,7 @@ India has 3,000+ central and state government welfare schemes — yet a large sh
 - A clean, searchable scheme browser
 - Category-based filtering across 10 sectors
 - A conversational chatbot for guided discovery
-- An AI-powered tool to flag fake scheme URLs and documents
-
----
-
-## 🌐 Live Demo
-
-**🔗 [saral-niti-backend.onrender.com](https://saral-niti-backend.onrender.com)**
-
-> ⚠️ Hosted on Render's free tier — the first request after a period of inactivity may take **~50 seconds** while the server spins up.
+- An AI-powered tool to flag fake scheme URLs and documents using Google Gemini
 
 ---
 
@@ -88,7 +77,7 @@ India has 3,000+ central and state government welfare schemes — yet a large sh
 `Google Gemini API` — `Gemini 2.5/3.5 Flash Lite`
 
 **DevOps & CI/CD**
-`GitHub Actions` · `Render` · `pytest`
+`GitHub Actions` · `pytest`
 
 ---
 
@@ -99,7 +88,7 @@ India has 3,000+ central and state government welfare schemes — yet a large sh
 | **Savita** | Backend Developer | `backend` | Flask app, REST API routes, MongoDB connection |
 | **Aryan Singhal** | Database Engineer | `database` | MongoDB schema design, seed script, data layer, unit tests, CI/CD pipeline |
 | **Dushyant Sharma** | Frontend Developer | `frontend` | UI/UX, modular design system, dark mode, fraud detector UI |
-| **Somya Maheshwari** | Deployment & Integration | `deployment` | Chatbot, Render deployment, repo management |
+| **Somya Maheshwari** | Deployment & Integration | `deployment` | Chatbot, deployment configuration, repo management |
 
 ---
 
@@ -119,9 +108,9 @@ Saral-Niti/
 │   ├── templates/           # Jinja2 HTML templates
 │   ├── tests/               # Unit test suite (mocked & offline-ready)
 │   ├── app.py               # Flask entry point & REST API
-│   ├── Procfile             # Render start command
+│   ├── Procfile             # Cloud PaaS start command
 │   └── requirements.txt
-├── frontend/                # Standalone frontend (Vercel / Netlify / Cloudflare)
+├── frontend/                # Standalone frontend (ready for Vercel / Netlify / Cloudflare)
 │   ├── css/                 # Modular CSS stylesheets
 │   ├── js/                  # App logic & chatbot client
 │   └── index.html           # Production-ready static client
@@ -192,14 +181,23 @@ App will be live at `http://127.0.0.1:5000`
 
 ---
 
-## ☁️ Deployment Options
+## ☁️ Deployment Architecture
 
-### Separate Deployment (Recommended)
-- **Backend on Render:** Point root directory to `backend`, start command `gunicorn app:app`, and set `MONGO_URI` & `GEMINI_API_KEY` in Render environment settings.
-- **Frontend on Vercel / Netlify:** Point root directory to `frontend`, no build command needed. The frontend automatically routes API calls to the live backend.
+Saral Niti is pre-configured for either separate or unified deployment:
+
+### Independent Deployment (Separate Frontend & Backend)
+- **Backend (Render, Railway, Fly.io, Heroku):**
+  - Root directory: `backend`
+  - Start command: `gunicorn app:app`
+  - Environment variables: `MONGO_URI` and `GEMINI_API_KEY`
+- **Frontend (Vercel, Netlify, Cloudflare Pages, GitHub Pages):**
+  - Root directory: `frontend`
+  - Output directory: `.`
+  - Build command: None required (static client)
+  - Configure `window.SARAL_API_BASE` in `index.html` to point to your deployed backend URL.
 
 ### Unified Deployment (Monolithic)
-- Point root directory to repo root or `backend`. Flask serves both the REST API and the integrated UI out of the box.
+- Deploy the repository root or run `python backend/app.py`. Flask serves both the REST API and the integrated UI out of the box.
 
 For detailed steps, refer to [docs/setup-guide.md](docs/setup-guide.md).
 

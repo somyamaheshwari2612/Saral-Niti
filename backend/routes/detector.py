@@ -8,14 +8,7 @@ from dotenv import load_dotenv
 base_dir = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(base_dir, '..', '.env'))
 
-# Optional/guarded imports so app can start even if optional dependencies are not installed
-try:
-    from google import genai
-    GENAI_AVAILABLE = True
-except ImportError:
-    genai = None
-    GENAI_AVAILABLE = False
-
+# Optional import for PDF parsing
 try:
     import pdfplumber
     PDFPLUMBER_AVAILABLE = True
@@ -26,8 +19,8 @@ except ImportError:
 detector_bp = Blueprint('detector', __name__)
 
 def get_api_key():
-    """Retrieve Gemini API Key (supports GROQ_API_KEY as fallback)"""
-    return os.getenv("GEMINI_API_KEY") or os.getenv("GROQ_API_KEY")
+    """Retrieve Google Gemini API Key from environment"""
+    return os.getenv("GEMINI_API_KEY")
 
 def get_model_name():
     """Retrieve Gemini Model Name (defaults to gemini-2.5-flash-lite)"""
@@ -35,63 +28,35 @@ def get_model_name():
     return model.lower().replace(" ", "-")
 
 def call_gemini(prompt):
-    """Generate content with Gemini using official SDK or direct REST API fallback"""
+    """Generate content directly with Google Gemini REST API using requests (no extra SDK needed)"""
     api_key = get_api_key()
     if not api_key:
         return None, "Error: GEMINI_API_KEY is not configured in backend/.env"
 
     model_name = get_model_name()
-
-    # 1. Try official google-genai SDK if installed
-    if GENAI_AVAILABLE and genai is not None:
-        try:
-            client = genai.Client(api_key=api_key)
-            response = client.models.generate_content(
-                model=model_name,
-                contents=prompt
-            )
-            if response and response.text:
-                return response.text, None
-        except Exception:
-            pass  # Fall back to direct REST API
-
-    # 2. Direct REST API via requests (zero extra dependencies required)
-    models_to_try = [model_name]
-    for fallback in ["gemini-2.5-flash-lite", "gemini-2.0-flash-lite", "gemini-1.5-flash"]:
-        if fallback not in models_to_try:
-            models_to_try.append(fallback)
-
-    last_error = None
-    for model in models_to_try:
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent?key={api_key}"
-        headers = {"Content-Type": "application/json"}
-        payload = {
-            "contents": [{
-                "parts": [{"text": prompt}]
-            }],
-            "generationConfig": {
-                "temperature": 0.2
-            }
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+    headers = {"Content-Type": "application/json"}
+    payload = {
+        "contents": [{
+            "parts": [{"text": prompt}]
+        }],
+        "generationConfig": {
+            "temperature": 0.2
         }
-        try:
-            res = requests.post(url, headers=headers, json=payload, timeout=20)
-            if res.status_code == 200:
-                data = res.json()
-                candidates = data.get("candidates", [])
-                if candidates and "content" in candidates[0]:
-                    parts = candidates[0]["content"].get("parts", [])
-                    if parts and "text" in parts[0]:
-                        return parts[0]["text"], None
-            elif res.status_code == 404:
-                last_error = f"Model '{model}' not found on Gemini API."
-                continue
-            else:
-                err_data = res.json().get("error", {})
-                last_error = err_data.get("message", res.text)
-        except Exception as e:
-            last_error = str(e)
-
-    return None, f"Error: {last_error or 'Failed to generate response from Gemini'}"
+    }
+    try:
+        res = requests.post(url, headers=headers, json=payload, timeout=20)
+        if res.status_code == 200:
+            data = res.json()
+            candidates = data.get("candidates", [])
+            if candidates and "content" in candidates[0]:
+                parts = candidates[0]["content"].get("parts", [])
+                if parts and "text" in parts[0]:
+                    return parts[0]["text"], None
+        err_data = res.json().get("error", {})
+        return None, f"Error from Gemini API: {err_data.get('message', res.text)}"
+    except Exception as e:
+        return None, f"Error connecting to Gemini API: {str(e)}"
 
 
 def parse_verdict(text):

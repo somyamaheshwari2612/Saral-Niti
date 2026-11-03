@@ -2,8 +2,8 @@
 
 The Saral Niti backend provides RESTful endpoints for scheme discovery, keyword search, sector filtering, rule-based chatbot assistance, and AI fraud detection.
 
-Base URL (Production): `https://saral-niti-backend.onrender.com`  
-Base URL (Local): `http://127.0.0.1:5000`
+Base URL (Local): `http://127.0.0.1:5000`  
+Base URL (Production): `https://<your-backend-domain>`
 
 ---
 

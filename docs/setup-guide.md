@@ -97,9 +97,8 @@ Saral Niti is engineered to deploy the backend API and the frontend client indep
 - **Build Command:** None (pure HTML/CSS/JS)
 - **Output Directory:** `.` (root of frontend folder)
 - **API Auto-Connection:**
-  The frontend automatically connects to `https://saral-niti-backend.onrender.com` in production and `http://127.0.0.1:5000` in local development.
-  To point to a custom backend domain, simply add a config tag in `frontend/index.html` `<head>`:
+  The frontend automatically connects to `http://127.0.0.1:5000` in local development. When deployed on a separate host (e.g. Vercel), set `window.SARAL_API_BASE` in `frontend/index.html` to your deployed backend URL:
   ```html
-  <script>window.SARAL_API_BASE = "https://your-custom-backend.com";</script>
+  <script>window.SARAL_API_BASE = "https://your-backend-service.com";</script>
   ```
 
