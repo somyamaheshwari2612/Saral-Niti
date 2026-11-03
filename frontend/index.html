@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-QY0NLP9X1P"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-QY0NLP9X1P');
+</script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Saral Niti — Government Scheme Discovery</title>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+<link rel="stylesheet" href="./css/main.css"></head>
+<body id="base">
+
+ <!-- ══════════════ TOP TRICOLOR BAR ══════════════ -->
+<div class="tricolor-strip">
+  <div class="strip-saffron"></div>
+  <div class="strip-white"></div>
+  <div class="strip-green"></div>
+</div>
+
+<!-- ══════════════ NAVBAR ══════════════ -->
+<header class="navbar-wrapper">
+  <nav class="nav-container">
+    <a href="#" class="logo">
+      <div class="logo-icon">
+        <span>स</span>
+      </div>
+      <div class="logo-brand">
+        <span class="logo-title">Saral<span>Niti</span></span>
+        <span class="logo-sub">Citizen Welfare Portal</span>
+      </div>
+    </a>
+
+    <ul class="nav-links">
+      <li><a href="#base" class="nav-link active">Home</a></li>
+      <li><a href="#schemes" class="nav-link" onclick="filterByCategory('all', document.querySelector('.filter-btn'))">Browse Schemes</a></li>
+      <li><a href="#Contact" class="nav-link">About</a></li>
+      <li>
+        <button class="nav-detector-btn" onclick="openDetector()">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>Scam Detector</span>
+          <span class="ai-pill">AI</span>
+        </button>
+      </li>
+      <li>
+        <div class="dark-toggle" onclick="toggleDarkMode()" title="Toggle Dark/Light Mode">
+          <i class="fa-solid fa-moon" id="darkIcon"></i>
+          <div class="toggle-switch">
+            <div class="toggle-ball"></div>
+          </div>
+        </div>
+      </li>
+    </ul>
+
+    <button class="hamburger" onclick="toggleMenu()" id="hamburgerBtn" aria-label="Toggle Navigation Menu">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+</header>
+ 
+ <!-- ══════════════ HERO SECTION ══════════════ -->
+<section class="hero">
+  <div class="hero-container">
+    <div class="hero-badge">
+      <span class="badge-dot"></span>
+      <span>National Welfare Portal • Direct Benefit Discovery</span>
+    </div>
+
+    <h1 class="hero-headline">
+      Find the Right <span class="highlight-text">Government Scheme</span><br>
+      For You & Your Family
+    </h1>
+
+    <p class="hero-subtitle">
+      Explore verified central and state welfare initiatives across agriculture, healthcare, education, and entrepreneurship with zero paperwork hurdles.
+    </p>
+
+    <!-- SEARCH BAR -->
+    <div class="search-wrapper">
+      <div class="search-box">
+        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+        <input 
+          type="text" 
+          id="searchInput" 
+          placeholder="Search by scheme name, ministry, or keyword (e.g. farmer, student, health)..."
+          autocomplete="off"
+        />
+        <button class="search-btn" onclick="handleSearch()" aria-label="Search schemes">
+          <span>Search</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+
+      <!-- TRENDING CHIPS -->
+      <div class="trending-searches">
+        <span class="trending-label"><i class="fa-solid fa-fire"></i> Popular:</span>
+        <button class="trend-chip" onclick="quickSearch('farmer')">🌾 PM Kisan</button>
+        <button class="trend-chip" onclick="quickSearch('ayushman')">🏥 Ayushman Bharat</button>
+        <button class="trend-chip" onclick="quickSearch('scholarship')">📚 Scholarships</button>
+        <button class="trend-chip" onclick="quickSearch('women')">👩 Women Welfare</button>
+        <button class="trend-chip" onclick="quickSearch('housing')">🏠 Awas Yojana</button>
+      </div>
+    </div>
+
+    <!-- STATS GRID -->
+    <div class="stats-grid">
+      <div class="stat-card">
+        <div class="stat-icon-wrap saffron">
+          <i class="fa-solid fa-file-shield"></i>
+        </div>
+        <div>
+          <div class="stat-number" id="totalCount">50+</div>
+          <div class="stat-title">Active Schemes</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon-wrap blue">
+          <i class="fa-solid fa-layer-group"></i>
+        </div>
+        <div>
+          <div class="stat-number">10</div>
+          <div class="stat-title">Target Sectors</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon-wrap green">
+          <i class="fa-solid fa-circle-check"></i>
+        </div>
+        <div>
+          <div class="stat-number">100%</div>
+          <div class="stat-title">Official & Free</div>
+        </div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-icon-wrap purple">
+          <i class="fa-solid fa-robot"></i>
+        </div>
+        <div>
+          <div class="stat-number">AI Powered</div>
+          <div class="stat-title">Fraud Protection</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+ <!-- ══════════════ SCHEMES EXPLORER SECTION ══════════════ -->
+<main class="main" id="schemes">
+  <div class="section-header">
+    <div class="section-heading">
+      <div class="section-badge">
+        <i class="fa-solid fa-shapes"></i> Category Directory
+      </div>
+      <h2 class="section-title">Explore Welfare Schemes by Sector</h2>
+      <p class="section-sub">Filter verified government initiatives tailored to your demographic and sector needs</p>
+    </div>
+  </div>
+
+  <!-- CATEGORY FILTERS -->
+  <div class="filters-scroll-wrap">
+    <div class="filters">
+      <button class="filter-btn active" onclick="filterByCategory('all', this)">
+        <span>✨ All Categories</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('agriculture', this)">
+        <span>🌾 Agriculture</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('health', this)">
+        <span>🏥 Healthcare</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('education', this)">
+        <span>📚 Education</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('housing', this)">
+        <span>🏠 Housing</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('employment', this)">
+        <span>💼 Employment</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('women', this)">
+        <span>👩 Women & Child</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('financial', this)">
+        <span>💰 Financial Aid</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('elderly', this)">
+        <span>👴 Senior Citizens</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('youth', this)">
+        <span>🧑 Youth & Skill</span>
+      </button>
+      <button class="filter-btn" onclick="filterByCategory('disability', this)">
+        <span>♿ Divyangjan</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- RESULTS META BAR -->
+  <div class="results-bar">
+    <div class="results-count" id="resultsCount">
+      <i class="fa-solid fa-circle-notch fa-spin"></i> Discovering schemes...
+    </div>
+    <div class="results-actions">
+      <button class="reset-filter-btn" id="resetBtn" onclick="resetFilters()" style="display:none;">
+        <i class="fa-solid fa-rotate-left"></i> Reset Filter
+      </button>
+    </div>
+  </div>
+
+  <!-- SCHEMES GRID WITH SKELETON PLACEHOLDERS -->
+  <div id="schemesGrid" class="schemes-grid">
+    <!-- 6 Skeleton cards loaded while initial data fetches -->
+    <div class="scheme-skeleton-card">
+      <div class="skeleton" style="height:22px; width:90px; border-radius:12px; margin-bottom:16px;"></div>
+      <div class="skeleton" style="height:24px; width:80%; margin-bottom:12px;"></div>
+      <div class="skeleton" style="height:14px; width:100%; margin-bottom:8px;"></div>
+      <div class="skeleton" style="height:14px; width:70%; margin-bottom:20px;"></div>
+      <div class="skeleton" style="height:44px; width:100%; border-radius:10px; margin-bottom:20px;"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="skeleton" style="height:14px; width:45%;"></div>
+        <div class="skeleton" style="height:32px; width:80px; border-radius:8px;"></div>
+      </div>
+    </div>
+    <div class="scheme-skeleton-card">
+      <div class="skeleton" style="height:22px; width:90px; border-radius:12px; margin-bottom:16px;"></div>
+      <div class="skeleton" style="height:24px; width:80%; margin-bottom:12px;"></div>
+      <div class="skeleton" style="height:14px; width:100%; margin-bottom:8px;"></div>
+      <div class="skeleton" style="height:14px; width:70%; margin-bottom:20px;"></div>
+      <div class="skeleton" style="height:44px; width:100%; border-radius:10px; margin-bottom:20px;"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="skeleton" style="height:14px; width:45%;"></div>
+        <div class="skeleton" style="height:32px; width:80px; border-radius:8px;"></div>
+      </div>
+    </div>
+    <div class="scheme-skeleton-card">
+      <div class="skeleton" style="height:22px; width:90px; border-radius:12px; margin-bottom:16px;"></div>
+      <div class="skeleton" style="height:24px; width:80%; margin-bottom:12px;"></div>
+      <div class="skeleton" style="height:14px; width:100%; margin-bottom:8px;"></div>
+      <div class="skeleton" style="height:14px; width:70%; margin-bottom:20px;"></div>
+      <div class="skeleton" style="height:44px; width:100%; border-radius:10px; margin-bottom:20px;"></div>
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div class="skeleton" style="height:14px; width:45%;"></div>
+        <div class="skeleton" style="height:32px; width:80px; border-radius:8px;"></div>
+      </div>
+    </div>
+  </div>
+</main>
+ 
+ <!-- ══════════════ MODERN FOOTER ══════════════ -->
+<footer class="footer-wrap" id="Contact">
+  <div class="footer-container">
+    <div class="footer-grid">
+   
+      <!-- Brand & Mission -->
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <div class="logo-icon mini"><span>स</span></div>
+          <h2><span>Saral</span> Niti</h2>
+        </div>
+        <p class="tagline">Empowering Indian citizens with simple, transparent, and verified access to central and state welfare schemes.</p>
+        <div class="brand-badges">
+          <span class="badge-flag">🇮🇳 Digital India</span>
+          <span class="badge-open">Open Welfare</span>
+        </div>
+        <a class="social-btn" href="https://github.com/somyamaheshwari2612/Saral-Niti.git" target="_blank" rel="noopener noreferrer">
+          <i class="fa-brands fa-github"></i>
+          <span>View on GitHub</span>
+        </a>
+      </div>
+   
+      <!-- Quick Navigation -->
+      <div class="footer-col">
+        <h3>Platform Links</h3>
+        <ul>
+          <li><a href="#base">Home Portal</a></li>
+          <li><a href="#schemes">Browse All Schemes</a></li>
+          <li><a href="#" onclick="openDetector(); return false;">AI Scam Verifier</a></li>
+          <li><a href="javascript:void(0)" onclick="toggleChat()">Chat with Assistant</a></li>
+        </ul>
+      </div>
+   
+      <!-- Official Government Portals -->
+      <div class="footer-col">
+        <h3>Official Portals</h3>
+        <div class="useful-links-grid">
+          <a href="https://india.gov.in" target="_blank" rel="noopener noreferrer" class="link-badge flag">
+            <span>india.gov.in</span>
+          </a>
+          <a href="https://mygov.in" target="_blank" rel="noopener noreferrer" class="link-badge gov">
+            <span>MyGov</span>
+          </a>
+          <a href="https://data.gov.in" target="_blank" rel="noopener noreferrer" class="link-badge blue">
+            <span>data.gov.in</span>
+          </a>
+          <a href="https://myscheme.gov.in" target="_blank" rel="noopener noreferrer" class="link-badge purple">
+            <span>myScheme</span>
+          </a>
+          <a href="https://digilocker.gov.in" target="_blank" rel="noopener noreferrer" class="link-badge blue">
+            <span>DigiLocker</span>
+          </a>
+          <a href="https://web.umang.gov.in" target="_blank" rel="noopener noreferrer" class="link-badge gov">
+            <span>UMANG</span>
+          </a>
+        </div>
+      </div>
+   
+      <!-- Contact / Development -->
+      <div class="footer-col">
+        <h3>Developed By</h3>
+        <p class="contact-info">
+          GLA University, Mathura<br>
+          Department of Computer Engineering
+        </p>
+        <a class="contact-email" href="mailto:dushyantsharma1937@gmail.com">
+          <i class="fa-solid fa-envelope"></i> dushyantsharma1937@gmail.com
+        </a>
+        <div class="disclaimer-note">
+          Saral Niti is an independent citizen discovery platform. Always verify final guidelines on respective ministry websites.
+        </div>
+      </div>
+   
+    </div>
+   
+    <!-- Bottom Bar -->
+    <div class="footer-bottom">
+      <span>© 2026 Saral Niti — Made with ❤️ for the Citizens of India 🇮🇳</span>
+      <div class="footer-bottom-links">
+        <a href="#base">Back to Top ↑</a>
+      </div>
+    </div>
+  </div>
+</footer>
+<!-- ══════════════ SCHEME DETAIL MODAL ══════════════ -->
+<div class="modal-overlay" id="modalOverlay" onclick="closeModalOnOverlay(event)" role="dialog" aria-modal="true">
+  <div class="modal">
+    <div class="modal-header">
+      <button class="modal-close" onclick="closeModal()" aria-label="Close modal">✕</button>
+      <div class="modal-category" id="modalCategory"></div>
+      <h2 class="modal-title" id="modalTitle"></h2>
+      <div class="modal-ministry" id="modalMinistry"></div>
+    </div>
+    
+    <div class="modal-body">
+      <!-- ABOUT -->
+      <div class="modal-section">
+        <div class="modal-section-title"><i class="fa-solid fa-circle-info"></i> About this Scheme</div>
+        <div class="modal-desc" id="modalDesc"></div>
+      </div>
+
+      <!-- BENEFITS -->
+      <div class="modal-section">
+        <div class="modal-section-title"><i class="fa-solid fa-gift"></i> Key Benefits</div>
+        <div class="benefit-box" id="modalBenefits"></div>
+      </div>
+
+      <!-- ELIGIBILITY -->
+      <div class="modal-section">
+        <div class="modal-section-title"><i class="fa-solid fa-id-card"></i> Eligibility Criteria</div>
+        <div class="eligibility-grid" id="modalEligibility"></div>
+      </div>
+
+      <!-- TAGS -->
+      <div class="modal-section">
+        <div class="modal-section-title"><i class="fa-solid fa-tags"></i> Related Tags</div>
+        <div class="tags-wrap" id="modalTags"></div>
+      </div>
+    </div>
+
+    <!-- FOOTER WITH SHARE & APPLY -->
+    <div class="modal-footer">
+      <a href="#" id="modalApplyBtn" target="_blank" rel="noopener noreferrer" class="btn-primary">
+        <span>Apply on Official Portal</span>
+        <i class="fa-solid fa-arrow-up-right-from-square"></i>
+      </a>
+      <button class="btn-whatsapp" onclick="shareOnWhatsApp()" title="Share Scheme on WhatsApp">
+        <i class="fa-brands fa-whatsapp"></i>
+        <span>Share</span>
+      </button>
+      <button class="btn-secondary" onclick="closeModal()">Close</button>
+    </div>
+  </div>
+</div>
+<!-- ══════════════ URL DETECTOR MODAL ══════════════ -->
+<div class="det-overlay" id="detOverlay" onclick="closeDetectorOnOverlay(event)">
+  <div class="det-modal">
+
+    <div class="det-header">
+      <button class="det-header-close" onclick="closeDetector()">✕</button>
+      <div class="det-header-badge"><i class="fa-solid fa-shield-halved"></i> AI Security Tool</div>
+      <h2>🔍 URL & Document Detector</h2>
+      <p>Check if a government scheme URL is real or fake, and scan documents for scam content</p>
+    </div>
+
+    <div class="det-tabs">
+      <button class="det-tab active" id="tab-url" onclick="switchDetectorTab('url')">
+        <i class="fa-solid fa-link"></i> URL Checker
+      </button>
+      <button class="det-tab" id="tab-file" onclick="switchDetectorTab('file')">
+        <i class="fa-solid fa-file-shield"></i> Document Validator
+      </button>
+    </div>
+
+    <div class="det-body">
+
+      <!-- URL PANEL -->
+      <div class="det-panel active" id="panel-url">
+        <label class="det-label" for="urlInput">
+          <i class="fa-solid fa-globe"></i>&nbsp; Enter a URL to verify:
+        </label>
+        <input type="text" id="urlInput" class="det-input"
+          placeholder="e.g. https://pmkisan.gov.in or http://pm-kisan-free.com" />
+        <button class="det-btn" id="urlBtn" onclick="analyzeURL()">
+          <i class="fa-solid fa-magnifying-glass"></i> Classify URL
+        </button>
+        <div class="det-spinner-row" id="urlSpinner">
+          <div class="det-mini-spinner"></div>
+          <span class="det-spinner-text">Analyzing URL with AI... please wait</span>
+        </div>
+        <div class="det-result" id="urlResult">
+          <div class="det-result-heading">Analysis Result</div>
+          <div class="det-result-box" id="urlResultBox"></div>
+          <p class="det-note">⚠️ AI-generated result. Always cross-check with official government portals.</p>
+        </div>
+      </div>
+
+      <!-- FILE PANEL -->
+      <div class="det-panel" id="panel-file">
+        <label class="det-label">
+          <i class="fa-solid fa-file-pdf"></i>&nbsp; Upload a document to scan:
+        </label>
+        <div class="det-file-area" onclick="document.getElementById('fileInput').click()">
+          <input type="file" id="fileInput" accept=".pdf,.txt" onchange="onFileSelected(this)">
+          <div class="det-file-icon">📄</div>
+          <div class="det-file-text">Click to upload or drag a file here<br><span>PDF or TXT only</span></div>
+          <div class="det-file-name" id="fileName"></div>
+        </div>
+        <button class="det-btn" id="fileBtn" onclick="analyzeFile()">
+          <i class="fa-solid fa-upload"></i> Analyze Document
+        </button>
+        <div class="det-spinner-row" id="fileSpinner">
+          <div class="det-mini-spinner"></div>
+          <span class="det-spinner-text">Reading and analyzing document... please wait</span>
+        </div>
+        <div class="det-result" id="fileResult">
+          <div class="det-result-heading">Analysis Result</div>
+          <div class="det-result-box" id="fileResultBox"></div>
+          <p class="det-note">⚠️ AI-generated result. Verify with official sources before taking action.</p>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+  <script src="./js/main.js"></script>
+  <script src="./js/chatbot.js"></script>
+
+</body>
+</html>

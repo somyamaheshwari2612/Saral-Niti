@@ -1,9 +1,12 @@
 import json
 import os
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from pymongo import MongoClient, TEXT
 from dotenv import load_dotenv
+
+# Ensure backend root is in sys.path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 # Load .env file
 load_dotenv(dotenv_path=os.path.join(os.path.dirname(__file__), '..', '.env'))
@@ -26,9 +29,10 @@ with open(data_path, "r", encoding="utf-8") as f:
     schemes = json.load(f)
 
 # Add timestamps to each document
+now = datetime.now(timezone.utc)
 for scheme in schemes:
-    scheme["created_at"] = datetime.utcnow()
-    scheme["updated_at"] = datetime.utcnow()
+    scheme["created_at"] = now
+    scheme["updated_at"] = now
 
 # Clear old data and insert fresh
 print("Deleting old data...")
@@ -61,4 +65,4 @@ categories = collection.distinct("category")
 print(f"Categories found: {categories}")
 
 client.close()
-print("\nDone! Database is ready for Person 2.")
+print("\nDone! Database seeded successfully.")

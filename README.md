@@ -12,7 +12,8 @@
 [![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white)](https://www.python.org/)
 [![Flask](https://img.shields.io/badge/Flask-000000?style=flat-square&logo=flask&logoColor=white)](https://flask.palletsprojects.com/)
 [![MongoDB](https://img.shields.io/badge/MongoDB-47A248?style=flat-square&logo=mongodb&logoColor=white)](https://www.mongodb.com/atlas)
-[![Bootstrap](https://img.shields.io/badge/Bootstrap-7952B3?style=flat-square&logo=bootstrap&logoColor=white)](https://getbootstrap.com/)
+[![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat-square&logo=css3&logoColor=white)](https://www.w3.org/Style/CSS/)
+[![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat-square&logo=javascript&logoColor=black)](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
 [![Groq](https://img.shields.io/badge/Groq%20AI-F55036?style=flat-square&logo=lightning&logoColor=white)](https://groq.com/)
 [![Render](https://img.shields.io/badge/Render-46E3B7?style=flat-square&logo=render&logoColor=white)](https://render.com/)
 
@@ -32,6 +33,7 @@ Built with ❤️ by a team of 4 — GLA University, Mathura
 - [Project Structure](#-project-structure)
 - [API Endpoints](#-api-endpoints)
 - [Getting Started Locally](#-getting-started-locally)
+- [Deployment (Independent Frontend & Backend)](#-deployment-options)
 - [Testing](#-testing)
 - [Roadmap](#-roadmap)
 - [License](#-license)
@@ -44,7 +46,7 @@ India has 3,000+ central and state government welfare schemes — yet a large sh
 
 **Saral Niti** (Hindi for *"Simple Policy"*) solves this by offering:
 - A clean, searchable scheme browser
-- Category-based filtering
+- Category-based filtering across 10 sectors
 - A conversational chatbot for guided discovery
 - An AI-powered tool to flag fake scheme URLs and documents
 
@@ -74,10 +76,10 @@ India has 3,000+ central and state government welfare schemes — yet a large sh
 ## 🛠️ Tech Stack
 
 **Frontend**
-`HTML5` · `CSS3` · `Bootstrap 5` · `Vanilla JavaScript`
+`HTML5` · `Modular CSS3` · `Vanilla JavaScript (ES6+)`
 
 **Backend**
-`Python 3` · `Flask` · `Flask-Blueprints` · `Gunicorn`
+`Python 3` · `Flask` · `Flask-CORS` · `Gunicorn`
 
 **Database**
 `MongoDB Atlas` · `PyMongo`
@@ -85,8 +87,8 @@ India has 3,000+ central and state government welfare schemes — yet a large sh
 **AI / LLM**
 `Groq API` — `LLaMA 3.3 70B`
 
-**DevOps**
-`GitHub Actions (CI)` · `Render` · `pytest`
+**DevOps & CI/CD**
+`GitHub Actions` · `Render` · `pytest`
 
 ---
 
@@ -96,7 +98,7 @@ India has 3,000+ central and state government welfare schemes — yet a large sh
 |---|---|---|---|
 | **Savita** | Backend Developer | `backend` | Flask app, REST API routes, MongoDB connection |
 | **Aryan Singhal** | Database Engineer | `database` | MongoDB schema design, seed script, data layer, unit tests, CI/CD pipeline |
-| **Dushyant Sharma** | Frontend Developer | `frontend` | UI/UX, Bootstrap components, dark mode, fraud detector UI |
+| **Dushyant Sharma** | Frontend Developer | `frontend` | UI/UX, modular design system, dark mode, fraud detector UI |
 | **Somya Maheshwari** | Deployment & Integration | `deployment` | Chatbot, Render deployment, repo management |
 
 ---
@@ -107,19 +109,27 @@ India has 3,000+ central and state government welfare schemes — yet a large sh
 Saral-Niti/
 ├── .github/
 │   └── workflows/
-│       └── test.yml         # CI — runs pytest on every push
+│       └── test.yml         # CI — runs unit tests on every push
 ├── backend/
-│   ├── data/                 # JSON dataset (local backup of schemes)
-│   ├── models/                # Database schema definitions
-│   ├── routes/                 # API route blueprints
-│   ├── scripts/                 # DB seed scripts
-│   ├── static/                  # CSS + JS assets
-│   ├── templates/               # Jinja2 HTML templates
-│   ├── tests/                   # pytest unit tests
-│   ├── app.py                   # Flask entry point
-│   ├── Procfile                 # Render start command
+│   ├── data/                # JSON dataset (backup of schemes)
+│   ├── models/              # Scheme data model & validation
+│   ├── routes/              # API blueprints (schemes, search, filter, detector, chatbot)
+│   ├── scripts/             # Database seed script (seed_db.py)
+│   ├── static/              # CSS + JS assets (monolithic mode)
+│   ├── templates/           # Jinja2 HTML templates
+│   ├── tests/               # Unit test suite (mocked & offline-ready)
+│   ├── app.py               # Flask entry point & REST API
+│   ├── Procfile             # Render start command
 │   └── requirements.txt
-├── docs/                     # API docs + setup guide
+├── frontend/                # Standalone frontend (Vercel / Netlify / Cloudflare)
+│   ├── css/                 # Modular CSS stylesheets
+│   ├── js/                  # App logic & chatbot client
+│   └── index.html           # Production-ready static client
+├── docs/
+│   ├── api-reference.md     # Full REST API documentation
+│   └── setup-guide.md       # Step-by-step setup and deployment guide
+├── .env.example             # Template for environment variables
+├── Procfile                 # Root start command for cloud PaaS
 ├── .gitignore
 ├── LICENSE
 └── README.md
@@ -131,13 +141,16 @@ Saral-Niti/
 
 | Method | Endpoint | Description |
 |---|---|---|
-| `GET` | `/api/schemes` | Get all schemes |
-| `GET` | `/api/schemes/:id` | Get one scheme by ID |
+| `GET` | `/api/schemes` | Get all active schemes |
+| `GET` | `/api/schemes/:id` | Get scheme by MongoDB ObjectId |
 | `GET` | `/api/search?q=` | Search schemes by keyword |
 | `GET` | `/api/filter?category=` | Filter schemes by category |
-| `POST` | `/api/chatbot` | Chatbot reply |
-| `POST` | `/api/detect-url` | Fake URL detector |
-| `POST` | `/api/detect-file` | Fake document detector |
+| `POST` | `/api/chatbot` | Chatbot assistance query |
+| `POST` | `/api/detect-url` | Scam URL detection (Groq LLaMA 3.3 70B) |
+| `POST` | `/api/detect-file` | Document validator (PDF/TXT) |
+| `GET` | `/api/live/schemes` | Live upstream scheme lookup |
+
+See [docs/api-reference.md](docs/api-reference.md) for full request/response schemas.
 
 ---
 
@@ -146,41 +159,64 @@ Saral-Niti/
 **1. Clone the repository**
 ```bash
 git clone https://github.com/somyamaheshwari2612/Saral-Niti.git
-cd Saral-Niti/backend
+cd Saral-Niti
 ```
 
-**2. Install dependencies**
+**2. Create virtual environment & install dependencies**
 ```bash
-pip install -r requirements.txt
+python -m venv venv
+# Windows:
+.\venv\Scripts\activate
+# Linux/macOS:
+source venv/bin/activate
+
+pip install -r backend/requirements.txt
 ```
 
-**3. Set up environment variables**
-
-Create a `.env` file in the `backend/` folder:
-```env
-MONGO_URI=your_mongodb_atlas_connection_string
-GROQ_API_KEY=your_groq_api_key
-```
-
-**4. Run the app**
+**3. Configure environment variables**
 ```bash
-python app.py
+cp .env.example backend/.env
+```
+Fill in your `MONGO_URI` and `GROQ_API_KEY`.
+
+**4. Seed the database**
+```bash
+python backend/scripts/seed_db.py
 ```
 
+**5. Run the server**
+```bash
+python backend/app.py
+```
 App will be live at `http://127.0.0.1:5000`
 
-> 💡 If MongoDB connection fails, check that your network allows port `27017` — some college/office WiFi networks block it. Try a mobile hotspot or VPN.
+---
+
+## ☁️ Deployment Options
+
+### Separate Deployment (Recommended)
+- **Backend on Render:** Point root directory to `backend`, start command `gunicorn app:app`, and set `MONGO_URI` & `GROQ_API_KEY` in Render environment settings.
+- **Frontend on Vercel / Netlify:** Point root directory to `frontend`, no build command needed. The frontend automatically routes API calls to the live backend.
+
+### Unified Deployment (Monolithic)
+- Point root directory to repo root or `backend`. Flask serves both the REST API and the integrated UI out of the box.
+
+For detailed steps, refer to [docs/setup-guide.md](docs/setup-guide.md).
 
 ---
 
 ## 🧪 Testing
 
-Unit tests are written with **pytest** and run automatically via **GitHub Actions** on every push to `main`.
+Unit tests run with in-memory database mocking so they execute deterministically offline and in GitHub Actions CI:
 
-Run tests locally:
 ```bash
 cd backend
 python -m pytest tests/test_api.py -v
+```
+
+Or run directly without pytest:
+```bash
+python backend/tests/test_api.py
 ```
 
 ---
@@ -188,9 +224,8 @@ python -m pytest tests/test_api.py -v
 ## 🗺️ Roadmap
 
 - [ ] Expand database from 50 to 700+ schemes
-- [ ] Live API integration (Data.gov.in)
 - [ ] Multilingual support (Hindi + regional languages)
-- [ ] Personalized eligibility checker
+- [ ] Personalized eligibility calculator
 - [ ] React Native / Flutter mobile app
 - [ ] State-level scheme coverage
 

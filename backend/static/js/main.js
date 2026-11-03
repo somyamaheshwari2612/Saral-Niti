@@ -1,9 +1,14 @@
 // ══════════════════════════════════════════════════
 //  CONFIG
-//  Using relative URLs so local and production hosts work automatically
+//  Automatically handles monolithic, local separate dev, and cloud-separated deployments
 // ══════════════════════════════════════════════════
-const SCHEMES_API = '';
-const ML_API      = '';
+const BACKEND_URL = (typeof window !== 'undefined' && window.SARAL_API_BASE) || (
+  typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? (window.location.port === '5000' ? '' : 'http://127.0.0.1:5000')
+    : (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com') ? '' : 'https://saral-niti-backend.onrender.com')
+);
+const SCHEMES_API = BACKEND_URL;
+const ML_API      = BACKEND_URL;
 
 let allSchemes = [];
 let currentSchemesList = [];

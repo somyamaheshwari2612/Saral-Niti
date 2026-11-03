@@ -1,7 +1,11 @@
 // frontend/js/chatbot.js
 // Saral Niti — Modern Citizen Chatbot Assistant
 
-const BACKEND_URL = "";
+const BACKEND_URL = (typeof window !== 'undefined' && window.SARAL_API_BASE) || (
+  typeof window !== 'undefined' && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+    ? (window.location.port === '5000' ? '' : 'http://127.0.0.1:5000')
+    : (typeof window !== 'undefined' && window.location.hostname.includes('onrender.com') ? '' : 'https://saral-niti-backend.onrender.com')
+);
 
 function initChatbot() {
   const chatHTML = `

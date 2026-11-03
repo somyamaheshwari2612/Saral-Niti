@@ -1,0 +1,104 @@
+# 🛠️ Saral Niti — Local Setup & Deployment Guide
+
+This guide walks through setting up **Saral Niti** locally, seeding the database, and deploying the backend and frontend separately or as a unified app.
+
+---
+
+## 📋 Prerequisites
+
+- **Python 3.10+** (Tested on Python 3.11, 3.12, 3.14)
+- **MongoDB Atlas** account (or local MongoDB server on `localhost:27017`)
+- **Groq API Key** (Free from [console.groq.com](https://console.groq.com/keys)) for LLaMA 3.3 70B scam detection
+
+---
+
+## 💻 1. Local Full-Stack Setup (Monolithic)
+
+In monolithic mode, the Flask server hosts both the REST API and the citizen UI at `http://127.0.0.1:5000`.
+
+### Step 1: Clone the Repository
+```bash
+git clone https://github.com/somyamaheshwari2612/Saral-Niti.git
+cd Saral-Niti
+```
+
+### Step 2: Set Up Virtual Environment & Dependencies
+```bash
+python -m venv venv
+
+# Windows (PowerShell)
+.\venv\Scripts\Activate.ps1
+
+# Linux / macOS
+source venv/bin/activate
+
+pip install -r backend/requirements.txt
+```
+
+### Step 3: Configure Environment Variables
+Copy `.env.example` into `backend/.env`:
+```bash
+cp .env.example backend/.env
+```
+Open `backend/.env` and update:
+```env
+MONGO_URI=mongodb+srv://<username>:<password>@<cluster-url>/saral_niti_db?retryWrites=true&w=majority
+GROQ_API_KEY=gsk_your_groq_api_key_here
+FLASK_ENV=development
+PORT=5000
+```
+
+### Step 4: Seed the Database
+Populate the 50 government schemes into your MongoDB Atlas cluster:
+```bash
+python backend/scripts/seed_db.py
+```
+
+### Step 5: Start the Development Server
+```bash
+python backend/app.py
+```
+Open `http://127.0.0.1:5000` in your web browser.
+
+---
+
+## 🧪 2. Running Tests
+
+Unit tests run without requiring a live database connection thanks to built-in mocking:
+```bash
+# Via pytest
+cd backend
+python -m pytest tests/test_api.py -v
+
+# Or directly via Python
+python tests/test_api.py
+```
+
+---
+
+## 🚀 3. Separate Deployment Architecture
+
+Saral Niti is engineered to deploy the backend API and the frontend client independently.
+
+### A. Backend Deployment (Render / Railway)
+- **Platform:** Render Web Service (or Railway)
+- **Root Directory:** `backend` (or repo root with `Procfile`)
+- **Runtime:** Python 3
+- **Build Command:** `pip install -r requirements.txt`
+- **Start Command:** `gunicorn app:app`
+- **Environment Variables on Render:**
+  - `MONGO_URI`: Your production MongoDB Atlas connection string
+  - `GROQ_API_KEY`: Your Groq API key
+
+### B. Frontend Deployment (Vercel / Netlify / Cloudflare Pages)
+- **Platform:** Vercel, Netlify, or GitHub Pages
+- **Root Directory:** `frontend`
+- **Build Command:** None (pure HTML/CSS/JS)
+- **Output Directory:** `.` (root of frontend folder)
+- **API Auto-Connection:**
+  The frontend automatically connects to `https://saral-niti-backend.onrender.com` in production and `http://127.0.0.1:5000` in local development.
+  To point to a custom backend domain, simply add a config tag in `frontend/index.html` `<head>`:
+  ```html
+  <script>window.SARAL_API_BASE = "https://your-custom-backend.com";</script>
+  ```
+

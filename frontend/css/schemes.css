@@ -1,0 +1,319 @@
+/* ══════════════════════════════════════════
+   SCHEMES — Modern Category Filters & Elevated Cards
+   ══════════════════════════════════════════ */
+.main {
+  max-width: 1240px;
+  margin: 0 auto;
+  padding: 56px 24px 80px;
+}
+
+/* ── SECTION HEADER ── */
+.section-header {
+  margin-bottom: 28px;
+}
+
+.section-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--saffron-pale);
+  color: var(--saffron);
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  margin-bottom: 10px;
+}
+
+.section-title {
+  font-size: clamp(22px, 3vw, 28px);
+  font-weight: 800;
+  color: var(--navy);
+  letter-spacing: -0.02em;
+}
+
+.section-sub {
+  font-size: 14px;
+  color: var(--slate-500);
+  margin-top: 6px;
+  max-width: 620px;
+}
+
+/* ── FILTERS ── */
+.filters-scroll-wrap {
+  margin-bottom: 32px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.filters {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.filter-btn {
+  padding: 8px 18px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--border);
+  background: var(--white);
+  color: var(--slate-700);
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  box-shadow: var(--shadow-xs);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.filter-btn:hover {
+  border-color: var(--saffron);
+  color: var(--saffron);
+  transform: translateY(-1px);
+}
+
+.filter-btn:active {
+  transform: translateY(0);
+}
+
+.filter-btn.active {
+  background: var(--navy);
+  color: var(--white);
+  border-color: var(--navy);
+  box-shadow: 0 4px 14px rgba(11, 19, 43, 0.25);
+}
+
+/* ── RESULTS BAR ── */
+.results-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--border);
+}
+
+.results-count {
+  font-size: 14px;
+  color: var(--slate-500);
+  font-weight: 500;
+}
+
+.results-count strong {
+  color: var(--navy);
+  font-weight: 700;
+}
+
+.reset-filter-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-full);
+  padding: 5px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  font-family: var(--font-sans);
+  color: var(--slate-600);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.reset-filter-btn:hover {
+  background: var(--slate-100);
+  color: var(--navy);
+}
+
+/* ── SCHEMES GRID ── */
+.schemes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 24px;
+}
+
+/* ── MODERN SCHEME CARD ── */
+.scheme-card {
+  background: var(--white);
+  border-radius: var(--radius-lg);
+  border: 1px solid rgba(226, 232, 240, 0.85);
+  padding: 24px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: transform var(--transition-smooth), box-shadow var(--transition-smooth), border-color var(--transition-smooth);
+  animation: cardFadeIn 0.4s ease-out backwards;
+}
+
+.scheme-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, var(--saffron), #FF8C3A);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform var(--transition-smooth);
+}
+
+.scheme-card:hover {
+  transform: translateY(-5px);
+  box-shadow: var(--shadow-hover);
+  border-color: rgba(255, 107, 0, 0.25);
+}
+
+.scheme-card:hover::before {
+  transform: scaleX(1);
+}
+
+.card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.category-badge {
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  text-transform: capitalize;
+  letter-spacing: 0.02em;
+}
+
+.cat-agriculture { background: #ECFDF5; color: #047857; }
+.cat-health      { background: #EFF6FF; color: #1D4ED8; }
+.cat-education   { background: #F5F3FF; color: #6D28D9; }
+.cat-housing     { background: #FFF7ED; color: #C2410C; }
+.cat-employment  { background: #F0FDF4; color: #15803D; }
+.cat-women       { background: #FDF2F8; color: #BE185D; }
+.cat-financial   { background: #FEFCE8; color: #A16207; }
+.cat-elderly     { background: #FFF1F2; color: #BE123C; }
+.cat-youth       { background: #F0FDFA; color: #0F766E; }
+.cat-disability  { background: #FAF5FF; color: #7E22CE; }
+
+.active-dot {
+  width: 8px;
+  height: 8px;
+  background: var(--green);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.2);
+}
+
+.card-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--navy);
+  margin-bottom: 8px;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+}
+
+.card-desc {
+  font-size: 13.5px;
+  color: var(--slate-600);
+  line-height: 1.6;
+  margin-bottom: 16px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-benefit {
+  background: var(--saffron-pale);
+  border-left: 3px solid var(--saffron);
+  border-radius: var(--radius-sm);
+  padding: 10px 14px;
+  font-size: 12.5px;
+  color: #9A3412;
+  font-weight: 600;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: 14px;
+  border-top: 1px solid var(--border);
+}
+
+.ministry-name {
+  font-size: 11.5px;
+  color: var(--slate-400);
+  font-weight: 500;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.apply-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: var(--slate-100);
+  color: var(--navy);
+  border-radius: var(--radius-md);
+  padding: 7px 16px;
+  font-size: 12.5px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  text-decoration: none;
+  transition: all var(--transition-fast);
+}
+
+.apply-btn:hover {
+  background: var(--saffron);
+  color: white;
+  transform: translateX(2px);
+  box-shadow: 0 4px 12px var(--saffron-glow);
+}
+
+/* ── SKELETON PLACEHOLDER CARDS ── */
+.scheme-skeleton-card {
+  background: white;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 24px;
+}
+
+/* ── EMPTY / NO RESULTS ── */
+.no-results {
+  text-align: center;
+  padding: 72px 20px;
+  color: var(--slate-500);
+  grid-column: 1 / -1;
+  animation: cardFadeIn 0.3s ease;
+}
+
+.no-results h3 {
+  font-size: 19px;
+  color: var(--navy);
+  margin-bottom: 8px;
+  font-weight: 700;
+}
+
+.no-results p {
+  font-size: 14px;
+  color: var(--slate-500);
+}
+
+/* ── RESPONSIVE ── */
+@media (max-width: 680px) {
+  .schemes-grid {
+    grid-template-columns: 1fr;
+  }
+  .main {
+    padding: 36px 16px 60px;
+  }
+}
