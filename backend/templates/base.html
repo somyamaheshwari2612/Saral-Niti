@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <!-- Google tag (gtag.js) -->
@@ -26,19 +26,21 @@
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}"></head>
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+</head>
 <body id="base">
 
- {% include 'navbar.html' %}
- {% block content %}
- {% include 'hero.html' %}
- {% include 'schemes.html' %}
- {% endblock %}
- {% include 'footer.html' %}
-{% include 'scheme_modal.html' %}
-{% include 'detector_modal.html' %}
-{% include 'eligibility_modal.html' %}
+  {% include 'navbar.html' %}
+  {% block content %}
+  {% include 'hero.html' %}
+  {% include 'schemes.html' %}
+  {% endblock %}
+  {% include 'footer.html' %}
+  {% include 'scheme_modal.html' %}
+  {% include 'detector_modal.html' %}
+  {% include 'eligibility_modal.html' %}
 
+  <script src="{{ url_for('static', filename='js/i18n.js') }}"></script>
   <script src="{{ url_for('static', filename='js/family_vault.js') }}"></script>
   <script src="{{ url_for('static', filename='js/main.js') }}"></script>
   <script src="{{ url_for('static', filename='js/chatbot.js') }}"></script>

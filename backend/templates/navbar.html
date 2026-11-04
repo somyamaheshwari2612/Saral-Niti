@@ -1,4 +1,4 @@
-<!-- ══════════════ TOP TRICOLOR BAR ══════════════ -->
+﻿<!-- ══════════════ TOP TRICOLOR BAR ══════════════ -->
 <div class="tricolor-strip">
   <div class="strip-saffron"></div>
   <div class="strip-white"></div>
@@ -19,20 +19,26 @@
     </a>
 
     <ul class="nav-links">
-      <li><a href="#base" class="nav-link active">Home</a></li>
-      <li><a href="#schemes" class="nav-link" onclick="filterByCategory('all', document.querySelector('.filter-btn'))">Browse Schemes</a></li>
+      <li><a href="#base" class="nav-link active" data-i18n="nav_home">Home</a></li>
+      <li><a href="#schemes" class="nav-link" onclick="filterByCategory('all', document.querySelector('.filter-btn'))" data-i18n="nav_browse">Browse Schemes</a></li>
       <li>
         <button class="nav-eligibility-btn" onclick="openEligibilityModal()">
           <i class="fa-solid fa-wand-magic-sparkles"></i>
-          <span>Check Eligibility</span>
+          <span data-i18n="nav_eligibility">Check Eligibility</span>
         </button>
       </li>
-      <li><a href="#Contact" class="nav-link">About</a></li>
+      <li><a href="#Contact" class="nav-link" data-i18n="nav_about">About</a></li>
       <li>
         <button class="nav-detector-btn" onclick="openDetector()">
           <i class="fa-solid fa-shield-halved"></i>
-          <span>Scam Detector</span>
+          <span data-i18n="nav_scam">Scam Detector</span>
           <span class="ai-pill">AI</span>
+        </button>
+      </li>
+      <li>
+        <button class="nav-lang-btn" onclick="toggleLanguage()" id="langToggleBtn" type="button" title="Switch Language / भाषा बदलें">
+          <i class="fa-solid fa-language"></i>
+          <span id="langToggleText">हिन्दी</span>
         </button>
       </li>
       <li>

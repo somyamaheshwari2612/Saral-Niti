@@ -1,4 +1,4 @@
-<!-- ══════════════ SCHEMES EXPLORER SECTION ══════════════ -->
+﻿<!-- ══════════════ SCHEMES EXPLORER SECTION ══════════════ -->
 <main class="main" id="schemes">
   <div class="section-header">
     <div class="section-heading">
@@ -473,11 +473,15 @@
   </div>
 
   <!-- SEAMLESS AUTO-SCROLL LOADER & STATUS -->
-  <div class="pagination-wrap" id="paginationWrap" style="display:none;">
+  <div class="pagination-wrap" id="paginationWrap" style="display:flex;">
     <div id="infiniteScrollLoader" class="infinite-scroll-loader" style="display: none;">
       <i class="fa-solid fa-circle-notch fa-spin"></i>
       <span>Loading next 24 schemes...</span>
     </div>
     <div class="pagination-info" id="paginationInfo"></div>
+    <button type="button" id="btnLoadMoreSchemes" class="btn-load-more" onclick="loadMoreSchemes()" style="display:inline-flex; margin-top:12px;">
+      <i class="fa-solid fa-angles-down"></i>
+      <span>Load More Schemes (24 more)</span>
+    </button>
   </div>
 </main>

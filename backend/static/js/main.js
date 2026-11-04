@@ -1,4 +1,4 @@
-// ══════════════════════════════════════════════════
+﻿// ══════════════════════════════════════════════════
 //  CONFIG
 //  Automatically handles monolithic, local dev, and separate deployments
 // ══════════════════════════════════════════════════
@@ -270,7 +270,7 @@ function loadNextBatch() {
   }
 }
 
-function setupAutoScrollObserver() {
+function setupAutoScrollObserver() { return; // Disabled infinite auto-scroll trap
   if (autoScrollObserver) {
     autoScrollObserver.disconnect();
   }
@@ -310,6 +310,7 @@ function updateScrollStatus() {
   const count = document.getElementById('resultsCount');
   const paginationWrap = document.getElementById('paginationWrap');
   const paginationInfo = document.getElementById('paginationInfo');
+  const loadMoreBtn = document.getElementById('btnLoadMoreSchemes');
   const cards = document.querySelectorAll('#schemesGrid .scheme-card');
   const displayedCount = cards.length;
   const total = isServerBrowsing ? totalAvailableSchemes : currentSchemesList.length;
@@ -322,16 +323,19 @@ function updateScrollStatus() {
     paginationWrap.style.display = total > 0 ? 'flex' : 'none';
   }
 
+  const hasMore = isServerBrowsing ? hasMoreServerSchemes : (displayedCount < total);
+
   if (paginationInfo) {
-    const hasMore = isServerBrowsing ? hasMoreServerSchemes : (displayedCount < total);
     if (hasMore) {
-      paginationInfo.innerHTML = `Loaded <strong>${displayedCount}</strong> of <strong>${total.toLocaleString('en-IN')}</strong> schemes (auto-loading as you scroll)`;
+      paginationInfo.innerHTML = `Showing <strong>${displayedCount}</strong> of <strong>${total.toLocaleString('en-IN')}</strong> schemes`;
     } else {
       paginationInfo.innerHTML = `<i class="fa-solid fa-check-circle" style="color:#10B981; margin-right:5px;"></i> All <strong>${total.toLocaleString('en-IN')}</strong> verified schemes loaded`;
     }
   }
 
-  setupAutoScrollObserver();
+  if (loadMoreBtn) {
+    loadMoreBtn.style.display = hasMore ? 'inline-flex' : 'none';
+  }
 }
 
 function loadMoreSchemes() {

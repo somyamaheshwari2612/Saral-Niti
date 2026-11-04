@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en">
 <head>
   <!-- Google tag (gtag.js) -->
@@ -50,20 +50,26 @@
     </a>
 
     <ul class="nav-links">
-      <li><a href="#base" class="nav-link active">Home</a></li>
-      <li><a href="#schemes" class="nav-link" onclick="filterByCategory('all', document.querySelector('.filter-btn'))">Browse Schemes</a></li>
+      <li><a href="#base" class="nav-link active" data-i18n="nav_home">Home</a></li>
+      <li><a href="#schemes" class="nav-link" onclick="filterByCategory('all', document.querySelector('.filter-btn'))" data-i18n="nav_browse">Browse Schemes</a></li>
       <li>
         <button class="nav-eligibility-btn" onclick="openEligibilityModal()">
           <i class="fa-solid fa-wand-magic-sparkles"></i>
-          <span>Check Eligibility</span>
+          <span data-i18n="nav_eligibility">Check Eligibility</span>
         </button>
       </li>
-      <li><a href="#Contact" class="nav-link">About</a></li>
+      <li><a href="#Contact" class="nav-link" data-i18n="nav_about">About</a></li>
       <li>
         <button class="nav-detector-btn" onclick="openDetector()">
           <i class="fa-solid fa-shield-halved"></i>
-          <span>Scam Detector</span>
+          <span data-i18n="nav_scam">Scam Detector</span>
           <span class="ai-pill">AI</span>
+        </button>
+      </li>
+      <li>
+        <button class="nav-lang-btn" onclick="toggleLanguage()" id="langToggleBtn" title="Switch Language / भाषा बदलें">
+          <i class="fa-solid fa-language"></i>
+          <span id="langToggleText">हिन्दी</span>
         </button>
       </li>
       <li>
@@ -96,7 +102,7 @@
       For You & Your Family
     </h1>
 
-    <p class="hero-subtitle">
+    <p class="hero-subtitle" data-i18n="hero_sub">
       Explore verified central and state welfare initiatives across agriculture, healthcare, education, and entrepreneurship with zero paperwork hurdles.
     </p>
 
@@ -667,12 +673,16 @@
   </div>
 
   <!-- SEAMLESS AUTO-SCROLL LOADER & STATUS -->
-  <div class="pagination-wrap" id="paginationWrap" style="display:none;">
+  <div class="pagination-wrap" id="paginationWrap" style="display:flex;">
     <div id="infiniteScrollLoader" class="infinite-scroll-loader" style="display: none;">
       <i class="fa-solid fa-circle-notch fa-spin"></i>
       <span>Loading next 24 schemes...</span>
     </div>
     <div class="pagination-info" id="paginationInfo"></div>
+    <button type="button" id="btnLoadMoreSchemes" class="btn-load-more" onclick="loadMoreSchemes()" style="display:inline-flex; margin-top:12px;">
+      <i class="fa-solid fa-angles-down"></i>
+      <span>Load More Schemes (24 more)</span>
+    </button>
   </div>
 </main>
 
@@ -743,8 +753,8 @@
           GLA University, Mathura<br>
           Department of Computer Engineering
         </p>
-        <a class="contact-email" href="mailto:aruu28249@gmail.com">
-          <i class="fa-solid fa-envelope"></i> aruu28249@gmail.com
+        <a class="contact-email" href="mailto:support@saralniti.in">
+          <i class="fa-solid fa-envelope"></i> Mail Us
         </a>
         <div class="disclaimer-note">
           Saral Niti is an independent citizen discovery platform. Always verify final guidelines on respective official ministry websites.
@@ -1337,7 +1347,10 @@
 
   <script src="./js/family_vault.js"></script>
   <script src="./js/main.js"></script>
-  <script src="./js/chatbot.js"></script>
+  <script src="./js/i18n.js"></script>`n  <script src="./js/chatbot.js"></script>
 
 </body>
 </html>
+
+
+
