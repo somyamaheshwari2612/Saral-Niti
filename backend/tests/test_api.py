@@ -822,8 +822,67 @@ def test_chatbot_family_relationship_nlu(client=None):
     assert data2["extracted_slots"]["age"] == 52
 
 
+# Test 41 - Multi-Turn Chatbot Memory Window & Slot Accumulation
+def test_chatbot_multi_turn_memory(client=None):
+    c = client or get_test_client()
+
+    # Turn 1: Citizen introduces demographic profile
+    t1_res = c.post('/api/chatbot', json={
+        "message": "I am a 21 year old student in Uttar Pradesh",
+        "history": []
+    })
+    assert t1_res.status_code == 200
+    t1_data = t1_res.get_json()
+    assert t1_data["extracted_slots"]["age"] == 21
+    assert t1_data["extracted_slots"]["state"] == "Uttar Pradesh"
+    assert t1_data["extracted_slots"]["occupation"] == "student"
+
+    # Turn 2: Citizen follows up about loans without repeating their state or age
+    history = [
+        {"role": "user", "content": "I am a 21 year old student in Uttar Pradesh"},
+        {"role": "model", "content": t1_data["reply"]}
+    ]
+    t2_res = c.post('/api/chatbot', json={
+        "message": "Are there any education loan schemes for me?",
+        "history": history
+    })
+    assert t2_res.status_code == 200
+    t2_data = t2_res.get_json()
+    # Memory check: State and age must be retained from Turn 1 history!
+    assert t2_data["extracted_slots"]["age"] == 21
+    assert t2_data["extracted_slots"]["state"] == "Uttar Pradesh"
+    assert t2_data["extracted_slots"]["occupation"] == "student"
+
+    # Turn 3: Citizen updates state mid-conversation
+    history.append({"role": "user", "content": "Are there any education loan schemes for me?"})
+    history.append({"role": "model", "content": t2_data["reply"]})
+    t3_res = c.post('/api/chatbot', json={
+        "message": "Actually I moved to Bihar now, what about Bihar?",
+        "history": history
+    })
+    assert t3_res.status_code == 200
+    t3_data = t3_res.get_json()
+    # State is overridden to Bihar, but age 21 is preserved!
+    assert t3_data["extracted_slots"]["state"] == "Bihar"
+    assert t3_data["extracted_slots"]["age"] == 21
+
+    # Turn 4: Resilient handling of malformed history
+    t4_res = c.post('/api/chatbot', json={
+        "message": "Hello",
+        "history": "not-a-list"
+    })
+    assert t4_res.status_code == 200
+
+    t5_res = c.post('/api/chatbot', json={
+        "message": "Hello",
+        "history": [{"role": "invalid_role", "content": None}]
+    })
+    assert t5_res.status_code == 200
+
+
 if __name__ == "__main__":
     test_functions = [
+        test_chatbot_multi_turn_memory,
         test_chatbot_family_relationship_nlu,
         test_home,
         test_schemes_page,

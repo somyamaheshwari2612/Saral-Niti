@@ -231,7 +231,17 @@ Multilingual conversational welfare assistant supporting code-mixed Hinglish, dy
 - **Body:**
 ```json
 {
-  "message": "My father is a 58 year old farmer in UP, what schemes are available for him?",
+  "message": "Are there any education loan schemes for me?",
+  "history": [
+    {
+      "role": "user",
+      "content": "I am a 21 year old student in Uttar Pradesh"
+    },
+    {
+      "role": "model",
+      "content": "Namaste! For a 21-year-old student in Uttar Pradesh, there are several scholarship and skill development programs available..."
+    }
+  ],
   "active_persona": {
     "label": "Rajesh (Papa)",
     "relationship": "father",
@@ -242,23 +252,28 @@ Multilingual conversational welfare assistant supporting code-mixed Hinglish, dy
   }
 }
 ```
+> **Multi-Turn Memory & Slot Accumulation:**
+> - `history` *(optional, array)*: A client-maintained sliding window of prior turns (`[{ role: "user" | "model", content: string }]`), capped automatically by the backend to the most recent 6 turns.
+> - **3-Tier Slot Accumulation Waterfall:** When answering a follow-up, slots are resolved in priority order:
+>   1. Active Household Persona (`active_persona`) establishes base demographic defaults.
+>   2. Historical User Turns (`history`) backfill previously stated attributes (e.g. state, age, category).
+>   3. Current User Message (`message`) overrides any prior slots if the citizen changes context (e.g. *"Actually I moved to Bihar"*).
+
 - **Response:** `200 OK`
 ```json
 {
   "status": "ok",
-  "reply": "Here are verified government schemes for your Father:\n1. PM-KISAN — ₹6,000/year income support\n2. PM Fasal Bima Yojana — Comprehensive crop damage insurance\n3. Kisan Credit Card — Low-interest institutional credit",
+  "reply": "Here are verified education loan and student welfare schemes in Uttar Pradesh for you:\n1. Vidya Lakshmi Education Loan Portal — Centralized portal for government-subsidized education loans\n2. UP Post-Matric Scholarship — Tuition reimbursement for UP college students...",
   "matched_schemes": [...],
   "extracted_slots": {
-    "relationship": "father",
-    "target_subject": "Father",
-    "age": 58,
-    "gender": "male",
+    "age": 21,
     "state": "Uttar Pradesh",
-    "occupation": "farmer"
+    "occupation": "student",
+    "target_subject": "Myself"
   },
-  "target_subject": "Father",
-  "inferred_relationship": "father",
-  "suggested_followups": ["How to apply for PM-KISAN?", "Documents for Fasal Bima Yojana"]
+  "target_subject": "Myself",
+  "inferred_relationship": "self",
+  "suggested_followups": ["How to apply for Vidya Lakshmi?", "Income eligibility for UP scholarship"]
 }
 ```
 

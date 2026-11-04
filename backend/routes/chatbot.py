@@ -295,9 +295,10 @@ def retrieve_grounded_schemes(keywords, slots, raw_message="", limit=4):
         return []
 
 
-def call_gemini_rag(user_message, schemes, slots):
+def call_gemini_rag(user_message, schemes, slots, history=None):
     """
-    Synthesizes a grounded, empathetic vernacular response using Gemini 3.5 Flash Lite.
+    Synthesizes a grounded, empathetic vernacular response using Gemini 3.5 Flash Lite
+    with multi-turn conversational memory and SQLite FTS5 grounded context.
     """
     api_key = get_api_key()
     if not api_key:
@@ -339,28 +340,75 @@ def call_gemini_rag(user_message, schemes, slots):
         "5. Always cite the official application portal URL.\n"
         "6. Keep responses concise, structured with bullet points, and under 150 words.\n"
         "7. If the citizen asks about DBT payment failures, rejection, or bank issues, explain Aadhaar-NPCI mapper seeding (*99*99*1#) and name matching between Aadhaar and bank passbook."
-        f"{subject_note}"
+        f"{subject_note}\n\n"
+        f"OFFICIAL SCHEMES CONTEXT:\n{context_str}"
     )
 
-    prompt = (
-        f"{system_instructions}\n\n"
-        f"OFFICIAL SCHEMES CONTEXT:\n{context_str}\n\n"
-        f"CITIZEN MESSAGE: {user_message}\n\n"
-        f"ASSISTANT RESPONSE:"
-    )
+    # Multi-turn conversation contents assembly
+    contents = []
+    if history and isinstance(history, list):
+        for turn in history[-6:]:
+            if isinstance(turn, dict):
+                r = "user" if turn.get("role") == "user" else "model"
+                c = (turn.get("content") or "").strip()
+                if c:
+                    contents.append({"role": r, "parts": [{"text": c[:500]}]})
+
+    # Ensure clean strict alternation required by Gemini API
+    clean_contents = []
+    last_role = None
+    for item in contents:
+        if item["role"] != last_role:
+            clean_contents.append(item)
+            last_role = item["role"]
+        else:
+            clean_contents[-1]["parts"][0]["text"] += "\n" + item["parts"][0]["text"]
+
+    # Append current citizen message
+    if clean_contents and clean_contents[-1]["role"] == "user":
+        clean_contents[-1]["parts"][0]["text"] += "\n" + user_message
+    else:
+        clean_contents.append({"role": "user", "parts": [{"text": user_message}]})
+
+    # Primary: systemInstruction schema
+    payload = {
+        "systemInstruction": {
+            "parts": [{"text": system_instructions}]
+        },
+        "contents": clean_contents,
+        "generationConfig": {
+            "temperature": 0.25,
+            "maxOutputTokens": 350
+        }
+    }
 
     try:
         res = requests.post(
             url,
             headers={"Content-Type": "application/json"},
-            json={
-                "contents": [{"parts": [{"text": prompt}]}],
-                "generationConfig": {"temperature": 0.25}
-            },
+            json=payload,
             timeout=8
         )
         if res.status_code == 200:
             res_json = res.json()
+            cand = res_json.get("candidates", [{}])[0]
+            parts = cand.get("content", {}).get("parts", [{}])
+            if parts and parts[0].get("text"):
+                return parts[0].get("text").strip()
+
+        # Fallback to combined prompt if model rejects systemInstruction
+        combined_prompt = f"{system_instructions}\n\nCITIZEN MESSAGE: {user_message}\n\nASSISTANT RESPONSE:"
+        res_fb = requests.post(
+            url,
+            headers={"Content-Type": "application/json"},
+            json={
+                "contents": [{"parts": [{"text": combined_prompt}]}],
+                "generationConfig": {"temperature": 0.25, "maxOutputTokens": 350}
+            },
+            timeout=8
+        )
+        if res_fb.status_code == 200:
+            res_json = res_fb.json()
             return res_json.get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "").strip()
     except Exception:
         pass
@@ -567,9 +615,25 @@ def chatbot_reply():
         if len(raw_message) > 500:
             return jsonify({"error": "Message too long (max 500 characters)"}), 400
 
-        # Check if an active persona was provided in the request payload (from SaralFamilyVault)
-        active_persona = data.get("active_persona") or data.get("persona")
+        # Validate history payload (multi-turn memory window)
+        raw_history = data.get("history") or []
+        sanitized_history = []
+        if isinstance(raw_history, list):
+            for item in raw_history[-6:]:
+                if isinstance(item, dict):
+                    role = item.get("role")
+                    content = item.get("content")
+                    if role in ("user", "model", "assistant") and isinstance(content, str):
+                        normalized_role = "user" if role == "user" else "model"
+                        sanitized_history.append({
+                            "role": normalized_role,
+                            "content": content.strip()[:500]
+                        })
+
+        # Slot Accumulation Waterfall:
+        # Priority 1: Start with active persona (if supplied from SaralFamilyVault)
         persona_slots = {}
+        active_persona = data.get("active_persona") or data.get("persona")
         if isinstance(active_persona, dict):
             for k in ["age", "gender", "caste", "state", "occupation", "relationship"]:
                 v = active_persona.get(k)
@@ -578,15 +642,26 @@ def chatbot_reply():
             if active_persona.get("label"):
                 persona_slots["target_subject"] = active_persona["label"]
 
-        # Step 1: Entity & Slot Extraction (Hinglish/Vernacular NLU)
-        extracted_slots, domains, keywords = extract_entities_and_slots(raw_message)
+        accumulated_slots = dict(persona_slots)
+        accumulated_keywords = []
 
-        # Merge slots: message-extracted slots take precedence over background active persona
-        slots = dict(persona_slots)
-        slots.update(extracted_slots)
+        # Priority 2: Accumulate demographic slots from prior user messages in history
+        for turn in sanitized_history:
+            if turn["role"] == "user":
+                prev_s, _, prev_k = extract_entities_and_slots(turn["content"])
+                accumulated_slots.update(prev_s)
+                accumulated_keywords.extend(prev_k)
+
+        # Priority 3: Extract slots from current message (overrides earlier slots)
+        extracted_slots, domains, keywords = extract_entities_and_slots(raw_message)
+        accumulated_slots.update(extracted_slots)
+        slots = accumulated_slots
+
+        # Merge keywords across history and current turn
+        all_keywords = list(set(accumulated_keywords + keywords))
 
         # Step 2: SQLite FTS5 RAG Knowledge Base Retrieval
-        retrieved_schemes = retrieve_grounded_schemes(keywords, slots, raw_message=raw_message, limit=3)
+        retrieved_schemes = retrieve_grounded_schemes(all_keywords or keywords, slots, raw_message=raw_message, limit=3)
 
         # Step 3: Shared Rate Limit Check (13 RPM Global Ceiling / 5 RPM per IP)
         client_ip = get_client_ip()
@@ -601,8 +676,8 @@ def chatbot_reply():
         llm_reply = None
         rate_limited = False
         if allowed:
-            # LLM Synthesis with Gemini 3.5 Flash Lite
-            llm_reply = call_gemini_rag(raw_message, retrieved_schemes, slots)
+            # LLM Synthesis with Gemini 3.5 Flash Lite + Multi-Turn Memory
+            llm_reply = call_gemini_rag(raw_message, retrieved_schemes, slots, history=sanitized_history)
         else:
             rate_limited = True
 
