@@ -6,7 +6,8 @@ services:
     rootDir: backend
     plan: free
     buildCommand: pip install -r requirements.txt && python scripts/seed_db.py
-    startCommand: gunicorn app:app
+    startCommand: gunicorn app:app --workers 2 --timeout 60
+    healthCheckPath: /health
     envVars:
       - key: PYTHON_VERSION
         value: 3.11.9

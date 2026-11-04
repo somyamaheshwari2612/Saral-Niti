@@ -59,20 +59,22 @@ def schemes_page():
 def project_page():
     return render_template("base.html")
 
-# Database connection and health test
+# Database connection and health check endpoints
+@app.route("/health")
+@app.route("/api/health")
 @app.route("/test-db")
-def test_db():
+def health_check():
     try:
         collection = get_schemes_collection()
         count = collection.count_documents({}) if collection is not None else 0
-        return {
-            "message": "Database connected successfully",
+        return jsonify({
+            "message": "Service healthy and database connected",
             "schemes_in_db": count,
             "status": "ok",
             "engine": "sqlite3_fts5"
-        }
+        }), 200
     except Exception as e:
-        return {"message": "Database connection failed", "error": str(e)}, 500
+        return jsonify({"message": "Health check failed", "error": str(e), "status": "error"}), 500
 
 # Register blueprints
 from routes.schemes import schemes_bp
