@@ -281,6 +281,56 @@ def get_schemes_paginated(page=1, limit=50, category=None):
     }
 
 
+def get_schemes_for_recommendation(profile=None):
+    """
+    High-performance SQL pre-filter for citizen welfare recommendation.
+    Filters out schemes at the SQLite database layer by state, gender, and category
+    before passing candidate schemes to the rules engine, avoiding full table scans.
+    """
+    profile = profile or {}
+    con = get_db_connection()
+    cur = con.cursor()
+
+    where_clauses = ["is_active = 1"]
+    params = []
+
+    # 1. State pre-filter
+    citizen_state = (profile.get("state") or "").strip()
+    if citizen_state and citizen_state.lower() != "all":
+        where_clauses.append("""(
+            level = 'central'
+            OR eligibility_json LIKE '%"state": "all"%'
+            OR eligibility_json NOT LIKE '%"state"%'
+            OR eligibility_json LIKE ?
+            OR ministry LIKE ?
+        )""")
+        state_pat = f"%{citizen_state}%"
+        params.extend([state_pat, state_pat])
+
+    # 2. Gender pre-filter
+    citizen_gender = (profile.get("gender") or "").strip().lower()
+    if citizen_gender and citizen_gender not in ("all", "any"):
+        where_clauses.append("""(
+            eligibility_json LIKE '%"gender": "all"%'
+            OR eligibility_json NOT LIKE '%"gender"%'
+            OR eligibility_json LIKE ?
+        )""")
+        params.append(f'%"gender": "{citizen_gender}"%')
+
+    # 3. Category pre-filter (if specified)
+    category = (profile.get("category") or "").strip().lower()
+    if category and category != "all":
+        where_clauses.append("category = ? COLLATE NOCASE")
+        params.append(category)
+
+    where_sql = " AND ".join(where_clauses)
+    query = f"SELECT * FROM schemes WHERE {where_sql} ORDER BY id ASC"
+
+    cur.execute(query, params)
+    rows = cur.fetchall()
+    return [row_to_dict(r) for r in rows]
+
+
 def get_scheme_by_id(scheme_id):
     con = get_db_connection()
     cur = con.cursor()

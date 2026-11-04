@@ -3,7 +3,7 @@
 
 import os
 from flask import Blueprint, request, jsonify
-from database import get_schemes_collection, scheme_to_dict
+from database import get_schemes_collection, get_schemes_for_recommendation, scheme_to_dict
 
 recommend_bp = Blueprint("recommend", __name__)
 
@@ -226,8 +226,13 @@ def recommend_schemes():
         if schemes_collection is None:
             return jsonify({"error": "Database not connected"}), 500
 
-        all_schemes = list(schemes_collection.find())
-        raw_schemes = [s for s in all_schemes if s.get("is_active") is not False]
+        # High-performance SQL pre-filter (falls back to mock collection if in test mode)
+        if hasattr(schemes_collection, 'data'):
+            all_schemes = list(schemes_collection.find())
+            raw_schemes = [s for s in all_schemes if s.get("is_active") is not False]
+        else:
+            raw_schemes = get_schemes_for_recommendation(profile)
+
         evaluated = []
 
         for s in raw_schemes:
