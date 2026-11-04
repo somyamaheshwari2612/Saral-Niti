@@ -9,6 +9,17 @@
     </div>
     
     <div class="modal-body">
+      <!-- HOUSEHOLD PERSONA STRIP -->
+      <div class="family-persona-strip" id="eligibilityPersonaStrip">
+        <div class="persona-strip-header">
+          <span class="strip-tag"><i class="fa-solid fa-people-roof"></i> Saral Parivar:</span>
+          <span id="eligibilityActiveBadge" style="font-size: 11.5px; color: var(--slate-500);">Checking for: <strong id="eligibilityActiveName">Myself (स्वयं)</strong></span>
+        </div>
+        <div class="persona-chips-row" id="eligibilityPersonaChips">
+          <!-- Dynamically populated from SaralFamilyVault -->
+        </div>
+      </div>
+
       <!-- FORM -->
       <form id="eligibilityForm" onsubmit="handleEligibilitySubmit(event)">
         <div class="elig-form-grid">
@@ -179,6 +190,135 @@
         </div>
         <div id="eligResultsList" class="elig-results-grid"></div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════ ADD / EDIT FAMILY MEMBER MODAL ══════════════ -->
+<div class="modal-overlay" id="familyMemberOverlay" onclick="closeFamilyMemberOnOverlay(event)" role="dialog" aria-modal="true" style="z-index: 2100;">
+  <div class="modal family-member-modal" style="max-width: 540px;">
+    <div class="modal-header">
+      <button class="modal-close" onclick="closeFamilyMemberModal()" aria-label="Close modal">✕</button>
+      <div class="modal-category"><i class="fa-solid fa-people-roof"></i> Saral Parivar Vault</div>
+      <h2 class="modal-title" id="familyModalTitle">Add Family Member</h2>
+      <div class="modal-ministry">Save member profile to discover schemes for your family anytime</div>
+    </div>
+    
+    <div class="modal-body">
+      <form id="familyMemberForm" onsubmit="handleFamilyMemberSubmit(event)">
+        <input type="hidden" id="famMemberId" value="">
+        <div class="elig-form-grid">
+          <div class="form-group">
+            <label for="famRelation"><i class="fa-solid fa-users"></i> Relationship</label>
+            <select id="famRelation" name="relationship" onchange="handleRelationPresetChange(this.value)" required>
+              <option value="father">🌾 Father (पिताजी)</option>
+              <option value="mother">👩 Mother (माताजी)</option>
+              <option value="spouse">💍 Spouse (जीवनसाथी)</option>
+              <option value="son">👦 Son (बेटा)</option>
+              <option value="daughter">👧 Daughter (बेटी)</option>
+              <option value="brother">🧑 Brother (भाई)</option>
+              <option value="sister">👧 Sister (बहन)</option>
+              <option value="grandfather">👴 Grandfather (दादा / नाना)</option>
+              <option value="grandmother">👵 Grandmother (दादी / नानी)</option>
+              <option value="other">👥 Other Relative (अन्य परिजन)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="famLabel"><i class="fa-solid fa-tag"></i> Name / Nickname</label>
+            <input type="text" id="famLabel" placeholder="e.g. Papa / Ramesh" required maxlength="50">
+          </div>
+
+          <div class="form-group">
+            <label for="famAge"><i class="fa-solid fa-cake-candles"></i> Age (Years)</label>
+            <input type="number" id="famAge" min="0" max="120" placeholder="e.g. 56" required>
+          </div>
+
+          <div class="form-group">
+            <label for="famGender"><i class="fa-solid fa-venus-mars"></i> Gender</label>
+            <select id="famGender" required>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="transgender">Transgender</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="famState"><i class="fa-solid fa-location-dot"></i> State / UT</label>
+            <select id="famState" required>
+              <option value="Uttar Pradesh">Uttar Pradesh</option>
+              <option value="Bihar">Bihar</option>
+              <option value="Madhya Pradesh">Madhya Pradesh</option>
+              <option value="Maharashtra">Maharashtra</option>
+              <option value="Rajasthan">Rajasthan</option>
+              <option value="Gujarat">Gujarat</option>
+              <option value="West Bengal">West Bengal</option>
+              <option value="Andhra Pradesh">Andhra Pradesh</option>
+              <option value="Karnataka">Karnataka</option>
+              <option value="Tamil Nadu">Tamil Nadu</option>
+              <option value="Telangana">Telangana</option>
+              <option value="Kerala">Kerala</option>
+              <option value="Punjab">Punjab</option>
+              <option value="Haryana">Haryana</option>
+              <option value="Delhi">Delhi (NCT)</option>
+              <option value="Assam">Assam</option>
+              <option value="Chhattisgarh">Chhattisgarh</option>
+              <option value="Jharkhand">Jharkhand</option>
+              <option value="Odisha">Odisha</option>
+              <option value="Himachal Pradesh">Himachal Pradesh</option>
+              <option value="Uttarakhand">Uttarakhand</option>
+              <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+              <option value="Goa">Goa</option>
+              <option value="All India">All India</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="famOccupation"><i class="fa-solid fa-briefcase"></i> Occupation</label>
+            <select id="famOccupation" required>
+              <option value="farmer">Farmer / Kisan (किसान)</option>
+              <option value="student">Student / Vidyarthi (विद्यार्थी)</option>
+              <option value="unemployed">Unemployed / Jobseeker</option>
+              <option value="self_employed">Self Employed / Small Trader</option>
+              <option value="homemaker">Homemaker (गृहिणी)</option>
+              <option value="senior_citizen">Senior Citizen / Pensioner</option>
+              <option value="daily_wage">Daily Wage Worker (मजदूर)</option>
+              <option value="salaried">Salaried (Private / Govt)</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="famCaste"><i class="fa-solid fa-users"></i> Social Category</label>
+            <select id="famCaste">
+              <option value="general">General</option>
+              <option value="obc">OBC (Other Backward Class)</option>
+              <option value="sc">SC (Scheduled Caste)</option>
+              <option value="st">ST (Scheduled Tribe)</option>
+              <option value="minority">Minority</option>
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="famIncome"><i class="fa-solid fa-indian-rupee-sign"></i> Annual Income (₹)</label>
+            <input type="number" id="famIncome" min="0" step="5000" placeholder="e.g. 120000">
+          </div>
+        </div>
+
+        <div class="elig-checkboxes" style="margin: 14px 0 6px;">
+          <label class="checkbox-label">
+            <input type="checkbox" id="famDisability">
+            <span>♿ Persons with Disabilities (Divyangjan)</span>
+          </label>
+        </div>
+
+        <div class="form-actions" style="margin-top: 18px;">
+          <button type="submit" class="btn-primary" id="famSaveBtn">
+            <i class="fa-solid fa-check"></i> <span>Save Member</span>
+          </button>
+          <button type="button" class="btn-secondary" onclick="closeFamilyMemberModal()">Cancel</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>

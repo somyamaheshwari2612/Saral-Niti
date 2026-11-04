@@ -65,6 +65,18 @@ function initChatbot() {
         </div>
       </div>
 
+      <!-- FAMILY PERSONA SELECTOR BAR -->
+      <div id="chat-persona-bar" class="chat-persona-bar">
+        <div class="chat-persona-label">
+          <i class="fa-solid fa-people-roof"></i>
+          <span>Advising:</span>
+        </div>
+        <div class="chat-persona-chips" id="chatPersonaChips"></div>
+        <button class="chat-persona-add-btn" type="button" onclick="openAddFamilyMemberModal()" title="Add Family Member">
+          <i class="fa-solid fa-plus"></i> Add
+        </button>
+      </div>
+
       <!-- MESSAGES CONTAINER -->
       <div id="chat-messages" class="chat-body">
         <div class="bot-msg-wrap">
@@ -187,6 +199,81 @@ function injectChatStyles() {
       to { opacity: 1; transform: translateY(0) scale(1); }
     }
     
+    .chat-persona-bar {
+      background: #F8FAFC;
+      border-bottom: 1px solid #E2E8F0;
+      padding: 7px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 11.5px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+    .chat-persona-label {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-weight: 700;
+      color: #64748B;
+      white-space: nowrap;
+    }
+    .chat-persona-chips {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      flex: 1;
+    }
+    .chat-persona-chips::-webkit-scrollbar {
+      display: none;
+    }
+    .chat-persona-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 3px 8px;
+      border-radius: 12px;
+      background: #FFFFFF;
+      border: 1px solid #CBD5E1;
+      color: #334155;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all 0.15s ease;
+    }
+    .chat-persona-chip:hover {
+      border-color: #FF6B00;
+      color: #FF6B00;
+    }
+    .chat-persona-chip.active {
+      background: #FF6B00;
+      color: #FFFFFF;
+      border-color: #FF6B00;
+      box-shadow: 0 2px 6px rgba(255, 107, 0, 0.25);
+    }
+    .chat-persona-add-btn {
+      background: transparent;
+      border: 1px dashed #FF6B00;
+      color: #FF6B00;
+      padding: 3px 7px;
+      border-radius: 12px;
+      font-size: 10.5px;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      transition: all 0.15s ease;
+    }
+    .chat-persona-add-btn:hover {
+      background: rgba(255, 107, 0, 0.1);
+    }
+
     .chat-header {
       background: linear-gradient(135deg, #0B132B 0%, #1C2541 100%);
       color: white;
@@ -527,6 +614,7 @@ function injectChatStyles() {
     }
   `;
   document.head.appendChild(style);
+  setTimeout(renderChatPersonaChips, 100);
 }
 
 function toggleChat() {
@@ -543,6 +631,7 @@ function toggleChat() {
   }
 
   if (isHidden) {
+    if (typeof renderChatPersonaChips === 'function') renderChatPersonaChips();
     const input = document.getElementById('chat-input');
     if (input) setTimeout(() => input.focus(), 150);
   }
@@ -843,3 +932,42 @@ function appendBotResponse(data) {
 
 // Auto-init chatbot when page loads
 document.addEventListener('DOMContentLoaded', initChatbot);
+
+function renderChatPersonaChips() {
+  if (typeof window === 'undefined' || !window.SaralFamilyVault) return;
+  const container = document.getElementById('chatPersonaChips');
+  if (!container) return;
+
+  const members = window.SaralFamilyVault.getMembers();
+  const active = window.SaralFamilyVault.getActiveMember();
+
+  container.innerHTML = '';
+  members.forEach(m => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'chat-persona-chip' + (m.id === active.id ? ' active' : '');
+    const meta = window.SaralFamilyVault.RELATION_METADATA[m.relationship] || window.SaralFamilyVault.RELATION_METADATA.other;
+    chip.innerHTML = `<span>${meta.avatar || '👤'}</span> <span>${escapeChatHtml(m.label)}</span>`;
+    chip.onclick = () => {
+      const prevId = window.SaralFamilyVault.getActiveMember()?.id;
+      if (prevId !== m.id) {
+        window.SaralFamilyVault.setActiveMember(m.id);
+        appendBotSimpleMessage(
+          `Switched advising context to **${escapeChatHtml(m.label)}** (${m.relationship.toUpperCase()}, ${m.state}). ` +
+          `Ask me any question or scheme inquiry for ${m.gender === 'female' ? 'her' : 'him'}!`
+        );
+      }
+    };
+    container.appendChild(chip);
+  });
+}
+
+// Global listeners for reactive persona updates in chatbot
+if (typeof window !== 'undefined') {
+  window.addEventListener('saral:active_persona_changed', function() {
+    if (typeof renderChatPersonaChips === 'function') renderChatPersonaChips();
+  });
+  window.addEventListener('saral:family_vault_updated', function() {
+    if (typeof renderChatPersonaChips === 'function') renderChatPersonaChips();
+  });
+}

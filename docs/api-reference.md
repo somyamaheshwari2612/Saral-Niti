@@ -300,3 +300,9 @@ The frontend includes `SaralFamilyVault` (`js/family_vault.js`), a zero-knowledg
 
 - `saral:active_persona_changed`: Fired when the citizen switches the active member persona (detail: `{ member, previousId }`).
 - `saral:family_vault_updated`: Fired when members are added, updated, deleted, or imported (detail: `{ action, member, roster }`).
+
+### UI Components
+
+- **Chat Widget Header Strip (`#chat-persona-bar`):** Horizontally scrollable chips (`[ 👤 Myself ] [ 🌾 Father ] [ ➕ Add ]`) embedded beneath the chat title bar. Switching personas dynamically updates the advising context and alerts the assistant.
+- **Eligibility Modal Persona Strip (`#eligibilityPersonaStrip`):** Located above the recommendation questionnaire. Tapping any persona chip auto-populates age, gender, state, occupation, income, and vulnerability checkboxes.
+- **Add / Edit Family Member Modal (`#familyMemberOverlay`):** Accessible from both the chatbot and recommendation views, providing relationship presets (Father, Mother, Student sibling, Grandparent, Spouse) with smart defaults.

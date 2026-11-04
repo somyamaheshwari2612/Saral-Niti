@@ -292,3 +292,55 @@ html.dark-mode .chat-footer input {
   border-color: #334155;
   color: #FFFFFF;
 }
+/* ── HOUSEHOLD PERSONA VAULT (DARK MODE) ── */
+html.dark-mode .family-persona-strip {
+  background: rgba(255, 107, 0, 0.08);
+  border-color: rgba(255, 107, 0, 0.3);
+}
+html.dark-mode .persona-strip-header {
+  color: #CBD5E1;
+}
+html.dark-mode .persona-chip {
+  background: #1E293B;
+  border-color: #334155;
+  color: #E2E8F0;
+}
+html.dark-mode .persona-chip:hover {
+  border-color: #FF6B00;
+  color: #FFA559;
+}
+html.dark-mode .persona-chip.active {
+  background: linear-gradient(135deg, #FF6B00 0%, #E05600 100%);
+  color: #FFFFFF;
+  border-color: #E05600;
+}
+html.dark-mode .persona-chip-add {
+  background: rgba(255, 107, 0, 0.12);
+  border-color: #FF6B00;
+  color: #FFA559;
+}
+html.dark-mode .chat-persona-bar {
+  background: #090D16;
+  border-bottom-color: #1E293B;
+}
+html.dark-mode .chat-persona-label {
+  color: #94A3B8;
+}
+html.dark-mode .chat-persona-chip {
+  background: #1E293B;
+  border-color: #334155;
+  color: #CBD5E1;
+}
+html.dark-mode .chat-persona-chip:hover {
+  border-color: #FF6B00;
+  color: #FFA559;
+}
+html.dark-mode .chat-persona-chip.active {
+  background: #FF6B00;
+  color: #FFFFFF;
+  border-color: #FF6B00;
+}
+html.dark-mode .chat-persona-add-btn {
+  border-color: #FF6B00;
+  color: #FFA559;
+}

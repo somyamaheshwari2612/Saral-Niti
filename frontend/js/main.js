@@ -994,6 +994,193 @@ function openEligibilityModal() {
   const overlay = document.getElementById('eligibilityOverlay');
   if (overlay) overlay.classList.add('open');
   document.body.style.overflow = 'hidden';
+
+  if (typeof window !== 'undefined' && window.SaralFamilyVault) {
+    renderEligibilityPersonas();
+    const active = window.SaralFamilyVault.getActiveMember();
+    populateEligibilityFormFromPersona(active);
+  }
+}
+
+// ══════════════════════════════════════════════════
+//  HOUSEHOLD PERSONA VAULT (SARAL PARIVAR) UI
+// ══════════════════════════════════════════════════
+
+function renderEligibilityPersonas() {
+  if (typeof window === 'undefined' || !window.SaralFamilyVault) return;
+  const container = document.getElementById('eligibilityPersonaChips');
+  const badgeName = document.getElementById('eligibilityActiveName');
+  if (!container) return;
+
+  const members = window.SaralFamilyVault.getMembers();
+  const active = window.SaralFamilyVault.getActiveMember();
+
+  if (badgeName && active) {
+    badgeName.textContent = active.label || 'Myself';
+  }
+
+  container.innerHTML = '';
+
+  members.forEach(m => {
+    const chip = document.createElement('button');
+    chip.type = 'button';
+    chip.className = 'persona-chip' + (m.id === active.id ? ' active' : '');
+    const meta = window.SaralFamilyVault.RELATION_METADATA[m.relationship] || window.SaralFamilyVault.RELATION_METADATA.other;
+    chip.innerHTML = `<span>${meta.avatar || '👤'}</span> <span>${escapeHtml(m.label)}</span>`;
+    chip.onclick = () => {
+      window.SaralFamilyVault.setActiveMember(m.id);
+    };
+    container.appendChild(chip);
+  });
+
+  // + Add Member chip
+  const addBtn = document.createElement('button');
+  addBtn.type = 'button';
+  addBtn.className = 'persona-chip-add';
+  addBtn.innerHTML = `<i class="fa-solid fa-plus"></i> Add Member`;
+  addBtn.onclick = () => openAddFamilyMemberModal();
+  container.appendChild(addBtn);
+}
+
+function populateEligibilityFormFromPersona(member) {
+  if (!member) return;
+  const setVal = (id, val) => {
+    const el = document.getElementById(id);
+    if (el && val !== undefined && val !== null) el.value = val;
+  };
+
+  setVal('eligAge', member.age || '');
+  setVal('eligGender', member.gender || 'all');
+  setVal('eligState', member.state || 'all');
+  setVal('eligIncome', member.income || '');
+  setVal('eligCaste', member.caste || 'general');
+  setVal('eligOccupation', member.occupation || 'other');
+
+  const disabledBox = document.getElementById('eligIsDisabled');
+  if (disabledBox) disabledBox.checked = Boolean(member.disability);
+
+  const studentBox = document.getElementById('eligIsStudent');
+  if (studentBox) studentBox.checked = member.occupation === 'student';
+
+  const widowBox = document.getElementById('eligIsWidow');
+  if (widowBox) widowBox.checked = member.marital_status === 'widowed';
+}
+
+function openAddFamilyMemberModal(memberToEdit) {
+  const overlay = document.getElementById('familyMemberOverlay');
+  if (!overlay) return;
+
+  const form = document.getElementById('familyMemberForm');
+  if (form) form.reset();
+
+  const idInput = document.getElementById('famMemberId');
+  const title = document.getElementById('familyModalTitle');
+
+  if (memberToEdit) {
+    if (idInput) idInput.value = memberToEdit.id;
+    if (title) title.textContent = 'Edit Family Member';
+    const setVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val !== undefined) el.value = val;
+    };
+    setVal('famRelation', memberToEdit.relationship);
+    setVal('famLabel', memberToEdit.label);
+    setVal('famAge', memberToEdit.age);
+    setVal('famGender', memberToEdit.gender);
+    setVal('famState', memberToEdit.state);
+    setVal('famOccupation', memberToEdit.occupation);
+    setVal('famCaste', memberToEdit.caste);
+    setVal('famIncome', memberToEdit.income);
+    const dis = document.getElementById('famDisability');
+    if (dis) dis.checked = Boolean(memberToEdit.disability);
+  } else {
+    if (idInput) idInput.value = '';
+    if (title) title.textContent = 'Add Family Member';
+    handleRelationPresetChange('father');
+  }
+
+  overlay.classList.add('open');
+}
+
+function closeFamilyMemberModal() {
+  const overlay = document.getElementById('familyMemberOverlay');
+  if (overlay) overlay.classList.remove('open');
+}
+
+function closeFamilyMemberOnOverlay(e) {
+  if (e.target === document.getElementById('familyMemberOverlay')) {
+    closeFamilyMemberModal();
+  }
+}
+
+function handleRelationPresetChange(relKey) {
+  const meta = (window.SaralFamilyVault && window.SaralFamilyVault.RELATION_METADATA[relKey]) || {};
+  const labelInput = document.getElementById('famLabel');
+  const genderSelect = document.getElementById('famGender');
+  const ageInput = document.getElementById('famAge');
+  const occSelect = document.getElementById('famOccupation');
+
+  if (labelInput && !labelInput.value) {
+    labelInput.placeholder = `e.g. ${meta.labelEn || 'Relative'}`;
+  }
+
+  if (relKey === 'father' || relKey === 'grandfather') {
+    if (genderSelect) genderSelect.value = 'male';
+    if (ageInput && !ageInput.value) ageInput.value = relKey === 'father' ? 56 : 74;
+    if (occSelect && relKey === 'father') occSelect.value = 'farmer';
+    if (occSelect && relKey === 'grandfather') occSelect.value = 'senior_citizen';
+  } else if (relKey === 'mother' || relKey === 'grandmother') {
+    if (genderSelect) genderSelect.value = 'female';
+    if (ageInput && !ageInput.value) ageInput.value = relKey === 'mother' ? 52 : 70;
+    if (occSelect && relKey === 'mother') occSelect.value = 'homemaker';
+    if (occSelect && relKey === 'grandmother') occSelect.value = 'senior_citizen';
+  } else if (relKey === 'son' || relKey === 'daughter' || relKey === 'brother' || relKey === 'sister') {
+    if (genderSelect) genderSelect.value = (relKey === 'son' || relKey === 'brother') ? 'male' : 'female';
+    if (occSelect) occSelect.value = 'student';
+    if (ageInput && !ageInput.value) ageInput.value = 18;
+  }
+}
+
+function handleFamilyMemberSubmit(e) {
+  e.preventDefault();
+  if (!window.SaralFamilyVault) return;
+
+  const id = document.getElementById('famMemberId')?.value;
+  const data = {
+    relationship: document.getElementById('famRelation').value,
+    label: document.getElementById('famLabel').value.trim(),
+    age: parseInt(document.getElementById('famAge').value, 10),
+    gender: document.getElementById('famGender').value,
+    state: document.getElementById('famState').value,
+    occupation: document.getElementById('famOccupation').value,
+    caste: document.getElementById('famCaste').value,
+    income: parseInt(document.getElementById('famIncome').value, 10) || 0,
+    disability: Boolean(document.getElementById('famDisability')?.checked)
+  };
+
+  if (id) {
+    window.SaralFamilyVault.updateMember(id, data);
+  } else {
+    const newMember = window.SaralFamilyVault.addMember(data);
+    window.SaralFamilyVault.setActiveMember(newMember.id);
+  }
+
+  closeFamilyMemberModal();
+}
+
+// Global listeners for reactive persona switching
+if (typeof window !== 'undefined') {
+  window.addEventListener('saral:active_persona_changed', function(e) {
+    const member = e.detail && e.detail.member;
+    renderEligibilityPersonas();
+    if (document.getElementById('eligibilityOverlay')?.classList.contains('open')) {
+      populateEligibilityFormFromPersona(member);
+    }
+  });
+
+  window.addEventListener('saral:family_vault_updated', function() {
+    renderEligibilityPersonas();
+  });
 }
 
 function closeEligibilityModal() {
