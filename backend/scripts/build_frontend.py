@@ -66,6 +66,7 @@ def build():
 
     # Replace Flask url_for with relative static paths
     html = re.sub(r"\{\{\s*url_for\('static',\s*filename='css/main\.css'\)\s*\}\}", './css/main.css', html)
+    html = re.sub(r"\{\{\s*url_for\('static',\s*filename='js/family_vault\.js'\)\s*\}\}", './js/family_vault.js', html)
     html = re.sub(r"\{\{\s*url_for\('static',\s*filename='js/main\.js'\)\s*\}\}", './js/main.js', html)
     html = re.sub(r"\{\{\s*url_for\('static',\s*filename='js/chatbot\.js'\)\s*\}\}", './js/chatbot.js', html)
 

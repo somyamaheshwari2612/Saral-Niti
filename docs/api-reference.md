@@ -273,3 +273,30 @@ Scans uploaded notification text or PDF files (up to 5MB) to verify official aut
 - **Content-Type:** `multipart/form-data`
 - **Form Data:** `file=[PDF or TXT file]`
 - **Response:** `200 OK`
+
+---
+
+## 👨‍👩‍👧‍👦 Client-Side Household Persona Vault (Saral Parivar)
+
+The frontend includes `SaralFamilyVault` (`js/family_vault.js`), a zero-knowledge, DPDP-compliant client-side dossier enabling citizens (acting as family anchors) to discover and track welfare benefits for themselves and their relatives (farming parents, student siblings, elderly grandparents) without storing PII on the backend server.
+
+### Global Methods (`window.SaralFamilyVault`)
+
+| Method | Parameters | Return Type | Description |
+|---|---|---|---|
+| `getMembers()` | None | `Array<Object>` | Retrieves all family member personas in the vault (defaults to primary "Self" persona). |
+| `getMemberById(id)` | `id: string` | `Object \| null` | Finds a specific member persona by ID. |
+| `getActiveMember()` | None | `Object` | Returns the currently active member persona. |
+| `setActiveMember(id)` | `id: string` | `Object \| null` | Switches the active persona across the platform and dispatches `saral:active_persona_changed`. |
+| `addMember(data)` | `data: Object` | `Object` | Validates, generates ID, saves new persona, and dispatches `saral:family_vault_updated`. |
+| `updateMember(id, updates)` | `id: string, updates: Object` | `Object \| null` | Partially updates a persona and syncs active context. |
+| `deleteMember(id)` | `id: string` | `boolean` | Deletes a non-primary relative persona (primary persona is protected). |
+| `toChatbotContext([member])` | `member?: Object` | `Object` | Serializes member attributes into a clean demographic dictionary for `/api/chatbot` and `/api/recommend`. |
+| `getHouseholdSummary()` | None | `Object` | Computes aggregate household statistics (total members, farmers, students, seniors, women). |
+| `exportVaultJSON()` | None | `string` | Exports the full household roster as a portable backup JSON string. |
+| `importVaultJSON(jsonStr)` | `jsonStr: string` | `boolean` | Validates and restores an imported household roster. |
+
+### DOM Events Dispatched
+
+- `saral:active_persona_changed`: Fired when the citizen switches the active member persona (detail: `{ member, previousId }`).
+- `saral:family_vault_updated`: Fired when members are added, updated, deleted, or imported (detail: `{ action, member, roster }`).

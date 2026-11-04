@@ -56,6 +56,7 @@ India provides thousands of central and state government welfare schemes — yet
 | 🎯 **Personalized Eligibility Calculator** | Multi-factor questionnaire assessing citizen profile with transparent reasons and zero hallucinations |
 | 🛡️ **Last-Mile Pre-Flight Audit** | Proactive diagnostic engine preventing departmental failure traps (Aadhaar-NPCI bank mapping, passbook spelling discrepancies, expired certificates, statutory tax exclusions) |
 | 🛡️ **Scam & Fake Scheme Detector** | URL and PDF/document validator powered by Google Gemini (`gemini-3.5-flash-lite`) |
+| 👨‍👩‍👧‍👦 **Household Persona Vault** | Zero-knowledge client-side dossier (`SaralFamilyVault`) enabling single-click multi-member scheme discovery for self, farming parents, students, and seniors |
 | 🌙 **Theme & Accessibility** | Dark mode with persistent session state and zero flash of unstyled content (FOUC) |
 | 🚀 **Decoupled Deployment** | Pure static client ready for **Vercel**; lightweight Python REST backend ready for **Render** |
 
