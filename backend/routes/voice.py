@@ -2,7 +2,7 @@
 # Voice-First Vernacular Input & Anti-Hallucination Query Normalizer for Rural Bharat
 # Cascading Speech-to-Text: Tier 1 (whisper-large-v3-turbo) -> Tier 2 (whisper-large-v3) -> Tier 3 (Client Native STT)
 # Guarded by 18 RPM ceiling to eliminate concurrency crashes and Groq 429 rate limit errors.
-# Bilingual: Full Devanagari script (हिंदी) and Romanized Hinglish support.
+# Pan-Indian Multilingual & Code-Mixed: Hindi, Hinglish, Tamil (Tanglish), Telugu (Tenglish), Bengali (Banglish), Marathi (Marathish), Kannada.
 
 import os
 import re
@@ -24,7 +24,7 @@ ALLOWED_AUDIO_MIMES = {
 }
 
 # ══════════════════════════════════════════════════
-#  STOPWORD & CONNECTOR DICTIONARIES (VERNACULAR + EN)
+#  STOPWORD & CONNECTOR DICTIONARIES (PAN-INDIAN VERNACULAR + EN)
 # ══════════════════════════════════════════════════
 HINDI_CONNECTORS = {
     # Romanized Hinglish
@@ -50,6 +50,35 @@ HINDI_CONNECTORS = {
     'पैसा', 'रुपये', 'रुपए', 'रुपया', 'बारे', 'वाला', 'वाली', 'वाले'
 }
 
+REGIONAL_CONNECTORS = {
+    # ── Tamil & Tanglish ──
+    'en', 'ennoda', 'enga', 'edhavadhu', 'edhachum', 'irukka', 'irukku', 
+    'venum', 'vendum', 'sollinga', 'sollunga', 'kedaikkuma', 'pathi', 'pathina', 
+    'la', 'ku', 'oda', 'kaaga', 'ippo', 'eppadi', 'kooda', 'illai', 'dhan', 'mattum',
+    'இருக்கு', 'வேணும்', 'சொல்லுங்க', 'கிடைக்குமா', 'எதாவது',
+
+    # ── Telugu & Tenglish ──
+    'maa', 'naa', 'aayanaki', 'aameki', 'unda', 'undi', 'unnaya', 'kaavali', 
+    'cheppandi', 'cheppu', 'dorukuthunda', 'gurinchi', 'lo', 'ki', 'kosam', 'ela', 
+    'eppudu', 'kooda', 'kadha', 'enti', 'emanna', 'unnam',
+    'ఉందా', 'కావాలి', 'చెప్పండి', 'గురించి', 'కోసం',
+
+    # ── Bengali & Banglish ──
+    'amar', 'amader', 'jonno', 'kono', 'kichu', 'achhe', 'hobe', 'dorkar', 'bolun', 
+    'pawa', 'jabe', 'kivabe', 'ki', 'bhalo', 'ektu', 'amake',
+    'আছে', 'হবে', 'দরকার', 'বলুন', 'জন্য', 'কোনো', 'পাওয়া',
+
+    # ── Marathi & Marathish ──
+    'majhya', 'amchya', 'tyanchya', 'sathi', 'kahi', 'aahe', 'aahet', 'pahije', 
+    'sanga', 'milen', 'milnar', 'kasa', 'kase', 'chya', 'madhe', 'war', 'tari',
+    'माझ्या', 'आमच्या', 'साठी', 'काही', 'आहे', 'पाहिजे', 'सांगा', 'मिळेल',
+
+    # ── Kannada & Kanglish ──
+    'nanna', 'namdu', 'beku', 'ideya', 'ide', 'helu', 'helangi', 'sigutha', 
+    'bagge', 'alli', 'keli', 'enu', 'yaava',
+    'ಇದೆ', 'ಬೇಕು', 'ಹೇಳಿ'
+}
+
 ENGLISH_CONNECTORS = {
     'is', 'are', 'am', 'was', 'were', 'be', 'been', 'being',
     'the', 'a', 'an', 'and', 'or', 'for', 'to', 'in', 'on', 'at', 'of', 'by', 'with', 'about',
@@ -61,7 +90,7 @@ ENGLISH_CONNECTORS = {
     'government', 'govt', 'scheme', 'schemes', 'yojana', 'portal', 'please', 'sir', 'madam'
 }
 
-ALL_CONNECTORS = HINDI_CONNECTORS | ENGLISH_CONNECTORS
+ALL_CONNECTORS = HINDI_CONNECTORS | REGIONAL_CONNECTORS | ENGLISH_CONNECTORS
 
 INDIAN_STATES = [
     "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa", "Gujarat",
@@ -76,15 +105,31 @@ DEVANAGARI_STATES = {
     "मध्य प्रदेश": "Madhya Pradesh", "महाराष्ट्र": "Maharashtra", "पश्चिम बंगाल": "West Bengal",
     "गुजरात": "Gujarat", "हरियाणा": "Haryana", "पंजाब": "Punjab", "दिल्ली": "Delhi",
     "झारखंड": "Jharkhand", "छत्तीसगढ़": "Chhattisgarh", "उत्तराखंड": "Uttarakhand",
-    "तमिलनाडु": "Tamil Nadu", "कर्नाटक": "Karnataka", "ओडिशा": "Odisha", "असम": "Assam"
+    "तमिलनाडु": "Tamil Nadu", "कर्नाटक": "Karnataka", "ओडिशा": "Odisha", "असम": "Assam",
+    "తెలంగాణ": "Telangana", "ఆంధ్ర ప్రదేశ్": "Andhra Pradesh", "தமிழ்நாடு": "Tamil Nadu", "পশ্চিমবঙ্গ": "West Bengal"
 }
+
+
+def _matches_any_root(tokens, roots):
+    """Matches words by equality or root prefix (to handle case endings like ponnu -> ponnukku, raithu -> raithuki)."""
+    for t in tokens:
+        for r in roots:
+            if t == r or t.startswith(r) or (len(r) > 3 and r in t):
+                return True
+    return False
 
 
 def extract_dynamic_search_schema(raw_text):
     """
     Strips conversational noise, punctuation (including Devanagari purna viram), and filler particles.
     Extracts high-intent domain entities (beneficiary, category, state, keywords).
-    Bilingual support for both Devanagari Hindi and Romanized Hinglish/English.
+    Pan-Indian Multilingual & Code-Mixed Support:
+    - Hindi / Hinglish
+    - Tamil / Tanglish
+    - Telugu / Tenglish
+    - Bengali / Banglish
+    - Marathi / Marathish
+    - English
     """
     if not raw_text or not isinstance(raw_text, str):
         return {
@@ -100,7 +145,7 @@ def extract_dynamic_search_schema(raw_text):
     cleaned = re.sub(r'[\?!,.:;\-_/\\()\[\]"\'\n\r\u0964\u0965\u2014\u2013\u201c\u201d\u2018\u2019]', ' ', raw_text.lower()).strip()
     tokens = [t for t in re.split(r'\s+', cleaned) if t]
 
-    # 1. State extraction (English & Devanagari)
+    # 1. State extraction (English & Regional scripts)
     detected_state = None
     lower_raw = raw_text.lower()
     for state_name in INDIAN_STATES:
@@ -108,8 +153,8 @@ def extract_dynamic_search_schema(raw_text):
             detected_state = state_name
             break
     if not detected_state:
-        for dev_name, eng_name in DEVANAGARI_STATES.items():
-            if dev_name in raw_text:
+        for reg_name, eng_name in DEVANAGARI_STATES.items():
+            if reg_name.lower() in lower_raw or reg_name in raw_text:
                 detected_state = eng_name
                 break
     if not detected_state:
@@ -119,15 +164,70 @@ def extract_dynamic_search_schema(raw_text):
             detected_state = "Madhya Pradesh"
         elif re.search(r'\b(wb|west bengal|bangla|bengal)\b', lower_raw):
             detected_state = "West Bengal"
+        elif re.search(r'\b(tn|tamil nadu|tamilnadu)\b', lower_raw):
+            detected_state = "Tamil Nadu"
+        elif re.search(r'\b(ap|andhra|andhra pradesh)\b', lower_raw):
+            detected_state = "Andhra Pradesh"
+        elif re.search(r'\b(ts|telangana)\b', lower_raw):
+            detected_state = "Telangana"
+        elif re.search(r'\b(mh|maharashtra)\b', lower_raw):
+            detected_state = "Maharashtra"
 
-    # 2. Beneficiary / Persona extraction (Composite awareness in Hinglish + Devanagari)
-    has_girl = any(k in tokens for k in ['beti', 'kanya', 'ladki', 'girl', 'daughter', 'shadi', 'बेटी', 'कन्या', 'लड़की', 'पुत्री'])
-    has_student = any(k in tokens for k in ['student', 'chhatra', 'vidyarthi', 'padhai', 'study', 'college', 'school', 'coaching', 'छात्र', 'छात्रा', 'विद्यार्थी', 'पढ़ाई', 'शिक्षा'])
-    has_farmer = any(k in tokens for k in ['kisan', 'farmer', 'krishi', 'kheti', 'kashtkar', 'batai', 'किसान', 'कृषि', 'खेती', 'काश्तकार'])
-    has_woman = any(k in tokens for k in ['mahila', 'women', 'woman', 'aurat', 'mataji', 'mother', 'nari', 'patni', 'महिला', 'महिलाएं', 'औरत', 'माताजी', 'माता', 'नारी', 'पत्नी'])
-    has_senior = any(k in tokens for k in ['bujurg', 'senior', 'vriddha', 'elderly', 'dada', 'dadi', 'grandfather', 'grandmother', 'old', 'बुजुर्ग', 'वृद्ध', 'वृद्धा', 'वरिष्ठ', 'दादा', 'दादी'])
-    has_disabled = any(k in tokens for k in ['divyang', 'viklang', 'disabled', 'handicap', 'disability', 'दिव्यांग', 'विकलांग', 'अपंग'])
-    has_widow = any(k in tokens for k in ['vidhwa', 'widow', 'विधवा'])
+    # 2. Beneficiary / Persona extraction (Pan-Indian Code-Mixed & Vernacular Root Matching)
+    girl_roots = [
+        'beti', 'kanya', 'ladki', 'girl', 'daughter', 'shadi', 'बेटी', 'कन्या', 'लड़की', 'पुत्री',
+        'ponnu', 'magal', 'penkuzhandhai', 'பெண்', 'மகள்',
+        'kuthuru', 'koothuru', 'ammayi', 'chinnaari', 'కూతురు', 'అమ్మాయి',
+        'meye', 'kanya', 'মেয়ে', 'কন্যা',
+        'mulgi', 'muli', 'lek', 'मुलगी', 'मुली'
+    ]
+    student_roots = [
+        'student', 'chhatra', 'vidyarthi', 'padhai', 'study', 'college', 'school', 'coaching', 'छात्र', 'छात्रा', 'विद्यार्थी', 'पढ़ाई', 'शिक्षा',
+        'maanavar', 'manavar', 'padippu', 'kalvi', 'மாணவர்', 'மாணவி', 'படிப்பு',
+        'vidyarthi', 'chaduvu', 'విద్యార్థి', 'చదువు',
+        'chhatra', 'chhatri', 'porasuna', 'shikkha', 'ছাত্র', 'ছাত্রী',
+        'vidyarthi', 'shikshan', 'विद्यार्थी', 'शिक्षण'
+    ]
+    farmer_roots = [
+        'kisan', 'farmer', 'krishi', 'kheti', 'kashtkar', 'batai', 'किसान', 'कृषि', 'खेती', 'काश्तकार',
+        'vivasayi', 'uzhavar', 'vivasaayi', 'விவசாயி', 'உழவர்',
+        'raithu', 'rythu', 'karshakudu', 'రైతు',
+        'chashi', 'krishak', 'চাষী', 'কৃষক',
+        'shetkari', 'baliraja', 'शेतकरी',
+        'raitha', 'raitharu', 'ರೈತ'
+    ]
+    woman_roots = [
+        'mahila', 'women', 'woman', 'aurat', 'mataji', 'mother', 'nari', 'patni', 'महिला', 'महिलाएं', 'औरत', 'माताजी', 'माता', 'नारी', 'पत्नी',
+        'magalir', 'penngal', 'thaai', 'amma', 'மகளிர்', 'பெண்கள்', 'தாய்', 'அம்மா',
+        'mahilalu', 'streelu', 'aadavallu', 'amma', 'మహిళలు', 'స్త్రీలు', 'అమ్మ',
+        'mohila', 'nari', 'ma', 'মহিলা', 'নারী', 'মা',
+        'mahila', 'stri', 'aai', 'महिला', 'स्त्री', 'आई'
+    ]
+    senior_roots = [
+        'bujurg', 'senior', 'vriddha', 'elderly', 'dada', 'dadi', 'grandfather', 'grandmother', 'old', 'बुजुर्ग', 'वृद्ध', 'वृद्धा', 'वरिष्ठ', 'दादा', 'दादी',
+        'thaatha', 'paatti', 'vayadhanavargal', 'muthiyor', 'தாத்தா', 'பாட்டி', 'முதியோர்',
+        'thatha', 'avva', 'peddalu', 'musalivallu', 'తాత', 'అవ్వ', 'వృద్ధులు',
+        'thakurda', 'thakuma', 'briddho', 'বয়স্ক', 'বৃদ্ধ',
+        'aajoba', 'aaji', 'vriddha', 'म्हातारे', 'आजोबा', 'आजी'
+    ]
+    disabled_roots = [
+        'divyang', 'viklang', 'disabled', 'handicap', 'disability', 'दिव्यांग', 'विकलांग', 'अपंग',
+        'matruthiranaligal', 'oonamutra', 'மாற்றுத்திறனாளிகள்',
+        'vikalamgulu', 'divyamgulu', 'వికలాంగులు',
+        'protibondhi', 'প্রতিবন্ধী',
+        'divyang', 'apaksh', 'दिव्यांग'
+    ]
+    widow_roots = [
+        'vidhwa', 'widow', 'विधवा', 'kaimpen', 'vidhava', 'বিধবা', 'கைம்பெண்'
+    ]
+
+    has_girl = _matches_any_root(tokens, girl_roots)
+    has_student = _matches_any_root(tokens, student_roots)
+    has_farmer = _matches_any_root(tokens, farmer_roots)
+    has_woman = _matches_any_root(tokens, woman_roots)
+    has_senior = _matches_any_root(tokens, senior_roots)
+    has_disabled = _matches_any_root(tokens, disabled_roots)
+    has_widow = _matches_any_root(tokens, widow_roots)
 
     detected_beneficiary = None
     if has_girl and has_student:
@@ -149,23 +249,50 @@ def extract_dynamic_search_schema(raw_text):
 
     # 3. Category matching (direct DB slugs: agriculture, education, health, housing, women, financial, employment, youth, elderly, disability)
     detected_category = None
-    if any(k in tokens for k in ['scholarship', 'chhatravritti', 'wazifa', 'padhai', 'education', 'stipend', 'fees', 'school', 'college', 'exam', 'छात्रवृत्ति', 'वजीफा', 'पढ़ाई', 'शिक्षा', 'फीस']):
+    if _matches_any_root(tokens, [
+        'scholarship', 'chhatravritti', 'wazifa', 'padhai', 'education', 'stipend', 'fees', 'school', 'college', 'exam', 'छात्रवृत्ति', 'वजीफा', 'पढ़ाई', 'शिक्षा', 'फीस',
+        'kalvi', 'padippu', 'chaduvu', 'shikkha', 'porasuna', 'shikshan', 'கல்வி', 'படிப்பு', 'చదువు', 'শিক্ষা'
+    ]):
         detected_category = 'education'
-    elif any(k in tokens for k in ['kisan', 'fasal', 'khet', 'sinchai', 'tractor', 'fertilizer', 'beej', 'agriculture', 'krishi', 'mandi', 'khad', 'pmkisan', 'किसान', 'फसल', 'खेत', 'सिंचाई', 'ट्रैक्टर', 'खाद', 'बीज', 'कृषि']):
+    elif _matches_any_root(tokens, [
+        'kisan', 'fasal', 'khet', 'sinchai', 'tractor', 'fertilizer', 'beej', 'agriculture', 'krishi', 'mandi', 'khad', 'pmkisan', 'किसान', 'फसल', 'खेत', 'सिंचाई', 'ट्रैक्टर', 'खाद', 'बीज', 'कृषि',
+        'vivasayi', 'uzhavar', 'raithu', 'rythu', 'chashi', 'krishak', 'shetkari', 'விவசாயம்', 'రైతు', 'কৃষি', 'शेतकरी'
+    ]):
         detected_category = 'agriculture'
-    elif any(k in tokens for k in ['health', 'swasthya', 'ayushman', 'ilaj', 'hospital', 'dawa', 'bimari', 'medical', 'clinic', 'operation', 'doctor', 'स्वास्थ्य', 'आयुष्मान', 'इलाज', 'अस्पताल', 'दवा', 'बीमारी', 'चिकित्सा']):
+    elif _matches_any_root(tokens, [
+        'health', 'swasthya', 'ayushman', 'ilaj', 'hospital', 'dawa', 'bimari', 'medical', 'clinic', 'operation', 'doctor', 'स्वास्थ्य', 'आयुष्मान', 'इलाज', 'अस्पताल', 'दवा', 'बीमारी', 'चिकित्सा',
+        'maruthuvam', 'vaidhyam', 'arogya', 'chikitsa', 'மருத்துவம்', 'ఆరోగ్యం', 'স্বাস্থ্য'
+    ]):
         detected_category = 'health'
-    elif any(k in tokens for k in ['awas', 'makaan', 'ghar', 'housing', 'chhat', 'pmay', 'colony', 'shelter', 'आवास', 'मकान', 'घर', 'छत', 'बसेरा']):
+    elif _matches_any_root(tokens, [
+        'awas', 'makaan', 'ghar', 'housing', 'chhat', 'pmay', 'colony', 'shelter', 'आवास', 'मकान', 'घर', 'छत', 'बसेरा',
+        'veedu', 'illu', 'bari', 'வீடு', 'ఇల్లు', 'বাড়ি'
+    ]):
         detected_category = 'housing'
-    elif any(k in tokens for k in ['beti', 'kanya', 'mahila', 'woman', 'women', 'ladli', 'matritva', 'pregnancy', 'garbhavati', 'sukanya', 'बेटी', 'कन्या', 'महिला', 'लाडली', 'मातृत्व', 'गर्भवती', 'सुकन्या']):
+    elif _matches_any_root(tokens, [
+        'beti', 'kanya', 'mahila', 'woman', 'women', 'ladli', 'matritva', 'pregnancy', 'garbhavati', 'sukanya', 'बेटी', 'कन्या', 'महिला', 'लाडली', 'मातृत्व', 'गर्भवती', 'सुकन्या',
+        'ponnu', 'magal', 'kuthuru', 'ammayi', 'meye', 'mulgi', 'மகள்', 'கூతురు', 'মেয়ে'
+    ]):
         detected_category = 'women'
-    elif any(k in tokens for k in ['mudra', 'loan', 'vyapar', 'dukan', 'business', 'credit', 'subvention', 'bank', 'khata', 'jandhan', 'bima', 'dbt', 'paisa', 'paise', 'ऋण', 'लोन', 'मुद्रा', 'व्यापार', 'दुकान', 'सब्सिडी', 'बैंक', 'खाता', 'जनधन', 'बीमा']):
+    elif _matches_any_root(tokens, [
+        'mudra', 'loan', 'vyapar', 'dukan', 'business', 'credit', 'subvention', 'bank', 'khata', 'jandhan', 'bima', 'dbt', 'paisa', 'paise', 'ऋण', 'लोन', 'मुद्रा', 'व्यापार', 'दुकान', 'सब्सिडी', 'बैंक', 'खाता', 'जनधन', 'बीमा',
+        'kadan', 'appu', 'rin', 'karj', 'கடன்', 'అప్పు', 'ঋণ', 'कर्ज'
+    ]):
         detected_category = 'financial'
-    elif any(k in tokens for k in ['rojgar', 'naukri', 'job', 'skill', 'kaushal', 'training', 'apprentice', 'employment', 'placement', 'रोजगार', 'नौकरी', 'कौशल', 'प्रशिक्षण']):
+    elif _matches_any_root(tokens, [
+        'rojgar', 'naukri', 'job', 'skill', 'kaushal', 'training', 'apprentice', 'employment', 'placement', 'रोजगार', 'नौकरी', 'कौशल', 'प्रशिक्षण',
+        'velai', 'udyogam', 'chakri', 'வேலை', 'ఉద్యోగం', 'চাকরি'
+    ]):
         detected_category = 'employment'
-    elif any(k in tokens for k in ['pension', 'bujurg', 'vriddha', 'elderly', 'senior', 'पेंशन', 'बुजुर्ग', 'वृद्धावस्था', 'वृद्ध']):
+    elif _matches_any_root(tokens, [
+        'pension', 'bujurg', 'vriddha', 'elderly', 'senior', 'पेंशन', 'बुजुर्ग', 'वृद्धावस्था', 'वृद्ध',
+        'ooyavudhiyam', 'vriddhapya', 'ஓய்வூதியம்', 'పెన్షన్'
+    ]):
         detected_category = 'elderly'
-    elif any(k in tokens for k in ['divyang', 'viklang', 'disabled', 'disability', 'udid', 'दिव्यांग', 'विकलांग']):
+    elif _matches_any_root(tokens, [
+        'divyang', 'viklang', 'disabled', 'disability', 'udid', 'दिव्यांग', 'विकलांग',
+        'matruthiranaligal', 'vikalamgulu', 'protibondhi', 'மாற்றுத்திறனாளிகள்'
+    ]):
         detected_category = 'disability'
 
     # 4. Filter genuine discriminative keywords (leave out connector words)
@@ -213,7 +340,8 @@ def transcribe_audio_groq(audio_file_bytes, client_ip="127.0.0.1", filename="aud
     scheme_prompt = (
         "Saral Niti, PM-KISAN, Ayushman Bharat, Pradhan Mantri Awas Yojana, "
         "DBT, Ration Card, Ladli Behna, Sukanya Samriddhi, scholarship, "
-        "Jan Dhan, Jan Seva Kendra, Kisan Credit Card, kisan, pension, divyang, beti"
+        "Jan Dhan, Jan Seva Kendra, Kisan Credit Card, kisan, pension, divyang, beti, "
+        "vivasayi, uzhavar, raithu, shetkari, chashi, ponnu, meye, mulgi, kalvi, chaduvu"
     )
 
     models_to_try = [

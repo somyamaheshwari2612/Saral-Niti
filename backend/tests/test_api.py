@@ -1126,6 +1126,23 @@ def test_voice_query_normalizer_and_endpoints():
     assert s_dev["category"] == "education"
     assert "छात्रवृत्ति" in s_dev["genuine_keywords"]
 
+    # 3b. Test Pan-Indian Code-Mixed queries (Tanglish, Tenglish, Banglish, Marathish)
+    s_ta = extract_dynamic_search_schema("En ponnukku scholarship scheme edhavadhu irukka")
+    assert s_ta["beneficiary"] in ("girl_student", "daughter")
+    assert s_ta["category"] == "education"
+
+    s_te = extract_dynamic_search_schema("Maa nanna raithu aayanaki agriculture loan scheme unda")
+    assert s_te["beneficiary"] == "farmer"
+    assert s_te["category"] in ("agriculture", "financial")
+
+    s_bn = extract_dynamic_search_schema("Amar meyer jonno kono scholarship scheme achhe ki")
+    assert s_bn["beneficiary"] in ("girl_student", "daughter")
+    assert s_bn["category"] == "education"
+
+    s_mr = extract_dynamic_search_schema("Majhya mulisathi kahi scholarship scheme aahe ka")
+    assert s_mr["beneficiary"] in ("girl_student", "daughter")
+    assert s_mr["category"] == "education" 
+
     # 4. Test 18 RPM Concurrency Guard on Groq Voice Endpoints
     from database import acquire_rate_limit_slot, reset_rate_limits
     reset_rate_limits("groq_whisper_test")
