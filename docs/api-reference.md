@@ -9,16 +9,25 @@ Base URL (Production): `https://<your-backend-domain>.onrender.com`
 
 ## 🏛️ Scheme Discovery Endpoints
 
-### 1. Get All Schemes
-Returns a list of verified welfare schemes stored in the local SQLite database.
+### 1. Get Schemes (Paginated)
+Returns a list of verified welfare schemes stored in the local SQLite database with server-side pagination.
 
 - **URL:** `/api/schemes`
 - **Method:** `GET`
+- **Query Params (Optional):**
+  - `page=[integer]` (default: `1`)
+  - `limit=[integer]` (default: `50`, max: `100`; set `limit=0` or `all=true` for full bulk export)
+  - `category=[string]` (optional, e.g. `agriculture`, `health`, `education`)
 - **Response:** `200 OK`
 ```json
 {
   "status": "ok",
-  "count": 4847,
+  "total": 4847,
+  "count": 50,
+  "page": 1,
+  "limit": 50,
+  "total_pages": 97,
+  "has_more": true,
   "schemes": [
     {
       "_id": "1",

@@ -139,12 +139,32 @@ def test_project_page(client=None):
 # Test 3 - Schemes API responds with status ok
 def test_get_schemes(client=None):
     c = client or get_test_client()
+    # 1. Default pagination (page=1, limit=50)
     res = c.get('/api/schemes')
     assert res.status_code == 200
     data = res.get_json()
     assert data["status"] == "ok"
     assert "schemes" in data
     assert data["count"] > 0
+    assert data["total"] >= data["count"]
+    assert data["page"] == 1
+    assert data["limit"] == 50
+    assert "has_more" in data
+    assert "total_pages" in data
+
+    # 2. Custom page and limit
+    res2 = c.get('/api/schemes?page=1&limit=10')
+    assert res2.status_code == 200
+    d2 = res2.get_json()
+    assert d2["page"] == 1
+    assert d2["limit"] == 10
+    assert d2["count"] <= 10
+
+    # 3. Validation on invalid parameters
+    res_bad_page = c.get('/api/schemes?page=not_a_number')
+    assert res_bad_page.status_code == 400
+    res_bad_limit = c.get('/api/schemes?limit=xyz')
+    assert res_bad_limit.status_code == 400
 
 
 # Test 4 - Get scheme by ID (Valid) - SQLite supports integer id or slug lookup

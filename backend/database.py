@@ -223,6 +223,64 @@ def get_all_schemes(limit=None):
     return [row_to_dict(r) for r in cur.fetchall()]
 
 
+def get_schemes_paginated(page=1, limit=50, category=None):
+    """
+    Returns high-speed paginated schemes from SQLite with total counts and pagination metadata.
+    Supports limit=0 to return full dataset if explicitly requested.
+    """
+    con = get_db_connection()
+    cur = con.cursor()
+
+    where_clauses = ["is_active = 1"]
+    params = []
+    if category and str(category).strip().lower() != "all":
+        where_clauses.append("category = ? COLLATE NOCASE")
+        params.append(str(category).strip())
+
+    where_sql = " AND ".join(where_clauses)
+
+    # 1. Total matching count
+    cur.execute(f"SELECT COUNT(*) FROM schemes WHERE {where_sql}", params)
+    total = cur.fetchone()[0]
+
+    # 2. If limit <= 0, return all schemes
+    if limit is not None and int(limit) <= 0:
+        cur.execute(f"SELECT * FROM schemes WHERE {where_sql} ORDER BY id ASC", params)
+        schemes = [row_to_dict(r) for r in cur.fetchall()]
+        return {
+            "total": total,
+            "count": len(schemes),
+            "page": 1,
+            "limit": total,
+            "total_pages": 1,
+            "has_more": False,
+            "schemes": schemes
+        }
+
+    # 3. Apply server-side pagination
+    page = max(1, int(page or 1))
+    limit = max(1, min(100, int(limit or 50)))
+    offset = (page - 1) * limit
+    total_pages = (total + limit - 1) // limit if total > 0 else 1
+
+    cur.execute(
+        f"SELECT * FROM schemes WHERE {where_sql} ORDER BY id ASC LIMIT ? OFFSET ?",
+        params + [limit, offset]
+    )
+    rows = cur.fetchall()
+    schemes = [row_to_dict(r) for r in rows]
+
+    return {
+        "total": total,
+        "count": len(schemes),
+        "page": page,
+        "limit": limit,
+        "total_pages": total_pages,
+        "has_more": (offset + len(schemes)) < total,
+        "schemes": schemes
+    }
+
+
 def get_scheme_by_id(scheme_id):
     con = get_db_connection()
     cur = con.cursor()

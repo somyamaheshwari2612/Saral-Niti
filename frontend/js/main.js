@@ -63,7 +63,7 @@ async function loadSchemes() {
     }
     allSchemes = data.schemes || [];
     const totalEl = document.getElementById('totalCount');
-    if (totalEl) totalEl.textContent = allSchemes.length + '+';
+    if (totalEl) totalEl.textContent = (data.total || allSchemes.length) + '+';
     renderSchemes(allSchemes);
   } catch (err) {
     document.getElementById('schemesGrid').innerHTML = `
