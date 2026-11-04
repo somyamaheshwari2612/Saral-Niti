@@ -188,14 +188,25 @@
       <!-- RESULTS CONTAINER -->
       <div id="eligResultsWrap" style="display: none; margin-top: 24px;">
         <div class="elig-results-header">
-          <h3 id="eligResultsTitle">Matched Schemes</h3>
-          <p id="eligResultsSub">Schemes ranked by eligibility fit and verification status</p>
+          <div class="elig-results-header-text">
+            <h3 id="eligResultsTitle">Matched Schemes</h3>
+            <p id="eligResultsSub">Schemes ranked by eligibility fit and verification status</p>
+          </div>
+          <div class="elig-results-actions">
+            <button type="button" class="btn-print-passbook" id="btnCitizenPassbook" onclick="printCitizenPassbook()" title="Generate official A4 printable welfare passbook for CSC & Jan Seva Kendra">
+              <i class="fa-solid fa-file-invoice"></i>
+              <span>Download Welfare Passbook (PDF/Print)</span>
+            </button>
+          </div>
         </div>
         <div id="eligResultsList" class="elig-results-grid"></div>
       </div>
     </div>
   </div>
 </div>
+
+<!-- ══════════════ CITIZEN WELFARE PASSBOOK (A4 PRINTABLE DOSSIER) ══════════════ -->
+<div id="citizenPassbookPrintSection" class="citizen-passbook-print-section" style="display: none;"></div>
 
 <!-- ══════════════ ADD / EDIT FAMILY MEMBER MODAL ══════════════ -->
 <div class="modal-overlay" id="familyMemberOverlay" onclick="closeFamilyMemberOnOverlay(event)" role="dialog" aria-modal="true" style="z-index: 2100;">

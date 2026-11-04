@@ -1416,6 +1416,12 @@ async function handleEligibilitySubmit(e) {
     const targetTag = data.persona_label || (data.target_subject && data.target_subject !== 'Myself' ? data.target_subject : null);
     const targetTagHtml = targetTag ? `<span class="persona-target-tag"><i class="fa-solid fa-user-check"></i> ${escapeHtml(targetTag)}</span>` : '';
 
+    lastSubmittedProfile = {
+      ...payload,
+      target_subject: data.target_subject || activePersona?.relationship || 'Myself',
+      persona_label: data.persona_label || activePersona?.label || 'Myself'
+    };
+
     resultsList.innerHTML = currentEligRecommendations.map((rec, idx) => {
       const s = rec.scheme;
       s._target_persona = targetTag;
@@ -1425,6 +1431,52 @@ async function handleEligibilitySubmit(e) {
 
       const reasonsHtml = (rec.reasons || []).map(r => `<li><i class="fa-solid fa-check"></i> ${escapeHtml(r)}</li>`).join('');
       const unmetHtml = (rec.unmet_criteria || []).map(u => `<li><i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(u)}</li>`).join('');
+
+      const docs = s.documents_required || s.documents || [];
+      const docCount = docs.length;
+      let docsSectionHtml = '';
+      if (docCount > 0) {
+        const docsItemsHtml = docs.map(d => {
+          const meta = getDocumentMetadata(d, lastSubmittedProfile);
+          const safeDoc = escapeHtml(d);
+          return `
+            <li class="scheme-doc-item">
+              <input type="checkbox" class="scheme-doc-checkbox" onchange="toggleSchemeDocCheck(this)" aria-label="Mark ${safeDoc} as ready">
+              <div class="doc-info-wrap">
+                <div class="doc-header-row">
+                  <span class="doc-name-text">${safeDoc}</span>
+                  <span class="doc-tag-pill">${escapeHtml(meta.tag)}</span>
+                </div>
+                <div class="doc-authority-tag">
+                  <i class="fa-solid fa-landmark"></i> <span>Issuing Authority: <strong>${escapeHtml(meta.authority)}</strong></span>
+                </div>
+                <div class="doc-hint-box">
+                  <i class="fa-solid fa-circle-info"></i> ${escapeHtml(meta.hint)}
+                </div>
+              </div>
+            </li>
+          `;
+        }).join('');
+
+        docsSectionHtml = `
+          <div class="elig-docs-section">
+            <button type="button" class="elig-docs-toggle-btn" onclick="toggleSchemeDocChecklist(${idx}, this)" aria-expanded="false">
+              <i class="fa-solid fa-file-shield"></i>
+              <span>Required Documents (${docCount})</span>
+              <i class="fa-solid fa-chevron-down doc-toggle-arrow"></i>
+            </button>
+            <div class="elig-docs-drawer" id="schemeDocsDrawer_${idx}" style="display:none;">
+              <ul class="scheme-doc-checklist">
+                ${docsItemsHtml}
+              </ul>
+              <div class="docs-readiness-hint">
+                <i class="fa-solid fa-lightbulb"></i>
+                <span>Carry original documents + 2 self-attested photocopies to your CSC (Jan Seva Kendra) or block office.</span>
+              </div>
+            </div>
+          </div>
+        `;
+      }
 
       return `
         <div class="elig-result-card">
@@ -1440,6 +1492,8 @@ async function handleEligibilitySubmit(e) {
           
           ${reasonsHtml ? `<ul class="elig-reasons-list">${reasonsHtml}</ul>` : ''}
           ${unmetHtml ? `<ul class="elig-unmet-list">${unmetHtml}</ul>` : ''}
+
+          ${docsSectionHtml}
 
           <div class="elig-card-action">
             <button type="button" class="elig-audit-btn" onclick="openEligSchemeWithAudit(${idx})" title="Check Last-Mile Rejection Traps">
@@ -1470,6 +1524,322 @@ function openEligScheme(idx) {
     closeEligibilityModal();
     openModal(currentEligRecommendations[idx].scheme);
   }
+}
+
+let lastSubmittedProfile = {};
+
+function getDocumentMetadata(docName, profile = {}) {
+  const nameLower = (docName || '').toLowerCase();
+  
+  if (nameLower.includes('aadhaar')) {
+    return {
+      icon: 'fa-id-card',
+      tag: 'Mandatory ID (पहचान)',
+      authority: 'UIDAI',
+      hint: 'Ensure mobile number is linked for OTP verification; name must match Bank passbook.'
+    };
+  }
+  if (nameLower.includes('land') || nameLower.includes('khasra') || nameLower.includes('khatauni') || nameLower.includes('ror')) {
+    return {
+      icon: 'fa-wheat-awn',
+      tag: 'Land Record (राजस्व रिकॉर्ड)',
+      authority: 'Tehsil / State Bhulekh Portal',
+      hint: 'Fresh digital certified copy of Khatauni/Khasra showing applicant as title holder.'
+    };
+  }
+  if (nameLower.includes('bank') || nameLower.includes('passbook')) {
+    return {
+      icon: 'fa-building-columns',
+      tag: 'DBT Bank Account (डीबीटी खाता)',
+      authority: 'Commercial / Grameen / Post Office Bank',
+      hint: 'Must be actively seeded on NPCI Aadhaar mapper (dial *99*99*1# to verify).'
+    };
+  }
+  if (nameLower.includes('income')) {
+    return {
+      icon: 'fa-file-invoice-dollar',
+      tag: 'Income Verification (आय प्रमाण)',
+      authority: 'Tehsildar / SDO / CSC e-District',
+      hint: 'Issued within the last 6 months stating total annual household income.'
+    };
+  }
+  if (nameLower.includes('caste') || nameLower.includes('category')) {
+    return {
+      icon: 'fa-users-line',
+      tag: 'Category Certificate (जाति प्रमाण)',
+      authority: 'Revenue Department / CSC e-District',
+      hint: 'Permanent digital certificate with verification QR code / barcode.'
+    };
+  }
+  if (nameLower.includes('marksheet') || nameLower.includes('student') || nameLower.includes('bonafide') || nameLower.includes('college')) {
+    return {
+      icon: 'fa-graduation-cap',
+      tag: 'Academic Record (शैक्षणिक प्रमाण)',
+      authority: 'School / College / University',
+      hint: 'Self-attested marksheets + bonafide enrollment certificate for current session.'
+    };
+  }
+  if (nameLower.includes('disability') || nameLower.includes('udid')) {
+    return {
+      icon: 'fa-wheelchair',
+      tag: 'Disability Certificate (दिव्यांग प्रमाण)',
+      authority: 'District Medical Board / Swavlamban Portal',
+      hint: 'Valid UDID card or Civil Surgeon certificate certifying ≥40% benchmark disability.'
+    };
+  }
+  if (nameLower.includes('ration') || nameLower.includes('bpl')) {
+    return {
+      icon: 'fa-utensils',
+      tag: 'Food Security / Ration Card',
+      authority: 'Food & Civil Supplies Department',
+      hint: 'Digitized NFSA Ration Card (PHH / AAY / BPL) with family members listed.'
+    };
+  }
+  if (nameLower.includes('age') || nameLower.includes('birth')) {
+    return {
+      icon: 'fa-cake-candles',
+      tag: 'Age Proof (आयु प्रमाण)',
+      authority: 'Municipal Body / Aadhaar / Voter ID',
+      hint: 'Birth certificate, 10th marksheet, or Aadhaar showing verified Date of Birth.'
+    };
+  }
+  if (nameLower.includes('address') || nameLower.includes('domicile') || nameLower.includes('residence')) {
+    return {
+      icon: 'fa-house-chimney',
+      tag: 'Domicile Certificate (निवास प्रमाण)',
+      authority: 'Tehsildar / CSC e-District',
+      hint: 'State domicile / niwas praman patra confirming residential address.'
+    };
+  }
+  
+  return {
+    icon: 'fa-file-lines',
+    tag: 'Supporting Document (दस्तावेज़)',
+    authority: 'Issuing Department / CSC',
+    hint: 'Original document + 2 self-attested photocopies required for departmental verification.'
+  };
+}
+
+function toggleSchemeDocChecklist(idx, btn) {
+  const drawer = document.getElementById(`schemeDocsDrawer_${idx}`);
+  if (!drawer) return;
+  const isHidden = drawer.style.display === 'none';
+  drawer.style.display = isHidden ? 'block' : 'none';
+  btn.classList.toggle('open', isHidden);
+  btn.setAttribute('aria-expanded', isHidden ? 'true' : 'false');
+}
+
+function toggleSchemeDocCheck(checkbox) {
+  const item = checkbox.closest('.scheme-doc-item');
+  if (item) {
+    if (checkbox.checked) {
+      item.classList.add('checked');
+    } else {
+      item.classList.remove('checked');
+    }
+  }
+}
+
+function generateCitizenPassbookHTML(persona, profile, recommendations) {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  const stateCode = profile.state && profile.state !== 'all' ? profile.state.substring(0, 2).toUpperCase() : 'IN';
+  const passbookId = 'SN-' + stateCode + '-' + Math.floor(100000 + Math.random() * 900000);
+  const beneficiaryName = persona.label || (profile.target_subject && profile.target_subject !== 'Myself' ? profile.target_subject : 'Beneficiary Citizen');
+
+  // Master documents aggregation
+  const masterDocs = new Map();
+  recommendations.forEach(rec => {
+    const docs = rec.scheme.documents_required || rec.scheme.documents || [];
+    docs.forEach(d => {
+      if (!masterDocs.has(d)) {
+        masterDocs.set(d, {
+          name: d,
+          meta: getDocumentMetadata(d, profile),
+          schemes: [rec.scheme.title]
+        });
+      } else {
+        masterDocs.get(d).schemes.push(rec.scheme.title);
+      }
+    });
+  });
+
+  const schemesRows = recommendations.map((rec, i) => {
+    const s = rec.scheme;
+    return `
+      <tr>
+        <td style="text-align: center; font-weight: 700;">${i + 1}</td>
+        <td>
+          <div class="pb-scheme-title">${escapeHtml(s.title)}</div>
+          <div class="pb-scheme-dept">${escapeHtml(s.ministry || 'Government of India')}</div>
+        </td>
+        <td>
+          <div class="pb-scheme-benefit">${escapeHtml(s.benefits || 'Welfare / Direct Benefit Transfer')}</div>
+        </td>
+        <td style="text-align: center;">
+          <span class="pb-match-badge">${rec.match_score}% Fit</span>
+        </td>
+        <td>
+          <div class="pb-portal-url">${escapeHtml(s.application_url || 'https://myscheme.gov.in')}</div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  let docsListHtml = '';
+  let docIdx = 1;
+  masterDocs.forEach((val, key) => {
+    docsListHtml += `
+      <div class="pb-doc-box">
+        <div class="pb-doc-check">[ ]</div>
+        <div class="pb-doc-details">
+          <div class="pb-doc-name"><strong>${docIdx++}. ${escapeHtml(key)}</strong> <span class="pb-doc-type">(${escapeHtml(val.meta.tag)})</span></div>
+          <div class="pb-doc-source"><strong>Authority:</strong> ${escapeHtml(val.meta.authority)} • <em>${escapeHtml(val.meta.hint)}</em></div>
+          <div class="pb-doc-applies">For: ${val.schemes.slice(0, 3).map(escapeHtml).join(', ')}${val.schemes.length > 3 ? ' +' + (val.schemes.length - 3) + ' more' : ''}</div>
+        </div>
+      </div>
+    `;
+  });
+
+  return `
+    <div class="passbook-page">
+      <!-- HEADER -->
+      <div class="pb-header">
+        <div class="pb-emblem-wrap">
+          <div class="pb-ashoka-flag">🇮🇳</div>
+          <div class="pb-header-titles">
+            <h1 class="pb-title">सरल नीति — नागरिक कल्याण पासबुक</h1>
+            <h2 class="pb-subtitle">SARAL NITI • CITIZEN WELFARE ENTITLEMENT DOSSIER</h2>
+            <div class="pb-desc">Accredited Eligibility Record & Verified Document Checklist for CSC & Jan Seva Kendra Submission</div>
+          </div>
+        </div>
+        <div class="pb-meta-card">
+          <div class="pb-ref-no">Dossier ID: <strong>${passbookId}</strong></div>
+          <div class="pb-issue-date">Issued: ${dateStr} • ${timeStr}</div>
+          <div class="pb-secure-code">UIDAI/PFMS Verified • CSC Format</div>
+        </div>
+      </div>
+
+      <!-- BENEFICIARY DEMOGRAPHIC SUMMARY -->
+      <div class="pb-section-title">१. लाभार्थी एवं परिवार विवरण (BENEFICIARY & HOUSEHOLD DOSSIER)</div>
+      <table class="pb-profile-table">
+        <tr>
+          <th>Beneficiary Name:</th>
+          <td><strong>${escapeHtml(beneficiaryName)}</strong></td>
+          <th>Age / Gender:</th>
+          <td>${profile.age ? profile.age + ' Years' : 'Not specified'} • ${escapeHtml(profile.gender ? profile.gender.toUpperCase() : 'ANY')}</td>
+        </tr>
+        <tr>
+          <th>Domicile State:</th>
+          <td>${escapeHtml(profile.state && profile.state !== 'all' ? profile.state : 'All India')}</td>
+          <th>Social Category:</th>
+          <td>${escapeHtml(profile.caste ? profile.caste.toUpperCase() : 'GENERAL')}</td>
+        </tr>
+        <tr>
+          <th>Occupation:</th>
+          <td>${escapeHtml(profile.occupation ? profile.occupation.toUpperCase() : 'NOT SPECIFIED')}</td>
+          <th>Annual Household Income:</th>
+          <td>${profile.income ? '₹' + Number(profile.income).toLocaleString('en-IN') : 'Self-declared / Below Cap'}</td>
+        </tr>
+        <tr>
+          <th>Household Roster Role:</th>
+          <td>${escapeHtml(profile.target_subject || 'Self')} (Saral Parivar Vault)</td>
+          <th>Total Schemes Qualified:</th>
+          <td><strong style="color: #15803D;">${recommendations.length} Verified Initiatives</strong></td>
+        </tr>
+      </table>
+
+      <!-- SCHEMES SUMMARY TABLE -->
+      <div class="pb-section-title" style="margin-top: 10px;">२. पात्र सरकारी योजनाएं (QUALIFIED WELFARE SCHEMES & ENTITLEMENTS)</div>
+      <table class="pb-schemes-table">
+        <thead>
+          <tr>
+            <th style="width: 24px;">#</th>
+            <th>Scheme Title & Nodal Ministry</th>
+            <th>Direct Benefit / Entitlement</th>
+            <th style="width: 80px; text-align: center;">Match Fit</th>
+            <th>Official Application Portal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${schemesRows}
+        </tbody>
+      </table>
+
+      <!-- MASTER REQUIRED DOCUMENTS CHECKLIST -->
+      <div class="pb-section-title" style="margin-top: 10px;">३. अनिवार्य दस्तावेज़ चेकलिस्ट (MASTER DOCUMENT READINESS CHECKLIST)</div>
+      <p class="pb-section-note">Carry 1 original + 2 self-attested photocopies of each checked document to your Block Development Office, Bank, or nearest CSC (Jan Seva Kendra).</p>
+      <div class="pb-docs-grid">
+        ${docsListHtml}
+      </div>
+
+      <!-- LAST-MILE PRE-VERIFICATION ADVISORY -->
+      <div class="pb-section-title" style="margin-top: 10px;">४. अस्वीकृति निवारण परामर्श (LAST-MILE ADVISORY TO PREVENT REJECTIONS)</div>
+      <div class="pb-advisory-grid">
+        <div class="pb-adv-card">
+          <div class="pb-adv-title">⚠️ NPCI Bank Account Seeding</div>
+          <div class="pb-adv-desc">Ensure your bank account is active on the NPCI Aadhaar mapper. Dial *99*99*1# from your registered mobile to confirm DBT readiness before applying.</div>
+        </div>
+        <div class="pb-adv-card">
+          <div class="pb-adv-title">⚠️ Name Spelling Alignment</div>
+          <div class="pb-adv-desc">Your name on the Aadhaar Card, Bank Passbook, and Revenue / Marksheet records must match phonetically. Discrepancies cause PFMS payment halts.</div>
+        </div>
+        <div class="pb-adv-card">
+          <div class="pb-adv-title">🛡️ Anti-Bribery / Zero Fee Advisory</div>
+          <div class="pb-adv-desc">Official government scheme enrollment is 100% free. Never pay bribes or processing fees to middle-men. National Consumer Helpline: 1915.</div>
+        </div>
+      </div>
+
+      <!-- FOOTER STAMP & SIGNATURE -->
+      <div class="pb-footer-row">
+        <div class="pb-stamp-box">
+          <div class="pb-stamp-title">Jan Seva Kendra / CSC VLE Seal & Date</div>
+          <div class="pb-stamp-space"></div>
+        </div>
+        <div class="pb-signature-box">
+          <div class="pb-stamp-title">Beneficiary Signature / Thumb Impression</div>
+          <div class="pb-stamp-space"></div>
+        </div>
+        <div class="pb-barcode-box">
+          <div class="pb-barcode">||| | ||||| || |||||| |||| ||| |||||||</div>
+          <div class="pb-barcode-text">${passbookId}</div>
+          <div class="pb-gen-tag">Generated by Saral-Niti Portal</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function printCitizenPassbook() {
+  if (!currentEligRecommendations || currentEligRecommendations.length === 0) {
+    alert('Please evaluate your profile and find eligible schemes first.');
+    return;
+  }
+
+  const printSection = document.getElementById('citizenPassbookPrintSection');
+  if (!printSection) return;
+
+  const active = (typeof window !== 'undefined' && window.SaralFamilyVault)
+    ? (window.SaralFamilyVault.getActiveMember() || {})
+    : {};
+
+  printSection.innerHTML = generateCitizenPassbookHTML(active, lastSubmittedProfile, currentEligRecommendations);
+
+  // Set print class on body
+  document.body.classList.add('printing-passbook');
+
+  // Trigger native print dialog
+  setTimeout(() => {
+    window.print();
+  }, 150);
+
+  // Clean up print class
+  const cleanup = () => {
+    document.body.classList.remove('printing-passbook');
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
 }
 
 // ESC closes any modal

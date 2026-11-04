@@ -344,3 +344,56 @@ html.dark-mode .chat-persona-add-btn {
   border-color: #FF6B00;
   color: #FFA559;
 }
+/* ── PASSBOOK & DOCUMENT CHECKLIST (DARK MODE) ── */
+html.dark-mode .btn-print-passbook {
+  background: linear-gradient(135deg, #1E293B 0%, #334155 100%);
+  border-color: #475569;
+  color: #F8FAFC;
+}
+html.dark-mode .btn-print-passbook:hover {
+  background: linear-gradient(135deg, #FF6B00 0%, #EA580C 100%);
+  border-color: #EA580C;
+  color: #FFFFFF;
+}
+html.dark-mode .elig-docs-toggle-btn {
+  background: #1E293B;
+  border-color: #334155;
+  color: #CBD5E1;
+}
+html.dark-mode .elig-docs-toggle-btn:hover {
+  background: #334155;
+  color: #FFFFFF;
+  border-color: #475569;
+}
+html.dark-mode .elig-docs-drawer {
+  background: #090D16;
+  border-color: #1E293B;
+}
+html.dark-mode .scheme-doc-item {
+  background: #151D2C;
+  border-color: #1E293B;
+}
+html.dark-mode .scheme-doc-item:hover {
+  border-color: #334155;
+}
+html.dark-mode .scheme-doc-item.checked {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(52, 211, 153, 0.35);
+}
+html.dark-mode .scheme-doc-item.checked .doc-name-text {
+  color: #34D399;
+}
+html.dark-mode .doc-name-text {
+  color: #E2E8F0;
+}
+html.dark-mode .doc-authority-tag {
+  color: #94A3B8;
+}
+html.dark-mode .doc-hint-box {
+  background: rgba(255, 255, 255, 0.04);
+  color: #CBD5E1;
+}
+html.dark-mode .docs-readiness-hint {
+  color: #94A3B8;
+  border-top-color: #1E293B;
+}
