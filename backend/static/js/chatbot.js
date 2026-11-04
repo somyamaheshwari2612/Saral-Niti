@@ -713,26 +713,100 @@ function initSpeechRecognition() {
   return rec;
 }
 
-function toggleVoiceInput() {
+let chatMediaRecorder = null;
+let chatAudioChunks = [];
+let isChatAudioRecording = false;
+
+async function toggleVoiceInput() {
   const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-  if (!SpeechRecognition) {
-    alert('Voice recognition is not supported in this browser. Please use Chrome, Edge, or Safari.');
+  if (SpeechRecognition) {
+    if (!recognition) {
+      recognition = initSpeechRecognition();
+    }
+    if (isRecording) {
+      try { recognition.stop(); } catch (e) {}
+      stopVoiceInput();
+    } else {
+      try {
+        recognition.start();
+      } catch (e) {
+        recognition = initSpeechRecognition();
+        if (recognition) recognition.start();
+      }
+    }
     return;
   }
 
-  if (!recognition) {
-    recognition = initSpeechRecognition();
-  }
-
-  if (isRecording) {
-    try { recognition.stop(); } catch (e) {}
-    stopVoiceInput();
+  // Universal MediaRecorder + Groq Whisper Fallback for Firefox & unsupported browsers
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    if (isChatAudioRecording) {
+      stopChatMediaRecorder();
+    } else {
+      startChatMediaRecorder();
+    }
   } else {
-    try {
-      recognition.start();
-    } catch (e) {
-      recognition = initSpeechRecognition();
-      if (recognition) recognition.start();
+    alert('Voice input requires microphone access. Please allow microphone permissions.');
+  }
+}
+
+async function startChatMediaRecorder() {
+  try {
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    chatAudioChunks = [];
+    let mimeType = 'audio/webm;codecs=opus';
+    if (typeof MediaRecorder !== 'undefined' && !MediaRecorder.isTypeSupported(mimeType)) {
+      mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+    }
+
+    chatMediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+    chatMediaRecorder.ondataavailable = e => { if (e.data && e.data.size > 0) chatAudioChunks.push(e.data); };
+    chatMediaRecorder.onstop = async () => {
+      stream.getTracks().forEach(t => t.stop());
+      if (chatAudioChunks.length > 0) {
+        const audioBlob = new Blob(chatAudioChunks, { type: chatMediaRecorder.mimeType || 'audio/webm' });
+        const formData = new FormData();
+        formData.append('file', audioBlob, 'chat_voice.webm');
+        const input = document.getElementById('chat-input');
+        if (input) input.placeholder = 'Transcribing voice with Whisper...';
+        try {
+          const res = await fetch('/api/voice/transcribe', { method: 'POST', body: formData });
+          const data = await res.json();
+          if (data && data.raw_transcript) {
+            if (input) input.value = data.raw_transcript;
+            sendMessage();
+          }
+        } catch (err) {
+          console.error('Chat voice error:', err);
+        } finally {
+          stopChatMediaRecorder(false);
+        }
+      }
+    };
+
+    chatMediaRecorder.start();
+    isChatAudioRecording = true;
+    const micBtn = document.getElementById('chatMicBtn');
+    const input = document.getElementById('chat-input');
+    if (micBtn) micBtn.classList.add('recording');
+    if (input) input.placeholder = '🎙️ Listening... (Tap mic when done)';
+  } catch (err) {
+    console.error('Failed to start chat voice recording:', err);
+    stopChatMediaRecorder(false);
+  }
+}
+
+function stopChatMediaRecorder(triggerProcess = true) {
+  isChatAudioRecording = false;
+  const micBtn = document.getElementById('chatMicBtn');
+  const input = document.getElementById('chat-input');
+  if (micBtn) micBtn.classList.remove('recording');
+  if (input) input.placeholder = 'Type or tap mic to speak in Hindi/English...';
+  if (chatMediaRecorder && chatMediaRecorder.state !== 'inactive') {
+    if (triggerProcess) {
+      chatMediaRecorder.stop();
+    } else {
+      chatAudioChunks = [];
+      chatMediaRecorder.stop();
     }
   }
 }

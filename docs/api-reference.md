@@ -188,6 +188,91 @@ Deterministically evaluates a citizen demographic and financial profile against 
 }
 ```
 
+### 6b. Entire Household Welfare Matrix (Family Bundle Discovery)
+Evaluates multi-member household dossiers in parallel, discovering combined welfare entitlements across parents, children, and elderly dependents. Automatically calculates potential annual cash support, cashless family health cover, subsidized in-kind aid, and unifies all member requirements into a consolidated Master Document Checklist. Synthesizes an actionable Family Strategic Roadmap using Gemini (`GEMINI_API_KEY_SP`) with deterministic offline fallback.
+
+- **URL:** `/api/recommend/household`
+- **Method:** `POST`
+- **Headers:** `Content-Type: application/json`
+- **Body:**
+```json
+{
+  "members": [
+    {
+      "id": "mem_father",
+      "label": "Rajesh (Papa)",
+      "relationship": "father",
+      "age": 58,
+      "gender": "male",
+      "state": "Uttar Pradesh",
+      "caste": "obc",
+      "occupation": "farmer",
+      "income": 120000,
+      "disability": false
+    },
+    {
+      "id": "mem_mother",
+      "label": "Sunita (Mataji)",
+      "relationship": "mother",
+      "age": 52,
+      "gender": "female",
+      "state": "Uttar Pradesh",
+      "caste": "obc",
+      "occupation": "homemaker",
+      "income": 120000,
+      "disability": false
+    },
+    {
+      "id": "mem_self",
+      "label": "Myself (Self)",
+      "relationship": "self",
+      "age": 21,
+      "gender": "male",
+      "state": "Uttar Pradesh",
+      "caste": "obc",
+      "occupation": "student",
+      "income": 120000,
+      "disability": false
+    }
+  ],
+  "include_ai_synthesis": true
+}
+```
+
+- **Response:** `200 OK`
+```json
+{
+  "status": "ok",
+  "household_summary": {
+    "total_members": 3,
+    "total_schemes_matched": 14,
+    "estimated_annual_cash_inflow": 18000,
+    "total_health_cover": 500000,
+    "in_kind_benefits_count": 4
+  },
+  "members_matrix": [
+    {
+      "member_id": "mem_father",
+      "label": "Rajesh (Papa)",
+      "relationship": "father",
+      "matched_count": 8,
+      "top_recommendations": [ ... ]
+    }
+  ],
+  "master_document_checklist": [
+    {
+      "name": "Aadhaar Card",
+      "required_by": ["Rajesh (Papa)", "Sunita (Mataji)", "Myself (Self)"]
+    },
+    {
+      "name": "Khasra / Khatauni Land Record",
+      "required_by": ["Rajesh (Papa)"]
+    }
+  ],
+  "ai_synthesis": "• **Immediate Priority:** Begin with central DBT initiatives for the primary earning member (such as PM-KISAN)..."
+}
+```
+
 ---
 
 ## 🛡️ Last-Mile Pre-Flight Verification Engine
@@ -343,6 +428,71 @@ Scans uploaded notification text or PDF files (up to 5MB) to verify official aut
 - **Content-Type:** `multipart/form-data`
 - **Form Data:** `file=[PDF or TXT file]`
 - **Response:** `200 OK`
+
+---
+
+## 🎙️ Voice-First Vernacular Input & Anti-Hallucination Query Normalizer
+
+Saral Niti implements a 3-tier cascading Speech-to-Text architecture engineered for rural Bharat accents and noisy environments, coupled with a dynamic slot-extraction schema that eliminates conversational stop words (`"meri beti ke liye koi scholarship ki sarkari scheme hai kya"` → `"scholarship beti"`).
+
+- **Tier 1:** `whisper-large-v3-turbo` via Groq Cloud (sub-second ~300ms inference, 20 RPM, 2K requests/day).
+- **Tier 2:** `whisper-large-v3` via Groq Cloud (automatic failover upon 429 rate-limiting, 20 RPM, 2K requests/day).
+- **Tier 3:** Native Client-Side Browser Web Speech API (`webkitSpeechRecognition` with `hi-IN` language) as an offline/quota-exhaustion fallback.
+
+### 12. Voice Transcription & Schema Extraction
+Accepts audio recordings (`audio/webm`, `audio/wav`, `audio/mp4`) or pre-transcribed text, runs cascading Whisper transcription, strips Hindi/English connector words, extracts high-intent entities, and returns matched schemes.
+
+- **URL:** `/api/voice/transcribe`
+- **Method:** `POST`
+- **Content-Type:** `multipart/form-data` OR `application/json`
+- **Body (Multipart):** `file=[audio clip]`
+- **Body (JSON Fallback):** `{"text": "Hamaare pitaji kisan hain unke fasal ke liye loan chahiye"}`
+- **Response:** `200 OK`
+```json
+{
+  "status": "ok",
+  "model_used": "whisper-large-v3-turbo",
+  "tier_used": 1,
+  "raw_transcript": "Meri beti ke liye koi padhai aur scholarship ki sarkari scheme hai kya",
+  "clean_search_query": "beti padhai scholarship",
+  "schema": {
+    "intent": "search_schemes",
+    "beneficiary": "girl_student",
+    "category": "education",
+    "state": null,
+    "genuine_keywords": ["beti", "padhai", "scholarship"]
+  },
+  "matched_count": 8,
+  "schemes": [ ... ]
+}
+```
+
+### 13. Dynamic Voice Query Normalization
+Directly extracts genuine keywords and entity schema from text queries without audio payload.
+
+- **URL:** `/api/voice/normalize`
+- **Method:** `POST`
+- **Headers:** `Content-Type: application/json`
+- **Body:**
+```json
+{
+  "text": "Old age pension scheme for my grandfather in Uttar Pradesh"
+}
+```
+- **Response:** `200 OK`
+```json
+{
+  "status": "ok",
+  "raw_text": "Old age pension scheme for my grandfather in Uttar Pradesh",
+  "schema": {
+    "intent": "search_schemes",
+    "beneficiary": "senior_citizen",
+    "category": "elderly",
+    "state": "Uttar Pradesh",
+    "genuine_keywords": ["old", "age", "pension", "grandfather"]
+  }
+}
+```
 
 ---
 

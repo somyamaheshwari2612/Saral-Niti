@@ -401,6 +401,289 @@ function quickSearch(term) {
 }
 
 // ══════════════════════════════════════════════════
+//  VOICE-FIRST VERNACULAR SEARCH & QUERY NORMALIZER
+//  Tier 1: whisper-large-v3-turbo -> Tier 2: whisper-large-v3 -> Tier 3: Native Web Speech
+// ══════════════════════════════════════════════════
+let voiceMediaRecorder = null;
+let voiceAudioChunks = [];
+let voiceRecordingTimer = null;
+let voiceRecordingStartTime = 0;
+let isVoiceRecording = false;
+let voiceNativeRecognition = null;
+
+async function toggleVoiceSearch() {
+  if (isVoiceRecording) {
+    stopVoiceSearch(true);
+  } else {
+    startVoiceSearch();
+  }
+}
+
+async function startVoiceSearch() {
+  const statusEl = document.getElementById('voiceSearchStatus');
+  const statusText = document.getElementById('voiceStatusText');
+  const micBtn = document.getElementById('btnVoiceSearch');
+  const input = document.getElementById('searchInput');
+
+  // Try MediaRecorder with Groq Tier 1 / Tier 2 (Guarded by 18 RPM ceiling)
+  if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      voiceAudioChunks = [];
+      voiceRecordingStartTime = Date.now();
+
+      let mimeType = 'audio/webm;codecs=opus';
+      if (typeof MediaRecorder !== 'undefined' && !MediaRecorder.isTypeSupported(mimeType)) {
+        mimeType = MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : '';
+      }
+
+      voiceMediaRecorder = mimeType ? new MediaRecorder(stream, { mimeType }) : new MediaRecorder(stream);
+
+      voiceMediaRecorder.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) {
+          voiceAudioChunks.push(e.data);
+        }
+      };
+
+      voiceMediaRecorder.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const durationMs = Date.now() - voiceRecordingStartTime;
+
+        // Anti-accidental tap guard: ignore recordings < 600ms
+        if (durationMs < 600 || voiceAudioChunks.length === 0) {
+          if (statusText) statusText.textContent = 'Recording too short. Please speak for at least 1-2 seconds.';
+          setTimeout(() => resetVoiceUI(), 1200);
+          return;
+        }
+
+        const audioBlob = new Blob(voiceAudioChunks, { type: voiceMediaRecorder.mimeType || 'audio/webm' });
+        if (audioBlob.size < 300) {
+          resetVoiceUI();
+          return;
+        }
+        await submitVoiceRecording(audioBlob);
+      };
+
+      voiceMediaRecorder.start();
+      isVoiceRecording = true;
+
+      if (micBtn) {
+        micBtn.classList.add('recording');
+        micBtn.innerHTML = '<i class="fa-solid fa-stop"></i>';
+      }
+      if (statusEl) statusEl.style.display = 'flex';
+      if (statusText) statusText.textContent = 'सुन रहे हैं... (Listening... Tap stop or mic when done)';
+      if (input) input.placeholder = '🎙️ Listening to your voice... (बोलते रहिए)';
+
+      clearTimeout(voiceRecordingTimer);
+      voiceRecordingTimer = setTimeout(() => {
+        if (isVoiceRecording) stopVoiceSearch(true);
+      }, 12000);
+
+      return;
+    } catch (err) {
+      if (err.name === 'NotAllowedError' || err.name === 'PermissionDeniedError') {
+        alert('Microphone access was denied. Please allow microphone permissions in your browser address bar to use voice search.');
+        resetVoiceUI();
+        return;
+      }
+      console.warn('MediaRecorder not allowed or failed, falling back to Native Web Speech:', err);
+    }
+  }
+
+  // Tier 3 Fallback: Native Browser Speech Recognition
+  startNativeWebSpeechFallback();
+}
+
+function stopVoiceSearch(processAudio = true) {
+  isVoiceRecording = false;
+  clearTimeout(voiceRecordingTimer);
+
+  const micBtn = document.getElementById('btnVoiceSearch');
+  if (micBtn) {
+    micBtn.classList.remove('recording');
+    micBtn.classList.add('processing');
+    micBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+  }
+
+  const statusText = document.getElementById('voiceStatusText');
+  if (statusText) statusText.textContent = 'आवाज़ प्रोसेस हो रही है... (Transcribing & Extracting Schema...)';
+
+  if (voiceMediaRecorder && voiceMediaRecorder.state !== 'inactive') {
+    if (processAudio) {
+      voiceMediaRecorder.stop();
+    } else {
+      voiceAudioChunks = [];
+      voiceMediaRecorder.stop();
+      resetVoiceUI();
+    }
+  } else if (voiceNativeRecognition) {
+    try { voiceNativeRecognition.stop(); } catch (e) {}
+  }
+}
+
+function cancelVoiceSearch() {
+  stopVoiceSearch(false);
+  resetVoiceUI();
+}
+
+function resetVoiceUI() {
+  isVoiceRecording = false;
+  const statusEl = document.getElementById('voiceSearchStatus');
+  const micBtn = document.getElementById('btnVoiceSearch');
+  const input = document.getElementById('searchInput');
+
+  if (statusEl) statusEl.style.display = 'none';
+  if (micBtn) {
+    micBtn.classList.remove('recording', 'processing');
+    micBtn.innerHTML = '<i class="fa-solid fa-microphone"></i>';
+  }
+  if (input) input.placeholder = 'Search by scheme name, ministry, or keyword (e.g. farmer, student, health)...';
+}
+
+async function submitVoiceRecording(audioBlob) {
+  const formData = new FormData();
+  formData.append('file', audioBlob, 'voice_query.webm');
+
+  try {
+    const res = await fetch('/api/voice/transcribe', {
+      method: 'POST',
+      body: formData
+    });
+    const data = await res.json();
+
+    if (data.status === 'fallback' && data.fallback_to_browser_stt) {
+      console.warn('Groq STT fallback triggered:', data.message);
+      resetVoiceUI();
+      startNativeWebSpeechFallback();
+      return;
+    }
+
+    if (!res.ok || data.error) {
+      throw new Error(data.error || 'Failed to process voice query');
+    }
+
+    applyVoiceSearchResult(data);
+
+  } catch (err) {
+    console.error('Voice transcription error:', err);
+    alert('Voice input error: ' + (err.message || 'Please try again or use the search bar.'));
+    resetVoiceUI();
+  }
+}
+
+function applyVoiceSearchResult(data) {
+  resetVoiceUI();
+
+  const input = document.getElementById('searchInput');
+  const insightBadge = document.getElementById('voiceInsightBadge');
+  const insightText = document.getElementById('voiceInsightText');
+
+  const raw = data.raw_transcript || '';
+  const clean = data.clean_search_query || '';
+  const schema = data.schema || {};
+
+  if (input && clean) {
+    input.value = clean;
+  }
+
+  if (insightBadge && insightText) {
+    let details = `🎙️ <em>"${escapeHtml(raw)}"</em> → <strong>Cleaned Query:</strong> "${escapeHtml(clean)}"`;
+    if (schema.beneficiary) {
+      details += ` • <strong>Target:</strong> ${escapeHtml(schema.beneficiary)}`;
+    }
+    if (schema.category) {
+      details += ` • <strong>Sector:</strong> ${escapeHtml(schema.category.toUpperCase())}`;
+    }
+    insightText.innerHTML = details;
+    insightBadge.style.display = 'flex';
+  }
+
+  if (data.schemes && data.schemes.length > 0) {
+    renderSchemes(data.schemes);
+    const resultsCount = document.getElementById('resultsCount');
+    if (resultsCount) {
+      resultsCount.innerHTML = `Showing <strong>${data.schemes.length}</strong> verified schemes matching your voice request`;
+    }
+    const schemesSection = document.getElementById('schemes');
+    if (schemesSection) schemesSection.scrollIntoView({ behavior: 'smooth' });
+  } else {
+    handleSearch();
+  }
+}
+
+function clearVoiceInsight() {
+  const insightBadge = document.getElementById('voiceInsightBadge');
+  if (insightBadge) insightBadge.style.display = 'none';
+}
+
+function startNativeWebSpeechFallback() {
+  const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SpeechRecognition) {
+    alert('Voice recording requires microphone permission or Chrome/Edge/Safari browser.');
+    resetVoiceUI();
+    return;
+  }
+
+  const rec = new SpeechRecognition();
+  voiceNativeRecognition = rec;
+  rec.continuous = false;
+  rec.interimResults = false;
+  rec.lang = 'hi-IN';
+
+  const micBtn = document.getElementById('btnVoiceSearch');
+  const statusEl = document.getElementById('voiceSearchStatus');
+  const statusText = document.getElementById('voiceStatusText');
+  const input = document.getElementById('searchInput');
+
+  rec.onstart = () => {
+    isVoiceRecording = true;
+    if (micBtn) {
+      micBtn.classList.add('recording');
+      micBtn.innerHTML = '<i class="fa-solid fa-stop"></i>';
+    }
+    if (statusEl) statusEl.style.display = 'flex';
+    if (statusText) statusText.textContent = 'Browser Voice Engine: बोलिए (Listening in Hindi/English)...';
+    if (input) input.placeholder = '🎙️ Listening via browser speech...';
+  };
+
+  rec.onresult = async (event) => {
+    const transcript = event.results[0][0].transcript;
+    if (transcript) {
+      if (statusText) statusText.textContent = 'Transcribing & Extracting Schema...';
+      try {
+        const res = await fetch('/api/voice/transcribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: transcript })
+        });
+        const data = await res.json();
+        applyVoiceSearchResult(data);
+      } catch (e) {
+        if (input) input.value = transcript;
+        handleSearch();
+        resetVoiceUI();
+      }
+    }
+  };
+
+  rec.onerror = (e) => {
+    console.warn('Native speech error:', e.error);
+    resetVoiceUI();
+  };
+
+  rec.onend = () => {
+    resetVoiceUI();
+  };
+
+  try {
+    rec.start();
+  } catch (e) {
+    resetVoiceUI();
+  }
+}
+
+// ══════════════════════════════════════════════════
 //  MULTI-DIMENSIONAL & CATEGORY FILTERING ENGINE
 // ══════════════════════════════════════════════════
 function toggleAdvancedFilterDrawer() {
@@ -1841,6 +2124,511 @@ function printCitizenPassbook() {
   };
   window.addEventListener('afterprint', cleanup);
 }
+
+// ══════════════════════════════════════════════════
+//  HOUSEHOLD WELFARE MATRIX (SARAL PARIVAR DISCOVERY)
+// ══════════════════════════════════════════════════
+let currentHouseholdData = null;
+
+async function evaluateEntireHousehold() {
+  if (typeof window === 'undefined' || !window.SaralFamilyVault) {
+    alert('Saral Parivar Vault is not available. Please refresh the page.');
+    return;
+  }
+
+  const members = window.SaralFamilyVault.getMembers();
+  if (!members || members.length === 0) {
+    alert('Please add at least one family member in the Saral Parivar Vault first.');
+    return;
+  }
+
+  const btn = document.getElementById('btnEvalAllHousehold');
+  const resultsWrap = document.getElementById('eligResultsWrap');
+  const matrixWrap = document.getElementById('householdMatrixWrap');
+
+  if (!matrixWrap) return;
+
+  if (btn) {
+    btn.disabled = true;
+    btn.dataset.originalHtml = btn.innerHTML;
+    btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> <span>Analyzing Household...</span>';
+  }
+
+  if (resultsWrap) resultsWrap.style.display = 'none';
+
+  matrixWrap.style.display = 'block';
+  matrixWrap.innerHTML = `
+    <div class="hh-matrix-loading">
+      <div class="hh-loading-spinner"><i class="fa-solid fa-spinner fa-spin fa-2x"></i></div>
+      <h4 class="hh-loading-title">Discovering Household Welfare Matrix (${members.length} Members)...</h4>
+      <p class="hh-loading-desc">Cross-evaluating central & state schemes, estimating combined annual cash support, health cover, and mapping unified document readiness.</p>
+    </div>
+  `;
+
+  try {
+    const res = await fetch('/api/recommend/household', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        members: members,
+        include_ai_synthesis: true
+      })
+    });
+
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      throw new Error(data.error || 'Failed to evaluate household schemes.');
+    }
+
+    currentHouseholdData = data;
+    renderHouseholdMatrix(data);
+
+    matrixWrap.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  } catch (err) {
+    console.error('Household discovery error:', err);
+    matrixWrap.innerHTML = `
+      <div class="hh-error-banner">
+        <i class="fa-solid fa-triangle-exclamation"></i>
+        <div class="hh-error-text">
+          <strong>Evaluation Error:</strong> ${escapeHtml(err.message || 'Unable to complete household analysis.')}
+        </div>
+        <button type="button" class="btn-secondary" onclick="evaluateEntireHousehold()">Try Again</button>
+      </div>
+    `;
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = btn.dataset.originalHtml || '<i class="fa-solid fa-wand-magic-sparkles"></i> <span>Evaluate Entire Household</span>';
+    }
+  }
+}
+
+function renderHouseholdMatrix(data) {
+  const matrixWrap = document.getElementById('householdMatrixWrap');
+  if (!matrixWrap || !data) return;
+
+  const s = data.household_summary || {};
+  const members = data.members_matrix || [];
+  const masterDocs = data.master_document_checklist || [];
+  const aiSynthesis = data.ai_synthesis || '';
+
+  const cashStr = (s.estimated_annual_cash_inflow || 0).toLocaleString('en-IN');
+  const healthStr = (s.total_health_cover || 500000).toLocaleString('en-IN');
+
+  let aiPlanHtml = '';
+  if (aiSynthesis) {
+    const lines = aiSynthesis.split('\n').filter(l => l.trim().length > 0);
+    const bullets = lines.map(line => {
+      let cleaned = escapeHtml(line.trim().replace(/^[-*•]\s*/, ''));
+      cleaned = cleaned.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+      return `<li>${cleaned}</li>`;
+    }).join('');
+
+    aiPlanHtml = `
+      <div class="hh-ai-plan-card">
+        <div class="hh-ai-plan-badge">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span>AI Strategic Household Roadmap (Gemini 3.5 Flash)</span>
+        </div>
+        <div class="hh-ai-plan-content">
+          <ul class="hh-ai-plan-list">
+            ${bullets}
+          </ul>
+        </div>
+      </div>
+    `;
+  }
+
+  let masterDocsHtml = '';
+  masterDocs.forEach((doc, idx) => {
+    const docName = doc.name;
+    const reqBy = (doc.required_by || []).map(r => `<span class="hh-member-pill-small">${escapeHtml(r)}</span>`).join('');
+    masterDocsHtml += `
+      <div class="hh-doc-item" onclick="toggleHouseholdDocCheck(this)">
+        <input type="checkbox" id="hhDoc_${idx}" class="hh-doc-checkbox" onclick="event.stopPropagation()">
+        <label for="hhDoc_${idx}" class="hh-doc-details">
+          <div class="hh-doc-name-row">
+            <span class="hh-doc-name"><strong>${idx + 1}.</strong> ${escapeHtml(docName)}</span>
+          </div>
+          <div class="hh-doc-beneficiaries">Needed by: ${reqBy}</div>
+        </label>
+      </div>
+    `;
+  });
+
+  let membersHtml = '';
+  members.forEach((m, idx) => {
+    const prof = m.profile || {};
+    const isOpen = idx === 0 ? 'open' : '';
+    const relationMeta = (window.SaralFamilyVault && window.SaralFamilyVault.RELATION_METADATA[m.relationship]) || { avatar: '👤', labelHi: 'सदस्य' };
+    
+    let topSchemesHtml = '';
+    (m.top_recommendations || []).forEach(rec => {
+      const sch = rec.scheme || {};
+      const benefitInfo = rec.benefit_info || {};
+      const statusClass = rec.status === 'eligible' ? 'eligible' : 'partial';
+
+      topSchemesHtml += `
+        <div class="hh-sch-card">
+          <div class="hh-sch-header">
+            <div>
+              <div class="hh-sch-title">${escapeHtml(sch.title || 'Scheme')}</div>
+              <div class="hh-sch-dept">${escapeHtml(sch.ministry || 'Government of India')}</div>
+            </div>
+            <span class="match-score-badge ${statusClass}">${rec.match_score}% Fit</span>
+          </div>
+          <div class="hh-sch-benefit-badge">
+            <i class="fa-solid fa-gift"></i> ${escapeHtml(benefitInfo.label || sch.benefits || 'Welfare Benefit')}
+          </div>
+          <div class="hh-sch-reasons">
+            ${(rec.reasons || []).slice(0, 2).map(r => `<div class="hh-sch-reason"><i class="fa-solid fa-check"></i> ${escapeHtml(r)}</div>`).join('')}
+          </div>
+          <div class="hh-sch-actions">
+            <a href="${escapeHtml(sch.application_url || 'https://myscheme.gov.in')}" target="_blank" rel="noopener noreferrer" class="btn-sch-portal">
+              <span>Apply on Portal</span> <i class="fa-solid fa-arrow-up-right-from-square"></i>
+            </a>
+          </div>
+        </div>
+      `;
+    });
+
+    membersHtml += `
+      <div class="hh-member-accordion ${isOpen}" id="hhMember_${m.member_id}">
+        <div class="hh-member-head" onclick="toggleHouseholdMemberAccordion('${m.member_id}')">
+          <div class="hh-member-avatar-wrap">
+            <span class="hh-member-emoji">${relationMeta.avatar}</span>
+            <div class="hh-member-title-box">
+              <div class="hh-member-name">${escapeHtml(m.label)} <span class="hh-member-rel-tag">${escapeHtml(m.relationship.toUpperCase())}</span></div>
+              <div class="hh-member-demographics">
+                ${prof.age ? prof.age + ' Yrs' : ''} • ${escapeHtml((prof.gender || '').toUpperCase())} • ${escapeHtml(prof.occupation || 'Self')} • ${escapeHtml(prof.state || 'All India')}
+              </div>
+            </div>
+          </div>
+          <div class="hh-member-head-right">
+            <span class="hh-member-schemes-badge">
+              <i class="fa-solid fa-check-double"></i> <strong>${m.matched_count}</strong> Schemes
+            </span>
+            <i class="fa-solid fa-chevron-down hh-chevron"></i>
+          </div>
+        </div>
+        <div class="hh-member-body">
+          <div class="hh-member-schemes-grid">
+            ${topSchemesHtml || '<p style="font-size:13px; color:var(--slate-500); padding: 10px;">No matching schemes found for this profile criteria.</p>'}
+          </div>
+        </div>
+      </div>
+    `;
+  });
+
+  matrixWrap.innerHTML = `
+    <div class="hh-matrix-container">
+      <div class="hh-matrix-top-bar">
+        <div>
+          <div class="hh-matrix-badge"><i class="fa-solid fa-people-roof"></i> SARAL PARIVAR DISCOVERY</div>
+          <h3 class="hh-matrix-main-title">Entire Household Welfare Matrix</h3>
+          <p class="hh-matrix-sub">Consolidated benefits discovery and family roadmap across ${s.total_members || 1} household members</p>
+        </div>
+        <div class="hh-matrix-actions">
+          <button type="button" class="btn-print-passbook" onclick="printHouseholdPassbook()" title="Download or print complete household welfare dossier for CSC submission">
+            <i class="fa-solid fa-file-invoice"></i>
+            <span>Print Family Passbook (CSC Format)</span>
+          </button>
+          <button type="button" class="btn-hh-close" onclick="closeHouseholdMatrix()" title="Close Household View">✕</button>
+        </div>
+      </div>
+
+      <div class="hh-metrics-grid">
+        <div class="hh-metric-card cash">
+          <div class="hh-metric-icon"><i class="fa-solid fa-indian-rupee-sign"></i></div>
+          <div class="hh-metric-content">
+            <div class="hh-metric-label">Annual Direct Cash Support</div>
+            <div class="hh-metric-value">₹${cashStr}<span class="hh-metric-unit">/yr</span></div>
+            <div class="hh-metric-sub">Direct DBT to Bank Accounts</div>
+          </div>
+        </div>
+
+        <div class="hh-metric-card health">
+          <div class="hh-metric-icon"><i class="fa-solid fa-shield-heart"></i></div>
+          <div class="hh-metric-content">
+            <div class="hh-metric-label">Cashless Health Protection</div>
+            <div class="hh-metric-value">₹${healthStr}</div>
+            <div class="hh-metric-sub">Hospitalization & Critical Care</div>
+          </div>
+        </div>
+
+        <div class="hh-metric-card in-kind">
+          <div class="hh-metric-icon"><i class="fa-solid fa-boxes-packing"></i></div>
+          <div class="hh-metric-content">
+            <div class="hh-metric-label">Subsidies & In-Kind Aid</div>
+            <div class="hh-metric-value">${s.in_kind_benefits_count || 0}</div>
+            <div class="hh-metric-sub">Ration, LPG, Housing, Kits</div>
+          </div>
+        </div>
+
+        <div class="hh-metric-card total">
+          <div class="hh-metric-icon"><i class="fa-solid fa-layer-group"></i></div>
+          <div class="hh-metric-content">
+            <div class="hh-metric-label">Total Qualified Schemes</div>
+            <div class="hh-metric-value">${s.total_schemes_matched || 0}</div>
+            <div class="hh-metric-sub">Across All Family Members</div>
+          </div>
+        </div>
+      </div>
+
+      ${aiPlanHtml}
+
+      <div class="hh-section-card">
+        <div class="hh-section-header">
+          <div class="hh-section-title"><i class="fa-solid fa-clipboard-check"></i> Master Family Document Readiness (${masterDocs.length} Documents)</div>
+          <div class="hh-section-note">Carry these originals & photocopies to Jan Seva Kendra / CSC for rapid processing.</div>
+        </div>
+        <div class="hh-master-docs-grid">
+          ${masterDocsHtml}
+        </div>
+      </div>
+
+      <div class="hh-section-card">
+        <div class="hh-section-header">
+          <div class="hh-section-title"><i class="fa-solid fa-users"></i> Member-by-Member Welfare Entitlements</div>
+          <div class="hh-section-note">Tap any member to expand their personalized qualified schemes and direct application links.</div>
+        </div>
+        <div class="hh-members-accordion-list">
+          ${membersHtml}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function toggleHouseholdMemberAccordion(memberId) {
+  const el = document.getElementById('hhMember_' + memberId);
+  if (!el) return;
+  el.classList.toggle('open');
+}
+
+function toggleHouseholdDocCheck(box) {
+  const cb = box.querySelector('.hh-doc-checkbox');
+  if (cb) {
+    cb.checked = !cb.checked;
+    box.classList.toggle('checked', cb.checked);
+  }
+}
+
+function closeHouseholdMatrix() {
+  const matrixWrap = document.getElementById('householdMatrixWrap');
+  if (matrixWrap) matrixWrap.style.display = 'none';
+  const resultsWrap = document.getElementById('eligResultsWrap');
+  if (resultsWrap && currentEligRecommendations && currentEligRecommendations.length > 0) {
+    resultsWrap.style.display = 'block';
+  }
+}
+
+function printHouseholdPassbook() {
+  if (!currentHouseholdData) {
+    alert('Please evaluate your household welfare matrix first.');
+    return;
+  }
+
+  const printSection = document.getElementById('citizenPassbookPrintSection');
+  if (!printSection) return;
+
+  printSection.innerHTML = generateHouseholdPassbookHTML(currentHouseholdData);
+
+  document.body.classList.add('printing-passbook');
+
+  setTimeout(() => {
+    window.print();
+  }, 150);
+
+  const cleanup = () => {
+    document.body.classList.remove('printing-passbook');
+    window.removeEventListener('afterprint', cleanup);
+  };
+  window.addEventListener('afterprint', cleanup);
+}
+
+function generateHouseholdPassbookHTML(data) {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' });
+  const timeStr = now.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
+  const passbookId = 'SN-FAM-' + Math.floor(100000 + Math.random() * 900000);
+
+  const s = data.household_summary || {};
+  const members = data.members_matrix || [];
+  const masterDocs = data.master_document_checklist || [];
+
+  const memberRows = members.map((m, idx) => {
+    const prof = m.profile || {};
+    return `
+      <tr>
+        <td style="text-align: center; font-weight: 700;">${idx + 1}</td>
+        <td><strong>${escapeHtml(m.label)}</strong></td>
+        <td>${escapeHtml(m.relationship ? m.relationship.toUpperCase() : 'SELF')}</td>
+        <td>${prof.age ? prof.age + ' Yrs' : '-'} • ${escapeHtml((prof.gender || '').toUpperCase())}</td>
+        <td>${escapeHtml((prof.occupation || 'Self').toUpperCase())}</td>
+        <td>${escapeHtml(prof.state && prof.state !== 'all' ? prof.state : 'All India')}</td>
+        <td style="text-align: center;"><strong style="color: #15803D;">${m.matched_count} Schemes</strong></td>
+      </tr>
+    `;
+  }).join('');
+
+  let consolidatedSchemes = [];
+  members.forEach(m => {
+    (m.top_recommendations || []).forEach(r => {
+      consolidatedSchemes.push({
+        memberLabel: m.label,
+        relationship: m.relationship,
+        scheme: r.scheme,
+        match_score: r.match_score,
+        benefit_info: r.benefit_info
+      });
+    });
+  });
+
+  consolidatedSchemes.sort((a, b) => b.match_score - a.match_score);
+  const displayedSchemes = consolidatedSchemes.slice(0, 15);
+
+  const schemeRows = displayedSchemes.map((item, idx) => {
+    const sch = item.scheme || {};
+    const bInfo = item.benefit_info || {};
+    return `
+      <tr>
+        <td style="text-align: center; font-weight: 700;">${idx + 1}</td>
+        <td>
+          <div class="pb-scheme-title">${escapeHtml(sch.title || '')}</div>
+          <div class="pb-scheme-dept">${escapeHtml(sch.ministry || 'Government of India')}</div>
+        </td>
+        <td>
+          <span class="pb-member-tag">For: ${escapeHtml(item.memberLabel)} (${escapeHtml(item.relationship.toUpperCase())})</span>
+        </td>
+        <td>
+          <div class="pb-scheme-benefit">${escapeHtml(bInfo.label || sch.benefits || 'Welfare Benefit')}</div>
+        </td>
+        <td style="text-align: center;">
+          <span class="pb-match-badge">${item.match_score}% Fit</span>
+        </td>
+        <td>
+          <div class="pb-portal-url">${escapeHtml(sch.application_url || 'https://myscheme.gov.in')}</div>
+        </td>
+      </tr>
+    `;
+  }).join('');
+
+  let docsListHtml = '';
+  masterDocs.forEach((doc, idx) => {
+    const reqBy = (doc.required_by || []).map(escapeHtml).join(', ');
+    docsListHtml += `
+      <div class="pb-doc-box">
+        <div class="pb-doc-check">[ ]</div>
+        <div class="pb-doc-details">
+          <div class="pb-doc-name"><strong>${idx + 1}. ${escapeHtml(doc.name)}</strong></div>
+          <div class="pb-doc-applies">Required For: <strong>${reqBy}</strong></div>
+        </div>
+      </div>
+    `;
+  });
+
+  return `
+    <div class="passbook-page">
+      <div class="pb-header">
+        <div class="pb-emblem-wrap">
+          <div class="pb-ashoka-flag">🇮🇳</div>
+          <div class="pb-header-titles">
+            <h1 class="pb-title">सरल नीति — संपूर्ण परिवार कल्याण पासबुक</h1>
+            <h2 class="pb-subtitle">SARAL NITI • CONSOLIDATED HOUSEHOLD WELFARE PASSBOOK</h2>
+            <div class="pb-desc">Multi-Member Family Welfare Entitlement Dossier for Jan Seva Kendra / CSC Submission</div>
+          </div>
+        </div>
+        <div class="pb-meta-card">
+          <div class="pb-ref-no">Family ID: <strong>${passbookId}</strong></div>
+          <div class="pb-issue-date">Issued: ${dateStr} • ${timeStr}</div>
+          <div class="pb-secure-code">Saral Parivar Vault • Verified CSC Format</div>
+        </div>
+      </div>
+
+      <div class="pb-section-title">१. परिवार कल्याण प्रभाव सारांश (HOUSEHOLD WELFARE IMPACT SUMMARY)</div>
+      <table class="pb-profile-table">
+        <tr>
+          <th>Total Registered Members:</th>
+          <td><strong>${members.length} Members</strong></td>
+          <th>Total Unique Qualified Schemes:</th>
+          <td><strong style="color: #15803D;">${s.total_schemes_matched || 0} Schemes</strong></td>
+        </tr>
+        <tr>
+          <th>Est. Annual Cash Support (DBT):</th>
+          <td><strong style="color: #EA580C; font-size: 13px;">₹${(s.estimated_annual_cash_inflow || 0).toLocaleString('en-IN')}/year</strong></td>
+          <th>Cashless Health Cover:</th>
+          <td><strong style="color: #2563EB; font-size: 13px;">₹${(s.total_health_cover || 500000).toLocaleString('en-IN')}</strong></td>
+        </tr>
+        <tr>
+          <th>Subsidized / In-Kind Benefits:</th>
+          <td><strong>${s.in_kind_benefits_count || 0} Entitlements</strong> (Ration, LPG, Housing, Kits)</td>
+          <th>Verification Standard:</th>
+          <td>Direct DBTs via PFMS / Aadhaar NPCI Seeding</td>
+        </tr>
+      </table>
+
+      <div class="pb-section-title" style="margin-top: 10px;">२. पंजीकृत परिवार सदस्य रोस्टर (FAMILY MEMBERS ROSTER)</div>
+      <table class="pb-schemes-table">
+        <thead>
+          <tr>
+            <th style="width: 24px;">#</th>
+            <th>Member Name</th>
+            <th>Relationship</th>
+            <th>Age / Gender</th>
+            <th>Occupation</th>
+            <th>Domicile State</th>
+            <th style="text-align: center;">Schemes Found</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${memberRows}
+        </tbody>
+      </table>
+
+      <div class="pb-section-title" style="margin-top: 10px;">३. मुख्य परिवार कल्याण योजनाएं (TOP CONSOLIDATED WELFARE SCHEMES)</div>
+      <table class="pb-schemes-table">
+        <thead>
+          <tr>
+            <th style="width: 24px;">#</th>
+            <th>Scheme Title & Nodal Ministry</th>
+            <th>Beneficiary Member</th>
+            <th>Direct Benefit / Entitlement</th>
+            <th style="width: 70px; text-align: center;">Match Fit</th>
+            <th>Official Portal</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${schemeRows}
+        </tbody>
+      </table>
+
+      <div class="pb-section-title" style="margin-top: 10px;">४. परिवार एकीकृत दस्तावेज़ चेकलिस्ट (MASTER HOUSEHOLD DOCUMENT CHECKLIST)</div>
+      <p class="pb-section-note">Carry 1 original + 2 self-attested photocopies of each checked document to your Block Development Office or Jan Seva Kendra.</p>
+      <div class="pb-docs-grid">
+        ${docsListHtml}
+      </div>
+
+      <div class="pb-footer-row">
+        <div class="pb-stamp-box">
+          <div class="pb-stamp-title">Jan Seva Kendra / CSC VLE Seal & Date</div>
+          <div class="pb-stamp-space"></div>
+        </div>
+        <div class="pb-signature-box">
+          <div class="pb-stamp-title">Head of Household Signature / Thumb</div>
+          <div class="pb-stamp-space"></div>
+        </div>
+        <div class="pb-barcode-box">
+          <div class="pb-barcode">||| | ||||| || |||||| |||| ||| |||||||</div>
+          <div class="pb-barcode-text">${passbookId}</div>
+          <div class="pb-gen-tag">Generated by Saral-Niti Portal</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 
 // ESC closes any modal
 document.addEventListener('keydown', e => {

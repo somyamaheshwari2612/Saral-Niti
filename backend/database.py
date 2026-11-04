@@ -32,13 +32,16 @@ _local = threading.local()
 
 
 def get_db_connection():
-    """Returns a thread-local SQLite connection with row_factory enabled"""
+    """Returns a thread-local SQLite connection with high-concurrency WAL mode and busy timeout."""
     con = getattr(_local, "con", None)
     if con is None:
         os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
-        con = sqlite3.connect(DB_PATH, check_same_thread=False)
+        # 20-second busy timeout to prevent 'database is locked' errors under concurrent multi-client requests
+        con = sqlite3.connect(DB_PATH, timeout=20.0, check_same_thread=False)
         con.row_factory = sqlite3.Row
         con.execute("PRAGMA journal_mode=WAL")
+        con.execute("PRAGMA busy_timeout = 20000")
+        con.execute("PRAGMA synchronous = NORMAL")
         _local.con = con
     return con
 

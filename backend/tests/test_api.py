@@ -986,9 +986,182 @@ def test_recommendation_sqlite_prefilter_and_clean_criteria(client=None):
         assert any("your Father" in r or "your Father's" in r for r in recs[0]["reasons"]), "Personalized reason phrasing missing from API response"
 
 
+
+def test_recommend_household_matrix():
+    from routes.recommend import classify_and_estimate_benefit, generate_rule_based_household_plan
+
+    # 1. Test benefit classifier
+    b_cash = classify_and_estimate_benefit("Rs. 6000 per year DBT directly into bank account")
+    assert b_cash["category"] == "cash_annual"
+    assert b_cash["amount"] == 6000
+
+    b_health = classify_and_estimate_benefit("Provides Rs. 5 Lakh cashless hospitalization health cover")
+    assert b_health["category"] == "health_cover"
+    assert b_health["amount"] == 500000
+
+    b_inkind = classify_and_estimate_benefit("Free LPG gas connection and subsidized cylinder refill")
+    assert b_inkind["category"] == "in_kind"
+
+    # 2. Test rule-based household plan fallback
+    plan = generate_rule_based_household_plan({"estimated_annual_cash_inflow": 12000, "total_health_cover": 500000})
+    assert "Immediate Priority" in plan
+    assert "Healthcare Protection" in plan
+    assert "Jan Seva Kendra" in plan
+
+    # 3. Test POST /api/recommend/household error cases
+    c = app.test_client()
+    res_err1 = c.post('/api/recommend/household', json={})
+    assert res_err1.status_code == 400
+    res_err2 = c.post('/api/recommend/household', json={"members": []})
+    assert res_err2.status_code == 400
+
+    # 4. Test POST /api/recommend/household happy path with multi-member family
+    family_payload = {
+        "members": [
+            {
+                "id": "mem_father",
+                "label": "Rajesh (Papa)",
+                "relationship": "father",
+                "age": 58,
+                "gender": "male",
+                "state": "Uttar Pradesh",
+                "caste": "obc",
+                "occupation": "farmer",
+                "income": 120000,
+                "disability": False
+            },
+            {
+                "id": "mem_mother",
+                "label": "Sunita (Mataji)",
+                "relationship": "mother",
+                "age": 52,
+                "gender": "female",
+                "state": "Uttar Pradesh",
+                "caste": "obc",
+                "occupation": "homemaker",
+                "income": 120000,
+                "disability": False
+            },
+            {
+                "id": "mem_self",
+                "label": "Myself (Self)",
+                "relationship": "self",
+                "age": 21,
+                "gender": "male",
+                "state": "Uttar Pradesh",
+                "caste": "obc",
+                "occupation": "student",
+                "income": 120000,
+                "disability": False
+            }
+        ],
+        "include_ai_synthesis": True
+    }
+
+    res = c.post('/api/recommend/household', json=family_payload)
+    assert res.status_code == 200
+    data = res.get_json()
+
+    assert data.get("status") == "ok"
+    hs = data.get("household_summary", {})
+    assert hs.get("total_members") == 3
+    assert hs.get("total_schemes_matched", 0) > 0
+    assert hs.get("total_health_cover", 0) >= 500000
+
+    members_matrix = data.get("members_matrix", [])
+    assert len(members_matrix) == 3
+    father_matrix = next((m for m in members_matrix if m["relationship"] == "father"), None)
+    assert father_matrix is not None
+    assert father_matrix["matched_count"] > 0
+    assert len(father_matrix["top_recommendations"]) > 0
+
+    master_docs = data.get("master_document_checklist", [])
+    assert len(master_docs) > 0
+    # Verify required_by list contains member labels
+    assert any(len(d.get("required_by", [])) > 0 for d in master_docs)
+
+    ai_synthesis = data.get("ai_synthesis")
+    assert ai_synthesis is not None and len(ai_synthesis) > 10
+
+
+
+def test_voice_query_normalizer_and_endpoints():
+    import io
+    from routes.voice import extract_dynamic_search_schema
+
+    # 1. Test Anti-Hallucination Schema Extractor on conversational Hindi/English queries
+    s1 = extract_dynamic_search_schema("Meri beti ke liye koi padhai aur scholarship ki sarkari scheme hai kya")
+    assert s1["beneficiary"] == "girl_student"
+    assert s1["category"] == "education"
+    assert "scholarship" in s1["genuine_keywords"]
+    assert "beti" in s1["genuine_keywords"]
+    assert not any(k in s1["genuine_keywords"] for k in ["meri", "ke", "liye", "koi", "sarkari", "scheme", "hai", "kya"])
+
+    s2 = extract_dynamic_search_schema("Hamaare pitaji kisan hain unke khet aur fasal ke liye paise milte hain kya")
+    assert s2["beneficiary"] == "farmer"
+    assert s2["category"] == "agriculture"
+    assert "kisan" in s2["genuine_keywords"]
+    assert "fasal" in s2["genuine_keywords"]
+    assert not any(k in s2["genuine_keywords"] for k in ["hamaare", "hain", "unke", "liye", "paise", "milte"])
+
+    s3 = extract_dynamic_search_schema("Old age pension scheme for my grandfather in Uttar Pradesh")
+    assert s3["beneficiary"] == "senior_citizen"
+    assert s3["category"] == "elderly"
+    assert s3["state"] == "Uttar Pradesh"
+
+    # 2. Test POST /api/voice/normalize
+    c = app.test_client()
+    res_err = c.post('/api/voice/normalize', json={})
+    assert res_err.status_code == 400
+
+    res_norm = c.post('/api/voice/normalize', json={"text": "Ayushman card me kitna ilaj muft milta hai hospital me"})
+    assert res_norm.status_code == 200
+    norm_data = res_norm.get_json()
+    assert norm_data["status"] == "ok"
+    assert norm_data["schema"]["category"] == "health"
+    assert "ayushman" in norm_data["schema"]["genuine_keywords"]
+
+    # 3. Test Devanagari purna viram punctuation handling
+    s_dev = extract_dynamic_search_schema("मेरी बेटी के लिए उच्च शिक्षा छात्रवृत्ति योजना।")
+    assert s_dev["category"] == "education"
+    assert "छात्रवृत्ति" in s_dev["genuine_keywords"]
+
+    # 4. Test 18 RPM Concurrency Guard on Groq Voice Endpoints
+    from database import acquire_rate_limit_slot, reset_rate_limits
+    reset_rate_limits("groq_whisper_test")
+    granted = 0
+    for i in range(18):
+        ok, _, _ = acquire_rate_limit_slot("groq_whisper_test", client_ip=f"10.0.0.{i}", global_limit=18, client_limit=8, window_sec=60)
+        if ok:
+            granted += 1
+    assert granted == 18, f"Expected 18 slots granted, got {granted}"
+    # 19th request must be rejected under 18 RPM concurrency ceiling
+    rejected_ok, retry_after, reason = acquire_rate_limit_slot("groq_whisper_test", client_ip="10.0.0.99", global_limit=18, client_limit=8, window_sec=60)
+    assert not rejected_ok, "19th request must be rejected under 18 RPM ceiling"
+    assert reason == "global_limit_reached"
+    reset_rate_limits("groq_whisper_test")
+
+    # 5. Test Audio Payload Validation
+    res_short = c.post('/api/voice/transcribe', data={"file": (io.BytesIO(b"short"), "test.webm")})
+    assert res_short.status_code == 400
+
+    # 6. Test POST /api/voice/transcribe with text (Tier 3 fallback mode)
+    res_trans = c.post('/api/voice/transcribe', json={"text": "Mujhe tractor khareedne ke liye kisan loan chahiye"})
+    assert res_trans.status_code == 200
+    trans_data = res_trans.get_json()
+    assert trans_data["status"] == "ok"
+    assert trans_data["model_used"] == "client-web-speech-api"
+    assert trans_data["tier_used"] == 3
+    assert trans_data["matched_count"] > 0
+    assert len(trans_data["schemes"]) > 0
+    assert trans_data["schema"]["category"] in ("agriculture", "financial")
+
+
 if __name__ == "__main__":
     test_functions = [
-        test_recommendation_sqlite_prefilter_and_clean_criteria,
+        test_voice_query_normalizer_and_endpoints,
+    test_recommend_household_matrix,
+    test_recommendation_sqlite_prefilter_and_clean_criteria,
         test_chatbot_multi_turn_memory,
         test_chatbot_family_relationship_nlu,
         test_home,

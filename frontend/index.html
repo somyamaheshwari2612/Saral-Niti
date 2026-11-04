@@ -110,10 +110,27 @@
           placeholder="Search by scheme name, ministry, or keyword (e.g. farmer, student, health)..."
           autocomplete="off"
         />
+        <button type="button" class="voice-search-btn" id="btnVoiceSearch" onclick="toggleVoiceSearch()" title="बोलकर खोजें (Voice Search in Hindi/English)" aria-label="Voice Search">
+          <i class="fa-solid fa-microphone"></i>
+        </button>
         <button class="search-btn" onclick="handleSearch()" aria-label="Search schemes">
           <span>Search</span>
           <i class="fa-solid fa-arrow-right"></i>
         </button>
+      </div>
+
+      <!-- VOICE RECORDING STATUS PILL -->
+      <div class="voice-search-status" id="voiceSearchStatus" style="display: none;">
+        <span class="voice-live-dot"></span>
+        <span class="voice-status-text" id="voiceStatusText">सुन रहे हैं... (Listening... Speak in Hindi or English)</span>
+        <button type="button" class="btn-voice-cancel" onclick="cancelVoiceSearch()" title="Cancel voice search">✕</button>
+      </div>
+
+      <!-- VOICE DISCOVERY INSIGHT BADGE -->
+      <div class="voice-insight-badge" id="voiceInsightBadge" style="display: none;">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <span id="voiceInsightText"></span>
+        <button type="button" class="btn-insight-clear" onclick="clearVoiceInsight()" title="Clear voice filter">✕</button>
       </div>
 
       <!-- TRENDING CHIPS -->
@@ -983,8 +1000,14 @@
       <!-- HOUSEHOLD PERSONA STRIP -->
       <div class="family-persona-strip" id="eligibilityPersonaStrip">
         <div class="persona-strip-header">
-          <span class="strip-tag"><i class="fa-solid fa-people-roof"></i> Saral Parivar:</span>
-          <span id="eligibilityActiveBadge" style="font-size: 11.5px; color: var(--slate-500);">Checking for: <strong id="eligibilityActiveName">Myself (स्वयं)</strong></span>
+          <div class="persona-strip-title-group">
+            <span class="strip-tag"><i class="fa-solid fa-people-roof"></i> Saral Parivar:</span>
+            <span id="eligibilityActiveBadge" style="font-size: 11.5px; color: var(--slate-500);">Checking for: <strong id="eligibilityActiveName">Myself (स्वयं)</strong></span>
+          </div>
+          <button type="button" class="btn-eval-all-household" id="btnEvalAllHousehold" onclick="evaluateEntireHousehold()" title="Evaluate all family members together and find maximum combined household benefits">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span>Evaluate Entire Household</span>
+          </button>
         </div>
         <div class="persona-chips-row" id="eligibilityPersonaChips">
           <!-- Dynamically populated from SaralFamilyVault -->
@@ -1155,6 +1178,9 @@
           <button type="button" class="btn-secondary" onclick="closeEligibilityModal()">Cancel</button>
         </div>
       </form>
+
+      <!-- HOUSEHOLD WELFARE MATRIX WRAPPER -->
+      <div class="household-matrix-wrap" id="householdMatrixWrap" style="display: none; margin-top: 24px;"></div>
 
       <!-- RESULTS CONTAINER -->
       <div id="eligResultsWrap" style="display: none; margin-top: 24px;">

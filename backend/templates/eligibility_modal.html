@@ -12,8 +12,14 @@
       <!-- HOUSEHOLD PERSONA STRIP -->
       <div class="family-persona-strip" id="eligibilityPersonaStrip">
         <div class="persona-strip-header">
-          <span class="strip-tag"><i class="fa-solid fa-people-roof"></i> Saral Parivar:</span>
-          <span id="eligibilityActiveBadge" style="font-size: 11.5px; color: var(--slate-500);">Checking for: <strong id="eligibilityActiveName">Myself (स्वयं)</strong></span>
+          <div class="persona-strip-title-group">
+            <span class="strip-tag"><i class="fa-solid fa-people-roof"></i> Saral Parivar:</span>
+            <span id="eligibilityActiveBadge" style="font-size: 11.5px; color: var(--slate-500);">Checking for: <strong id="eligibilityActiveName">Myself (स्वयं)</strong></span>
+          </div>
+          <button type="button" class="btn-eval-all-household" id="btnEvalAllHousehold" onclick="evaluateEntireHousehold()" title="Evaluate all family members together and find maximum combined household benefits">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+            <span>Evaluate Entire Household</span>
+          </button>
         </div>
         <div class="persona-chips-row" id="eligibilityPersonaChips">
           <!-- Dynamically populated from SaralFamilyVault -->
@@ -184,6 +190,9 @@
           <button type="button" class="btn-secondary" onclick="closeEligibilityModal()">Cancel</button>
         </div>
       </form>
+
+      <!-- HOUSEHOLD WELFARE MATRIX WRAPPER -->
+      <div class="household-matrix-wrap" id="householdMatrixWrap" style="display: none; margin-top: 24px;"></div>
 
       <!-- RESULTS CONTAINER -->
       <div id="eligResultsWrap" style="display: none; margin-top: 24px;">

@@ -2,8 +2,11 @@
 # Transparent, rules-first eligibility recommendation engine for citizen welfare schemes
 
 import os
+import re
+import json
+import requests
 from flask import Blueprint, request, jsonify
-from database import get_schemes_collection, get_schemes_for_recommendation, scheme_to_dict
+from database import get_schemes_collection, get_schemes_for_recommendation, scheme_to_dict, acquire_rate_limit_slot
 
 recommend_bp = Blueprint("recommend", __name__)
 
@@ -375,6 +378,251 @@ def recommend_schemes():
                 k: v for k, v in profile.items() if v is not None and v != "" and v is not False and v != []
             },
             "recommendations": evaluated
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ══════════════════════════════════════════════════
+#  HOUSEHOLD WELFARE MATRIX (SARAL PARIVAR DISCOVERY)
+# ══════════════════════════════════════════════════
+
+def classify_and_estimate_benefit(benefits_text):
+    text = (benefits_text or "").lower()
+    
+    # 1. Health Cover
+    if any(k in text for k in ["health cover", "hospitalization", "ayushman", "health insurance"]):
+        m = re.search(r'(?:rs\.?|₹)\s*(\d+(?:\.\d+)?)\s*(?:lakh|lakhs|l)\b', text)
+        amt = int(float(m.group(1)) * 100000) if m else 500000
+        return {"category": "health_cover", "amount": amt, "label": f"₹{amt:,} Cashless Health Cover"}
+
+    # 2. Annual Direct Cash Support
+    m_year = re.search(r'(?:rs\.?|₹)\s*(\d+(?:,\d+)*)\s*(?:per year|/year|yearly|annually)', text)
+    if m_year:
+        val = int(m_year.group(1).replace(",", ""))
+        return {"category": "cash_annual", "amount": val, "label": f"₹{val:,}/year Direct Cash Support"}
+
+    # 3. Monthly Pension / Support -> Annualized
+    m_month = re.search(r'(?:rs\.?|₹)\s*(\d+(?:,\d+)*)\s*(?:per month|/month|monthly)', text)
+    if m_month:
+        val = int(m_month.group(1).replace(",", "")) * 12
+        return {"category": "cash_annual", "amount": val, "label": f"₹{val:,}/year Monthly Pension"}
+
+    # 4. Lump-Sum Financial Aid / Grant
+    m_grant = re.search(r'(?:rs\.?|₹)\s*(\d+(?:,\d+)*)', text)
+    if m_grant and any(k in text for k in ["incentive", "stipend", "grant", "aid", "scholarship", "allowance"]):
+        val = int(m_grant.group(1).replace(",", ""))
+        return {"category": "cash_grant", "amount": val, "label": f"₹{val:,} Financial Aid"}
+
+    # 5. Institutional Credit / Loans
+    if any(k in text for k in ["loan", "mudra", "credit", "subvention", "borrow"]):
+        return {"category": "credit_loan", "amount": 0, "label": "Institutional Credit / Loan"}
+
+    # 6. In-Kind / Subsidies
+    if any(k in text for k in ["free", "subsidy", "connection", "ration", "toolkit", "equipment", "cycle", "tablet"]):
+        return {"category": "in_kind", "amount": 0, "label": "Subsidized / In-Kind Entitlement"}
+
+    return {"category": "welfare", "amount": 0, "label": "Welfare Entitlement"}
+
+
+def call_gemini_household_synthesis(roster_summary, metrics, client_ip):
+    # Strictly prioritize GEMINI_API_KEY_SP per user directive to avoid load on primary key
+    api_key = os.getenv("GEMINI_API_KEY_SP") or os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        return generate_rule_based_household_plan(metrics)
+
+    allowed, _, _ = acquire_rate_limit_slot("gemini_household", client_ip, global_limit=13, client_limit=5, window_sec=60)
+    if not allowed:
+        return generate_rule_based_household_plan(metrics)
+
+    model_name = os.getenv("GEMINI_MODEL", "gemini-3.5-flash-lite").strip().lower().replace(" ", "-")
+    url = f"https://generativelanguage.googleapis.com/v1beta/models/{model_name}:generateContent?key={api_key}"
+    headers = {"Content-Type": "application/json"}
+
+    prompt = f"""You are Saral Niti Sahayak, India's leading public welfare advisor.
+Analyze the following multi-member household welfare entitlements discovery results:
+
+Household Summary:
+- Total Members: {metrics.get('total_members', 0)}
+- Total Qualified Schemes: {metrics.get('total_schemes_matched', 0)}
+- Potential Annual Direct Cash Support: ₹{metrics.get('estimated_annual_cash_inflow', 0):,}
+- Cashless Health Protection: ₹{metrics.get('total_health_cover', 0):,}
+
+Member Breakdown:
+{roster_summary}
+
+INSTRUCTIONS:
+1. Provide a warm, empowering, highly practical 3-4 bullet "Family Welfare Action Plan" in clear bilingual Hinglish/English.
+2. Step 1: Immediate priority enrollment (which member should apply first and why).
+3. Step 2: Benefit stacking (e.g. how agricultural DBT + maternal aid + student scholarships complement each other).
+4. Step 3: Critical document readiness (e.g. NPCI bank account mapping and land/caste verification).
+5. Keep it concise, respectful, and formatted with clean bullet points.
+"""
+
+    payload = {
+        "contents": [{"parts": [{"text": prompt}]}],
+        "generationConfig": {"temperature": 0.2, "maxOutputTokens": 600}
+    }
+
+    try:
+        res = requests.post(url, headers=headers, json=payload, timeout=12)
+        if res.status_code == 200:
+            data = res.json()
+            candidates = data.get("candidates", [])
+            if candidates and "content" in candidates[0]:
+                parts = candidates[0]["content"].get("parts", [])
+                if parts and "text" in parts[0]:
+                    return parts[0]["text"].strip()
+    except Exception:
+        pass
+
+    return generate_rule_based_household_plan(metrics)
+
+
+def generate_rule_based_household_plan(metrics):
+    cash_str = f"₹{metrics.get('estimated_annual_cash_inflow', 0):,}" if metrics.get('estimated_annual_cash_inflow') else "Direct Cash"
+    health_str = f"₹{metrics.get('total_health_cover', 0):,}" if metrics.get('total_health_cover') else "₹5,00,000"
+    return (
+        f"• **Immediate Priority:** Begin with central DBT initiatives for the primary earning member (such as PM-KISAN or pensions) as they provide foundational liquidity ({cash_str}/year).\n"
+        f"• **Healthcare Protection:** Ensure the entire family is enrolled under Ayushman Bharat or State Health Cards for up to {health_str} in cashless hospitalization coverage.\n"
+        f"• **Education & Livelihood:** Apply for student scholarships and youth skill development schemes early in the academic cycle to prevent missing cutoff deadlines.\n"
+        f"• **Next Steps for CSC:** Carry original Aadhaar cards, updated bank passbooks (active on NPCI mapper), and revenue records to your nearest Jan Seva Kendra."
+    )
+
+
+@recommend_bp.route("/api/recommend/household", methods=["POST"])
+def recommend_household():
+    """
+    POST /api/recommend/household
+    Evaluates multi-member household dossiers in parallel.
+    """
+    try:
+        data = request.get_json(silent=True)
+        if not isinstance(data, dict):
+            return jsonify({"error": "Payload must be a valid JSON object"}), 400
+
+        members = data.get("members")
+        if not isinstance(members, list) or len(members) == 0:
+            return jsonify({"error": "Payload must include a non-empty 'members' list"}), 400
+
+        # Cap members at 15 to prevent resource exhaustion
+        members = members[:15]
+        schemes_collection = get_schemes_collection()
+        if schemes_collection is None:
+            return jsonify({"error": "Database not connected"}), 500
+
+        members_matrix = []
+        unique_schemes = set()
+        master_docs = {}
+        total_cash_inflow = 0
+        total_health_cover = 0
+        in_kind_count = 0
+        credited_scheme_types = set()
+
+        for m in members:
+            rel = (m.get("relationship") or "self").lower()
+            lbl = m.get("label") or rel.capitalize()
+            member_profile = {
+                "age": m.get("age"),
+                "gender": m.get("gender"),
+                "state": m.get("state"),
+                "income": m.get("income"),
+                "caste": m.get("caste") or m.get("social_category"),
+                "occupation": m.get("occupation"),
+                "is_student": m.get("occupation") == "student" or bool(m.get("is_student")),
+                "is_differently_abled": bool(m.get("disability") or m.get("is_differently_abled")),
+                "vulnerabilities": m.get("vulnerabilities") or [],
+                "ration_card": m.get("ration_card"),
+                "housing_status": m.get("housing_status"),
+                "land_ownership": m.get("land_ownership"),
+                "education_level": m.get("education_level"),
+                "relationship": rel,
+                "target_subject": rel,
+                "persona_label": lbl
+            }
+
+            if hasattr(schemes_collection, 'data'):
+                all_schemes = list(schemes_collection.find())
+                raw_schemes = [s for s in all_schemes if s.get("is_active") is not False]
+            else:
+                raw_schemes = get_schemes_for_recommendation(member_profile)
+
+            evaluated_member_schemes = []
+            for s in raw_schemes:
+                eval_res = evaluate_eligibility(s, member_profile)
+                if eval_res["status"] in ("eligible", "partial"):
+                    s_dict = scheme_to_dict(s)
+                    b_info = classify_and_estimate_benefit(s_dict.get("benefits"))
+                    evaluated_member_schemes.append({
+                        "scheme": s_dict,
+                        "match_score": eval_res["match_score"],
+                        "status": eval_res["status"],
+                        "reasons": eval_res["reasons"],
+                        "unmet_criteria": eval_res["unmet_criteria"],
+                        "benefit_info": b_info
+                    })
+                    unique_schemes.add(s_dict.get("title"))
+
+                    # Aggregate household totals safely
+                    sch_title = s_dict.get("title", "")
+                    if b_info["category"] in ("cash_annual", "cash_grant"):
+                        if (sch_title, m.get("id")) not in credited_scheme_types:
+                            total_cash_inflow += b_info["amount"]
+                            credited_scheme_types.add((sch_title, m.get("id")))
+                    elif b_info["category"] == "health_cover":
+                        total_health_cover = max(total_health_cover, b_info["amount"])
+                    elif b_info["category"] == "in_kind":
+                        in_kind_count += 1
+
+                    # Collect master documents
+                    for doc in (s_dict.get("documents_required") or s_dict.get("documents") or []):
+                        if doc not in master_docs:
+                            master_docs[doc] = {
+                                "name": doc,
+                                "required_by": [lbl]
+                            }
+                        elif lbl not in master_docs[doc]["required_by"]:
+                            master_docs[doc]["required_by"].append(lbl)
+
+            evaluated_member_schemes.sort(
+                key=lambda x: (x["match_score"], x["scheme"].get("launched_year") or 0),
+                reverse=True
+            )
+
+            members_matrix.append({
+                "member_id": m.get("id"),
+                "label": lbl,
+                "relationship": rel,
+                "profile": member_profile,
+                "matched_count": len(evaluated_member_schemes),
+                "top_recommendations": evaluated_member_schemes[:8]
+            })
+
+        household_summary = {
+            "total_members": len(members_matrix),
+            "total_schemes_matched": len(unique_schemes),
+            "estimated_annual_cash_inflow": total_cash_inflow,
+            "total_health_cover": total_health_cover or 500000,
+            "in_kind_benefits_count": in_kind_count
+        }
+
+        # Format roster summary for AI synthesis
+        roster_lines = []
+        for mm in members_matrix:
+            top_titles = [x["scheme"]["title"] for x in mm["top_recommendations"][:3]]
+            roster_lines.append(f"- {mm['relationship'].capitalize()} ({mm['label']}): {mm['matched_count']} schemes matched ({', '.join(top_titles)})")
+        roster_summary_text = "\n".join(roster_lines)
+
+        client_ip = request.headers.get("X-Forwarded-For", "").split(",")[0].strip() or request.remote_addr or "127.0.0.1"
+        include_ai = data.get("include_ai_synthesis", True)
+        ai_synthesis = call_gemini_household_synthesis(roster_summary_text, household_summary, client_ip) if include_ai else None
+
+        return jsonify({
+            "status": "ok",
+            "household_summary": household_summary,
+            "members_matrix": members_matrix,
+            "master_document_checklist": list(master_docs.values()),
+            "ai_synthesis": ai_synthesis
         }), 200
 
     except Exception as e:

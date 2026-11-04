@@ -85,6 +85,7 @@ from routes.chatbot import chatbot_bp
 from routes.detector import detector_bp
 from routes.recommend import recommend_bp
 from routes.pre_audit import pre_audit_bp
+from routes.voice import voice_bp
 
 app.register_blueprint(schemes_bp)
 app.register_blueprint(search_bp)
@@ -94,6 +95,7 @@ app.register_blueprint(chatbot_bp)
 app.register_blueprint(detector_bp)
 app.register_blueprint(recommend_bp)
 app.register_blueprint(pre_audit_bp)
+app.register_blueprint(voice_bp)
 
 if __name__ == "__main__":
     port = int(os.getenv("PORT", 5000))

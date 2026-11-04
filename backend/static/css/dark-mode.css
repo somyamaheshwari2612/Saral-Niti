@@ -397,3 +397,128 @@ html.dark-mode .docs-readiness-hint {
   color: #94A3B8;
   border-top-color: #1E293B;
 }
+
+/* ── DARK MODE: HOUSEHOLD WELFARE MATRIX ── */
+html.dark-mode .btn-eval-all-household {
+  background: linear-gradient(135deg, #EA580C 0%, #C2410C 100%);
+  color: #FFFFFF;
+}
+html.dark-mode .hh-matrix-loading {
+  background: #0D1322;
+  border-color: #334155;
+}
+html.dark-mode .hh-loading-title {
+  color: #F1F5F9;
+}
+html.dark-mode .hh-loading-desc {
+  color: #94A3B8;
+}
+html.dark-mode .hh-matrix-top-bar {
+  border-bottom-color: #1E293B;
+}
+html.dark-mode .hh-matrix-main-title {
+  color: #F8FAFC;
+}
+html.dark-mode .btn-hh-close {
+  background: #1E293B;
+  border-color: #334155;
+  color: #CBD5E1;
+}
+html.dark-mode .btn-hh-close:hover {
+  background: #334155;
+  color: #FFFFFF;
+}
+html.dark-mode .hh-metric-card {
+  background: #0F172A;
+  border-color: #1E293B;
+}
+html.dark-mode .hh-metric-value {
+  color: #F8FAFC;
+}
+html.dark-mode .hh-ai-plan-card {
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.08) 0%, rgba(99, 102, 241, 0.08) 100%);
+  border-color: rgba(255, 107, 0, 0.25);
+}
+html.dark-mode .hh-ai-plan-list li {
+  color: #CBD5E1;
+}
+html.dark-mode .hh-ai-plan-list li strong {
+  color: #F8FAFC;
+}
+html.dark-mode .hh-section-card {
+  background: #0F172A;
+  border-color: #1E293B;
+}
+html.dark-mode .hh-section-title {
+  color: #F8FAFC;
+}
+html.dark-mode .hh-doc-item {
+  background: #151D2C;
+  border-color: #1E293B;
+}
+html.dark-mode .hh-doc-item:hover {
+  background: #1E293B;
+  border-color: #334155;
+}
+html.dark-mode .hh-doc-name {
+  color: #E2E8F0;
+}
+html.dark-mode .hh-member-accordion {
+  background: #0F172A;
+  border-color: #1E293B;
+}
+html.dark-mode .hh-member-head {
+  background: #151D2C;
+}
+html.dark-mode .hh-member-head:hover {
+  background: #1E293B;
+}
+html.dark-mode .hh-member-name {
+  color: #F8FAFC;
+}
+html.dark-mode .hh-member-rel-tag {
+  background: #1E293B;
+  color: #94A3B8;
+}
+html.dark-mode .hh-member-body {
+  background: #0F172A;
+  border-top-color: #1E293B;
+}
+html.dark-mode .hh-sch-card {
+  background: #151D2C;
+  border-color: #1E293B;
+}
+html.dark-mode .hh-sch-title {
+  color: #F8FAFC;
+}
+html.dark-mode .hh-sch-benefit-badge {
+  color: #FB923C;
+  background: rgba(251, 146, 60, 0.12);
+}
+html.dark-mode .btn-sch-portal {
+  background: rgba(255, 107, 0, 0.12);
+}
+
+/* ── DARK MODE: VOICE-FIRST SEARCH CONTROLS ── */
+html.dark-mode .voice-search-btn {
+  color: #94A3B8;
+}
+html.dark-mode .voice-search-btn:hover {
+  color: #FB923C;
+  background: rgba(255, 107, 0, 0.15);
+}
+html.dark-mode .voice-search-status {
+  background: #1F1315;
+  border-color: #7F1D1D;
+}
+html.dark-mode .voice-status-text {
+  color: #FCA5A5;
+}
+html.dark-mode .voice-insight-badge {
+  background: #131A29;
+  border-color: rgba(255, 107, 0, 0.3);
+  color: #CBD5E1;
+}
+html.dark-mode .voice-insight-badge strong {
+  color: #F8FAFC;
+}

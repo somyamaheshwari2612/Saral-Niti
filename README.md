@@ -56,7 +56,9 @@ India provides thousands of central and state government welfare schemes — yet
 | 🎯 **Personalized Eligibility Calculator** | Multi-factor questionnaire assessing citizen profile with transparent reasons and zero hallucinations |
 | 🛡️ **Last-Mile Pre-Flight Audit** | Proactive diagnostic engine preventing departmental failure traps (Aadhaar-NPCI bank mapping, passbook spelling discrepancies, expired certificates, statutory tax exclusions) |
 | 🛡️ **Scam & Fake Scheme Detector** | URL and PDF/document validator powered by Google Gemini (`gemini-3.5-flash-lite`) |
-| 👨‍👩‍👧‍👦 **Household Persona Vault** | Zero-knowledge client-side dossier (`SaralFamilyVault`) enabling single-click multi-member scheme discovery for self, farming parents, students, and seniors |
+| 🎙️ **Voice-First Vernacular STT** | 3-tier cascading Speech-to-Text (`whisper-large-v3-turbo` → `whisper-large-v3` → Web Speech API) with 18 RPM concurrency guard & anti-hallucination query normalizer |
+| 👨‍👩‍👧‍👦 **Household Persona Vault & Matrix** | Multi-member parallel discovery (`SaralFamilyVault`) calculating combined annual DBT cash support, health cover, and consolidated master document checklists |
+| 📑 **Citizen Welfare Passbook** | Official CSC & Jan Seva Kendra format A4 printable dossiers with QR reference codes, verification checklists, and anti-bribery advisories |
 | 🌙 **Theme & Accessibility** | Dark mode with persistent session state and zero flash of unstyled content (FOUC) |
 | 🚀 **Decoupled Deployment** | Pure static client ready for **Vercel**; lightweight Python REST backend ready for **Render** |
 
@@ -131,7 +133,9 @@ Saral Niti is cleanly decoupled into two independent deployment units:
 3. Environment variables:
    * `PYTHON_VERSION`: `3.11.9`
    * `GEMINI_MODEL`: `gemini-3.5-flash-lite`
-   * `GEMINI_API_KEY`: Your Google Gemini API Key
+   * `GEMINI_API_KEY`: Primary Google Gemini API Key
+   * `GEMINI_API_KEY_SP`: Secondary Gemini Key for Household AI Synthesis (load isolation)
+   * `GROQ_API_KEY`: Groq API Key for Whisper Speech-to-Text (4,000 queries/day)
 4. Render runs `pip install -r requirements.txt && python scripts/seed_db.py` to auto-seed SQLite FTS5 in ~0.25 seconds, then launches via `gunicorn app:app`.
 
 ---
@@ -151,7 +155,9 @@ Saral-Niti/
 │   │   ├── chatbot.py         # Vernacular NLU, Speech RAG & Gemini synthesizer
 │   │   ├── detector.py        # Fraud & scam detector (Gemini 3.5 Flash Lite)
 │   │   ├── filter.py          # Multi-dimensional 6-category filtering engine
-│   │   ├── recommend.py       # Deterministic rules-first eligibility calculator
+│   │   ├── recommend.py       # Deterministic rules-first eligibility & Household Matrix engine
+│   │   ├── pre_audit.py       # Last-mile pre-flight diagnostic checklist & traps
+│   │   ├── voice.py           # 3-tier cascading Whisper STT & query normalizer
 │   │   └── schemes.py         # Scheme lookup and search endpoints
 │   ├── scripts/
 │   │   ├── build_frontend.py  # Synchronizes standalone frontend distribution
@@ -159,7 +165,7 @@ Saral-Niti/
 │   ├── static/                # Monolithic assets (CSS, JS)
 │   ├── templates/             # Jinja2 templates (Schemes explorer, Modals)
 │   ├── tests/
-│   │   └── test_api.py        # Comprehensive test suite (33 unit tests)
+│   │   └── test_api.py        # Comprehensive test suite (44 unit tests, 100% passing)
 │   ├── app.py                 # Flask REST application entry point
 │   ├── database.py            # SQLite FTS5 thread-local database manager
 │   └── requirements.txt       # Production dependencies (pure Flask, no MongoDB)

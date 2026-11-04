@@ -277,3 +277,112 @@
   .search-btn span { display: none; }
   .search-btn { padding: 12px 16px; }
 }
+
+/* ── VOICE-FIRST SEARCH CONTROLS ── */
+.voice-search-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  background: transparent;
+  color: var(--slate-500);
+  font-size: 17px;
+  cursor: pointer;
+  margin-right: 8px;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  flex-shrink: 0;
+}
+.voice-search-btn:hover {
+  background: rgba(255, 107, 0, 0.12);
+  color: var(--saffron);
+  transform: scale(1.08);
+}
+.voice-search-btn.recording {
+  background: #EF4444 !important;
+  color: #FFFFFF !important;
+  animation: voicePulse 1.2s infinite;
+  box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.3);
+}
+.voice-search-btn.processing {
+  background: rgba(255, 107, 0, 0.15);
+  color: var(--saffron);
+  pointer-events: none;
+}
+@keyframes voicePulse {
+  0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.6); }
+  70% { transform: scale(1.1); box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+  100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.voice-search-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #FEF2F2;
+  border: 1px solid #FECACA;
+  border-radius: 9999px;
+  padding: 8px 16px;
+  margin-top: 10px;
+  animation: fadeIn 0.2s ease-out;
+}
+.voice-live-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #EF4444;
+  display: inline-block;
+  animation: pulseDot 1s infinite alternate;
+}
+@keyframes pulseDot {
+  0% { opacity: 0.4; }
+  100% { opacity: 1; transform: scale(1.2); }
+}
+.voice-status-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: #B91C1C;
+  flex: 1;
+}
+.btn-voice-cancel {
+  background: transparent;
+  border: none;
+  color: #991B1B;
+  font-size: 13px;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.voice-insight-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(255, 107, 0, 0.08) 0%, rgba(99, 102, 241, 0.08) 100%);
+  border: 1px solid rgba(255, 107, 0, 0.25);
+  border-radius: 8px;
+  padding: 8px 12px;
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--slate-700);
+  animation: fadeIn 0.25s ease-out;
+}
+.voice-insight-badge i {
+  color: var(--saffron);
+}
+.voice-insight-badge strong {
+  color: var(--navy);
+}
+.btn-insight-clear {
+  margin-left: auto;
+  background: transparent;
+  border: none;
+  color: var(--slate-400);
+  cursor: pointer;
+  font-size: 12px;
+}
+.btn-insight-clear:hover {
+  color: var(--navy);
+}
