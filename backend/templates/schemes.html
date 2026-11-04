@@ -472,12 +472,12 @@
     </div>
   </div>
 
-  <!-- PAGINATION CONTROLS -->
+  <!-- SEAMLESS AUTO-SCROLL LOADER & STATUS -->
   <div class="pagination-wrap" id="paginationWrap" style="display:none;">
-    <button class="load-more-btn" id="loadMoreBtn" onclick="loadMoreSchemes()">
-      <span>Load More Schemes</span>
-      <i class="fa-solid fa-arrow-down"></i>
-    </button>
+    <div id="infiniteScrollLoader" class="infinite-scroll-loader" style="display: none;">
+      <i class="fa-solid fa-circle-notch fa-spin"></i>
+      <span>Loading next 24 schemes...</span>
+    </div>
     <div class="pagination-info" id="paginationInfo"></div>
   </div>
 </main>

@@ -48,32 +48,16 @@ function debounce(func, delay = 300) {
 // ══════════════════════════════════════════════════
 //  LOAD SCHEMES
 // ══════════════════════════════════════════════════
-async function loadSchemes() {
-  try {
-    const res = await fetch(`${SCHEMES_API}/api/schemes`);
-    const data = await res.json();
-    if (!res.ok || data.error) {
-      document.getElementById('schemesGrid').innerHTML = `
-        <div class="no-results">
-          <h3>Could not load schemes</h3>
-          <p>${escapeHtml(data.error || 'Database connection error')}</p>
-        </div>`;
-      document.getElementById('resultsCount').textContent = 'Server error';
-      return;
-    }
-    allSchemes = data.schemes || [];
-    const totalEl = document.getElementById('totalCount');
-    if (totalEl) totalEl.textContent = (data.total || allSchemes.length) + '+';
-    renderSchemes(allSchemes);
-  } catch (err) {
-    document.getElementById('schemesGrid').innerHTML = `
-      <div class="no-results">
-        <h3>Could not connect to server</h3>
-        <p>Make sure your Flask backend is running on port 5000</p>
-      </div>`;
-    document.getElementById('resultsCount').textContent = 'Connection error';
-  }
-}
+// ══════════════════════════════════════════════════
+//  SCHEME LOADING & SEAMLESS 24-BATCH INFINITE BROWSING
+// ══════════════════════════════════════════════════
+const PAGE_SIZE = 24;
+let currentPage = 1;
+let totalAvailableSchemes = 0;
+let hasMoreServerSchemes = true;
+let isLoadingNextBatch = false;
+let autoScrollObserver = null;
+let isServerBrowsing = true; // True when browsing master DB; False when browsing client-side filter/search array
 
 const CATEGORY_ICONS = {
   agriculture: '🌾',
@@ -106,57 +90,17 @@ function renderSkeletons() {
   `).join('');
 }
 
-// ══════════════════════════════════════════════════
-//  RENDER CARDS (XSS-safe with data attributes)
-// ══════════════════════════════════════════════════
-const PAGE_SIZE = 24;
-let currentPage = 1;
+function formatSchemeCardHTML(s, idx) {
+  const icon = CATEGORY_ICONS[s.category] || '🏛';
+  const safeCat = escapeHtml(s.category || 'general');
+  const safeTitle = escapeHtml(s.title || '');
+  const safeDesc = escapeHtml(s.description || '');
+  const safeBenefits = escapeHtml(s.benefits || '');
+  const safeMinistry = escapeHtml(s.ministry || '');
+  const safeUrl = sanitizeUrl(s.application_url);
 
-function renderSchemes(schemes, resetPage = true) {
-  const grid = document.getElementById('schemesGrid');
-  const count = document.getElementById('resultsCount');
-  const resetBtn = document.getElementById('resetBtn');
-  const paginationWrap = document.getElementById('paginationWrap');
-  const loadMoreBtn = document.getElementById('loadMoreBtn');
-  const paginationInfo = document.getElementById('paginationInfo');
-
-  if (resetPage) {
-    currentPage = 1;
-    currentSchemesList = Array.isArray(schemes) ? schemes : [];
-  }
-
-  if (resetBtn) {
-    const isFiltered = currentSchemesList.length !== allSchemes.length;
-    resetBtn.style.display = isFiltered ? 'inline-flex' : 'none';
-  }
-
-  if (!currentSchemesList.length) {
-    grid.innerHTML = `
-      <div class="no-results">
-        <h3>No schemes found matching your search</h3>
-        <p>Try searching for different keywords or select "All Categories".</p>
-      </div>`;
-    count.innerHTML = 'Showing <strong>0</strong> schemes';
-    if (paginationWrap) paginationWrap.style.display = 'none';
-    return;
-  }
-
-  const total = currentSchemesList.length;
-  const displayedCount = Math.min(currentPage * PAGE_SIZE, total);
-  count.innerHTML = `Showing <strong>${displayedCount}</strong> of <strong>${total.toLocaleString('en-IN')}</strong> verified schemes`;
-
-  const visibleSchemes = currentSchemesList.slice(0, displayedCount);
-  grid.innerHTML = visibleSchemes.map((s, idx) => {
-    const icon = CATEGORY_ICONS[s.category] || '🏛';
-    const safeCat = escapeHtml(s.category || 'general');
-    const safeTitle = escapeHtml(s.title || '');
-    const safeDesc = escapeHtml(s.description || '');
-    const safeBenefits = escapeHtml(s.benefits || '');
-    const safeMinistry = escapeHtml(s.ministry || '');
-    const safeUrl = sanitizeUrl(s.application_url);
-
-    return `
-    <div class="scheme-card" data-index="${idx}" tabindex="0" role="button" aria-label="View details for ${safeTitle}">
+  return `
+    <div class="scheme-card fade-in-card" data-index="${idx}" tabindex="0" role="button" aria-label="View details for ${safeTitle}">
       <div>
         <div class="card-top">
           <span class="category-badge cat-${safeCat}">${icon} ${safeCat}</span>
@@ -176,32 +120,222 @@ function renderSchemes(schemes, resetPage = true) {
         </a>
       </div>
     </div>
-  `}).join('');
+  `;
+}
 
-  if (paginationWrap) {
-    if (displayedCount < total) {
-      paginationWrap.style.display = 'flex';
-      if (loadMoreBtn) {
-        const remaining = total - displayedCount;
-        loadMoreBtn.style.display = 'inline-flex';
-        loadMoreBtn.querySelector('span').textContent = `Load More Schemes (${Math.min(PAGE_SIZE, remaining)} more)`;
+async function loadSchemes(page = 1, append = false) {
+  if (isLoadingNextBatch) return;
+  isLoadingNextBatch = true;
+  isServerBrowsing = true;
+
+  const grid = document.getElementById('schemesGrid');
+  const count = document.getElementById('resultsCount');
+  const paginationWrap = document.getElementById('paginationWrap');
+  const scrollLoader = document.getElementById('infiniteScrollLoader');
+
+  if (!append) {
+    currentPage = 1;
+    currentSchemesList = [];
+    if (autoScrollObserver) autoScrollObserver.disconnect();
+    renderSkeletons();
+  } else {
+    if (scrollLoader) scrollLoader.style.display = 'inline-flex';
+  }
+
+  try {
+    const res = await fetch(`${SCHEMES_API}/api/schemes?page=${page}&limit=${PAGE_SIZE}`);
+    const data = await res.json();
+    if (!res.ok || data.error) {
+      if (!append && grid) {
+        grid.innerHTML = `
+          <div class="no-results">
+            <h3>Could not load schemes</h3>
+            <p>${escapeHtml(data.error || 'Database connection error')}</p>
+          </div>`;
+        if (count) count.textContent = 'Server error';
       }
-      if (paginationInfo) {
-        paginationInfo.textContent = `Showing ${displayedCount} of ${total.toLocaleString('en-IN')} total schemes`;
+      return;
+    }
+
+    const fetchedSchemes = data.schemes || [];
+    totalAvailableSchemes = data.total || 0;
+    hasMoreServerSchemes = Boolean(data.has_more);
+    currentPage = data.page || page;
+
+    const totalEl = document.getElementById('totalCount');
+    if (totalEl) totalEl.textContent = totalAvailableSchemes.toLocaleString('en-IN') + '+';
+
+    if (append) {
+      const startIndex = currentSchemesList.length;
+      currentSchemesList = currentSchemesList.concat(fetchedSchemes);
+      if (grid) {
+        const newHtml = fetchedSchemes.map((s, idx) => formatSchemeCardHTML(s, startIndex + idx)).join('');
+        grid.insertAdjacentHTML('beforeend', newHtml);
       }
     } else {
-      if (loadMoreBtn) loadMoreBtn.style.display = 'none';
-      if (paginationInfo) {
-        paginationInfo.textContent = `All ${total.toLocaleString('en-IN')} schemes displayed`;
+      currentSchemesList = fetchedSchemes;
+      allSchemes = fetchedSchemes;
+      if (grid) {
+        grid.innerHTML = currentSchemesList.map((s, idx) => formatSchemeCardHTML(s, idx)).join('');
       }
-      paginationWrap.style.display = total > PAGE_SIZE ? 'flex' : 'none';
+    }
+
+    updateScrollStatus();
+  } catch (err) {
+    if (!append && grid) {
+      grid.innerHTML = `
+        <div class="no-results">
+          <h3>Could not connect to server</h3>
+          <p>Make sure your Flask backend is running on port 5000</p>
+        </div>`;
+      if (count) count.textContent = 'Connection error';
+    }
+  } finally {
+    isLoadingNextBatch = false;
+    if (scrollLoader) scrollLoader.style.display = 'none';
+  }
+}
+
+function renderSchemes(schemes, resetPage = true) {
+  const grid = document.getElementById('schemesGrid');
+  const count = document.getElementById('resultsCount');
+  const resetBtn = document.getElementById('resetBtn');
+  const paginationWrap = document.getElementById('paginationWrap');
+
+  if (resetPage) {
+    currentPage = 1;
+    currentSchemesList = Array.isArray(schemes) ? schemes : [];
+    isServerBrowsing = false; // Filter or search result array
+    if (autoScrollObserver) autoScrollObserver.disconnect();
+  }
+
+  if (resetBtn) {
+    const isFiltered = !isServerBrowsing;
+    resetBtn.style.display = isFiltered ? 'inline-flex' : 'none';
+  }
+
+  if (!currentSchemesList.length) {
+    if (grid) {
+      grid.innerHTML = `
+        <div class="no-results">
+          <h3>No schemes found matching your search</h3>
+          <p>Try searching for different keywords or select "All Categories".</p>
+        </div>`;
+    }
+    if (count) count.innerHTML = 'Showing <strong>0</strong> schemes';
+    if (paginationWrap) paginationWrap.style.display = 'none';
+    return;
+  }
+
+  const total = currentSchemesList.length;
+  const initialCount = Math.min(PAGE_SIZE, total);
+  const visible = currentSchemesList.slice(0, initialCount);
+
+  if (grid) {
+    grid.innerHTML = visible.map((s, idx) => formatSchemeCardHTML(s, idx)).join('');
+  }
+
+  updateScrollStatus();
+}
+
+function loadNextBatch() {
+  if (isLoadingNextBatch) return;
+
+  if (isServerBrowsing) {
+    if (hasMoreServerSchemes) {
+      loadSchemes(currentPage + 1, true);
+    }
+  } else {
+    // Client-side array pagination (e.g. search or filter results)
+    const total = currentSchemesList.length;
+    const currentRendered = document.querySelectorAll('#schemesGrid .scheme-card').length;
+    if (currentRendered < total) {
+      isLoadingNextBatch = true;
+      const scrollLoader = document.getElementById('infiniteScrollLoader');
+      if (scrollLoader) scrollLoader.style.display = 'inline-flex';
+
+      setTimeout(() => {
+        currentPage++;
+        const nextBatch = currentSchemesList.slice(currentRendered, currentRendered + PAGE_SIZE);
+        const grid = document.getElementById('schemesGrid');
+        if (grid) {
+          const newHtml = nextBatch.map((s, idx) => formatSchemeCardHTML(s, currentRendered + idx)).join('');
+          grid.insertAdjacentHTML('beforeend', newHtml);
+        }
+        isLoadingNextBatch = false;
+        if (scrollLoader) scrollLoader.style.display = 'none';
+        updateScrollStatus();
+      }, 80);
     }
   }
 }
 
+function setupAutoScrollObserver() {
+  if (autoScrollObserver) {
+    autoScrollObserver.disconnect();
+  }
+
+  const cards = document.querySelectorAll('#schemesGrid .scheme-card');
+  if (!cards || cards.length === 0) return;
+
+  const total = isServerBrowsing ? totalAvailableSchemes : currentSchemesList.length;
+  const hasMore = isServerBrowsing ? hasMoreServerSchemes : (cards.length < total);
+
+  if (!hasMore) return;
+
+  // Seamless trigger on the 20th scheme of the currently rendered batch
+  // When 24 cards are rendered, card at index 19 is the 20th scheme (cards.length - 5 = 19).
+  // When 48 cards are rendered, card at index 43 is the 20th scheme of the second batch (cards.length - 5 = 43).
+  const targetIndex = Math.max(0, cards.length - 5);
+  const targetCard = cards[targetIndex];
+
+  if (!targetCard) return;
+
+  autoScrollObserver = new IntersectionObserver((entries) => {
+    const entry = entries[0];
+    if (entry.isIntersecting && !isLoadingNextBatch) {
+      autoScrollObserver.disconnect();
+      loadNextBatch();
+    }
+  }, {
+    root: null,
+    rootMargin: '250px', // Pre-fetch before citizen reaches the bottom for 100% seamless experience
+    threshold: 0.1
+  });
+
+  autoScrollObserver.observe(targetCard);
+}
+
+function updateScrollStatus() {
+  const count = document.getElementById('resultsCount');
+  const paginationWrap = document.getElementById('paginationWrap');
+  const paginationInfo = document.getElementById('paginationInfo');
+  const cards = document.querySelectorAll('#schemesGrid .scheme-card');
+  const displayedCount = cards.length;
+  const total = isServerBrowsing ? totalAvailableSchemes : currentSchemesList.length;
+
+  if (count) {
+    count.innerHTML = `Showing <strong>${displayedCount}</strong> of <strong>${total.toLocaleString('en-IN')}</strong> verified schemes`;
+  }
+
+  if (paginationWrap) {
+    paginationWrap.style.display = total > 0 ? 'flex' : 'none';
+  }
+
+  if (paginationInfo) {
+    const hasMore = isServerBrowsing ? hasMoreServerSchemes : (displayedCount < total);
+    if (hasMore) {
+      paginationInfo.innerHTML = `Loaded <strong>${displayedCount}</strong> of <strong>${total.toLocaleString('en-IN')}</strong> schemes (auto-loading as you scroll)`;
+    } else {
+      paginationInfo.innerHTML = `<i class="fa-solid fa-check-circle" style="color:#10B981; margin-right:5px;"></i> All <strong>${total.toLocaleString('en-IN')}</strong> verified schemes loaded`;
+    }
+  }
+
+  setupAutoScrollObserver();
+}
+
 function loadMoreSchemes() {
-  currentPage++;
-  renderSchemes(currentSchemesList, false);
+  loadNextBatch();
 }
 
 // Scheme card delegated click and keyboard handlers
@@ -235,7 +369,7 @@ if (schemesGridEl) {
 // ══════════════════════════════════════════════════
 async function handleSearch() {
   const q = document.getElementById('searchInput').value.trim();
-  if (!q) { renderSchemes(allSchemes); return; }
+  if (!q) { loadSchemes(1, false); return; }
   renderSkeletons();
   try {
     const res = await fetch(`${SCHEMES_API}/api/search?q=${encodeURIComponent(q)}`);
@@ -468,7 +602,7 @@ async function applyAdvancedFilters() {
   });
 
   if (!hasActiveFilters) {
-    renderSchemes(allSchemes);
+    loadSchemes(1, false);
     return;
   }
 
@@ -522,7 +656,7 @@ function resetAllFilters() {
   if (searchInput) searchInput.value = '';
 
   updateActiveFilterChips({ category: 'all' });
-  renderSchemes(allSchemes);
+  loadSchemes(1, false);
 }
 
 function resetFilters() {

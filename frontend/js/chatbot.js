@@ -12,6 +12,7 @@ const CHAT_BACKEND_URL = (typeof window !== 'undefined' && (
 
 let recognition = null;
 let isRecording = false;
+let chatHistory = [];
 
 function escapeChatHtml(str) {
   if (str === null || str === undefined) return '';
@@ -61,6 +62,9 @@ function initChatbot() {
         </div>
         <div class="chat-header-actions">
           <span class="chat-lang-tag" title="Voice & Text supports Hindi, English & Hinglish"><i class="fa-solid fa-language"></i> Hi/En</span>
+          <button class="chat-header-reset" id="chatResetBtn" onclick="resetChatConversation()" aria-label="New chat" title="Start new conversation">
+            <i class="fa-solid fa-rotate-right"></i>
+          </button>
           <button class="chat-header-close" onclick="toggleChat()" aria-label="Close chat">✕</button>
         </div>
       </div>
@@ -325,6 +329,24 @@ function injectChatStyles() {
       box-shadow: 0 0 6px #10B981;
     }
     
+    .chat-header-reset {
+      background: rgba(255, 255, 255, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      color: #FFFFFF;
+      font-size: 11px;
+      cursor: pointer;
+      padding: 4px 7px;
+      border-radius: 6px;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .chat-header-reset:hover {
+      background: rgba(255, 255, 255, 0.25);
+      transform: rotate(90deg);
+    }
+
     .chat-header-actions {
       display: flex;
       align-items: center;
@@ -805,11 +827,14 @@ async function sendMessage() {
       ? window.SaralFamilyVault.toChatbotContext()
       : null;
 
+    const historyPayload = chatHistory.slice(-6);
+
     const response = await fetch(`${CHAT_BACKEND_URL}/api/chatbot`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         message,
+        history: historyPayload,
         active_persona: activePersona
       })
     });
@@ -818,6 +843,9 @@ async function sendMessage() {
 
     if (data.status === 'ok' || data.reply) {
       appendBotResponse(data);
+      chatHistory.push({ role: 'user', content: message });
+      chatHistory.push({ role: 'model', content: data.reply || '' });
+      if (chatHistory.length > 12) chatHistory = chatHistory.slice(-12);
     } else {
       appendBotSimpleMessage(data.error || "I didn't catch that. Could you please rephrase?");
     }
@@ -977,4 +1005,31 @@ if (typeof window !== 'undefined') {
   window.addEventListener('saral:family_vault_updated', function() {
     if (typeof renderChatPersonaChips === 'function') renderChatPersonaChips();
   });
+}
+
+function resetChatConversation() {
+  chatHistory = [];
+  const container = document.getElementById('chat-messages');
+  if (!container) return;
+  container.innerHTML = `
+    <div class="bot-msg-wrap">
+      <div class="bot-msg-header">
+        <span class="bot-label">Saral Niti Sahayak</span>
+        <button class="speech-btn" onclick="speakFromElement(this)" title="Listen to response" aria-label="Listen">
+          <i class="fa-solid fa-volume-high"></i>
+        </button>
+      </div>
+      <div class="bot-msg">
+        Namaste! 🙏 Started a fresh conversation. Ask me about any central or state government scheme, eligibility, or benefits!
+      </div>
+    </div>
+    <div class="chat-quick-tags" id="chatQuickTags">
+      <button class="quick-chip" onclick="sendQuickMessage('PM-KISAN eligibility for farmers')">🌾 PM-KISAN Farmer Support</button>
+      <button class="quick-chip" onclick="sendQuickMessage('Ayushman Bharat free health card')">🏥 Ayushman ₹5 Lakh Health Cover</button>
+      <button class="quick-chip" onclick="sendQuickMessage('Post-matric scholarships for SC ST OBC students')">📚 Scholarships for Students</button>
+      <button class="quick-chip" onclick="sendQuickMessage('Kutcha makan ke liye PM Awas Yojana')">🏠 PM Awas Housing Scheme</button>
+    </div>
+  `;
+  const input = document.getElementById('chat-input');
+  if (input) input.focus();
 }

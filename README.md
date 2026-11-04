@@ -50,7 +50,7 @@ India provides thousands of central and state government welfare schemes — yet
 
 | Feature | Description |
 |---|---|
-| 🔍 **High-Speed Scheme Explorer** | Sub-millisecond keyword search (SQLite FTS5) with batch pagination (24 cards/page) |
+| 🔍 **High-Speed Scheme Explorer** | Sub-millisecond keyword search (SQLite FTS5) with seamless 24-batch infinite scrolling (auto-loads at 20th scheme) |
 | 🎛️ **Multi-Dimensional Filters** | Interactive 6-card drawer filtering age, social categories (SC/ST/OBC/Minority/DNT), vulnerabilities, location, ration card, education, and trades |
 | 🎙️ **Voice-First Vernacular Chatbot** | Browser-native Speech-to-Text and Text-to-Speech in Hindi/English, code-mixed NLU, and SQLite FTS5 RAG grounding |
 | 🎯 **Personalized Eligibility Calculator** | Multi-factor questionnaire assessing citizen profile with transparent reasons and zero hallucinations |
