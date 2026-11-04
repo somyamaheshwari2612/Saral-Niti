@@ -133,7 +133,11 @@ def retrieve_grounded_schemes(keywords, slots, raw_message="", limit=4):
         # 1. Primary search: extracted keywords + state
         terms = []
         if keywords:
-            clean_kws = [f'"{re.sub(r"[^\w\s]", "", k)}"' for k in keywords if k.strip()]
+            clean_kws = []
+            for k in keywords:
+                clean_k = re.sub(r"[^\w\s]", "", k).strip()
+                if clean_k:
+                    clean_kws.append(f'"{clean_k}"')
             if clean_kws:
                 terms.append(f"({' OR '.join(clean_kws)})")
 
