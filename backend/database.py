@@ -6,6 +6,7 @@ import os
 import json
 import sqlite3
 import threading
+import time
 from dotenv import load_dotenv
 
 base_dir = os.path.dirname(os.path.abspath(__file__))
@@ -124,6 +125,18 @@ def init_db(force=False):
         benefits
     );
     """)
+
+    # API Rate Limits Table (Protects Gemini Quota: 13 RPM Server-Wide Ceiling)
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS api_rate_limits (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        endpoint_group TEXT NOT NULL,
+        client_ip TEXT NOT NULL,
+        timestamp REAL NOT NULL
+    );
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_rate_limits_group_ts ON api_rate_limits(endpoint_group, timestamp);")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_rate_limits_client_ts ON api_rate_limits(endpoint_group, client_ip, timestamp);")
 
     # Check count
     cur.execute("SELECT COUNT(*) FROM schemes")
@@ -275,6 +288,81 @@ def count_schemes():
     cur = con.cursor()
     cur.execute("SELECT COUNT(*) FROM schemes WHERE is_active = 1")
     return cur.fetchone()[0]
+
+
+# ══════════════════════════════════════════════════
+#  SLIDING-WINDOW RATE LIMITER (PROTECTS GEMINI 15 RPM QUOTA)
+# ══════════════════════════════════════════════════
+def acquire_rate_limit_slot(endpoint_group="gemini_ai", client_ip="127.0.0.1", global_limit=13, client_limit=5, window_sec=60):
+    """
+    Thread-safe & multi-worker safe sliding-window rate limiter powered by SQLite in WAL mode.
+    Guarantees that global calls to Gemini stay <= 13 RPM across the entire server,
+    with a per-IP fair-use cap of 5 RPM to prevent starvation.
+
+    Returns:
+        tuple: (allowed: bool, retry_after_seconds: int, reason: str)
+    """
+    now = time.time()
+    cutoff = now - window_sec
+    con = get_db_connection()
+    cur = con.cursor()
+
+    try:
+        # 1. Clean up entries older than 2 minutes to keep table compact
+        cur.execute("DELETE FROM api_rate_limits WHERE timestamp < ?", (now - 120,))
+
+        # 2. Check Global Server-Wide Ceiling (13 RPM across all clients combined)
+        cur.execute(
+            "SELECT COUNT(*), MIN(timestamp) FROM api_rate_limits WHERE endpoint_group = ? AND timestamp >= ?",
+            (endpoint_group, cutoff)
+        )
+        row = cur.fetchone()
+        global_count = row[0] if row else 0
+        oldest_global = row[1] if row else None
+
+        if global_count >= global_limit:
+            retry_after = max(1, int(oldest_global + window_sec - now)) if oldest_global else window_sec
+            con.commit()
+            return False, retry_after, "global_limit_reached"
+
+        # 3. Check Per-Client Fair Use Ceiling (5 RPM per client IP)
+        cur.execute(
+            "SELECT COUNT(*), MIN(timestamp) FROM api_rate_limits WHERE endpoint_group = ? AND client_ip = ? AND timestamp >= ?",
+            (endpoint_group, client_ip, cutoff)
+        )
+        c_row = cur.fetchone()
+        client_count = c_row[0] if c_row else 0
+        oldest_client = c_row[1] if c_row else None
+
+        if client_count >= client_limit:
+            retry_after = max(1, int(oldest_client + window_sec - now)) if oldest_client else window_sec
+            con.commit()
+            return False, retry_after, "client_limit_reached"
+
+        # 4. Slot granted — record timestamp and commit atomically
+        cur.execute(
+            "INSERT INTO api_rate_limits (endpoint_group, client_ip, timestamp) VALUES (?, ?, ?)",
+            (endpoint_group, client_ip, now)
+        )
+        con.commit()
+        return True, 0, "ok"
+    except Exception as e:
+        print(f"Warning: Rate limit check error: {e}")
+        return True, 0, "error_fallback"
+
+
+def reset_rate_limits(endpoint_group="gemini_ai"):
+    """Resets rate limit records (used by unit tests and admin maintenance)."""
+    try:
+        con = get_db_connection()
+        cur = con.cursor()
+        if endpoint_group:
+            cur.execute("DELETE FROM api_rate_limits WHERE endpoint_group = ?", (endpoint_group,))
+        else:
+            cur.execute("DELETE FROM api_rate_limits")
+        con.commit()
+    except Exception:
+        pass
 
 
 # ══════════════════════════════════════════════════

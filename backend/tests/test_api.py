@@ -670,6 +670,46 @@ def test_pre_audit_critical_rejection_traps(client=None):
     assert any('mobile' in r.lower() for r in data['remedies'])
 
 
+# Test 38 - Rate Limiter enforces strict 13 RPM Global Ceiling
+def test_rate_limiter_13_rpm(client=None):
+    from database import acquire_rate_limit_slot, reset_rate_limits
+    reset_rate_limits('unit_test_pool')
+
+    for i in range(13):
+        allowed, retry_after, _ = acquire_rate_limit_slot(
+            'unit_test_pool', f'192.168.1.{i+1}', global_limit=13, client_limit=5, window_sec=60
+        )
+        assert allowed is True
+        assert retry_after == 0
+
+    allowed14, retry_after14, reason = acquire_rate_limit_slot(
+        'unit_test_pool', '192.168.1.99', global_limit=13, client_limit=5, window_sec=60
+    )
+    assert allowed14 is False
+    assert retry_after14 > 0
+    assert reason == 'global_limit_reached'
+    reset_rate_limits('unit_test_pool')
+
+
+# Test 39 - Chatbot gracefully falls back to verified rulebook under rate limiting
+def test_chatbot_rate_limit_graceful_fallback(client=None):
+    from database import reset_rate_limits
+    reset_rate_limits('gemini_ai')
+    c = client or get_test_client()
+
+    for i in range(13):
+        res = c.post('/api/chatbot', json={'message': 'hello'}, headers={'X-Forwarded-For': f'10.0.0.{i+1}'})
+        assert res.status_code == 200
+
+    res14 = c.post('/api/chatbot', json={'message': 'farmer'}, headers={'X-Forwarded-For': '10.0.0.99'})
+    assert res14.status_code == 200
+    data = res14.get_json()
+    assert data['status'] == 'ok'
+    assert data['rate_limited'] is True
+    assert 'PM-KISAN' in data['reply']
+    reset_rate_limits('gemini_ai')
+
+
 # ══════════════════════════════════════════════════
 #  DIRECT TEST RUNNER (Works without pytest installed)
 # ══════════════════════════════════════════════════
@@ -712,6 +752,8 @@ if __name__ == "__main__":
         test_scheme_last_mile_audit,
         test_pre_audit_high_readiness,
         test_pre_audit_critical_rejection_traps,
+        test_rate_limiter_13_rpm,
+        test_chatbot_rate_limit_graceful_fallback,
     ]
 
     passed = 0

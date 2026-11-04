@@ -3,10 +3,17 @@ import re
 import requests
 from flask import Blueprint, request, jsonify
 from dotenv import load_dotenv
+from database import acquire_rate_limit_slot
 
 # Ensure .env is loaded reliably regardless of current working directory
 base_dir = os.path.dirname(os.path.abspath(__file__))
 load_dotenv(os.path.join(base_dir, '..', '.env'))
+
+def get_client_ip():
+    """Accurately extracts client IP behind Vercel / Render proxies."""
+    if request.headers.get("X-Forwarded-For"):
+        return request.headers.get("X-Forwarded-For").split(",")[0].strip()
+    return request.remote_addr or "127.0.0.1"
 
 # Optional import for PDF parsing
 try:
@@ -167,6 +174,20 @@ def api_detect_url():
     if not url.startswith(('http://', 'https://')):
         return jsonify({"error": "URL must start with http:// or https://"}), 400
 
+    # Rate Limit Check: 13 RPM Global Pool / 5 RPM per IP
+    client_ip = get_client_ip()
+    allowed, retry_after, _ = acquire_rate_limit_slot("gemini_ai", client_ip, global_limit=13, client_limit=5, window_sec=60)
+    if not allowed:
+        res = jsonify({
+            "error": f"AI service busy. Global rate limit of 13 requests/minute reached to protect API quota. Please try again in {retry_after} seconds.",
+            "result": f"⏳ AI verification service is experiencing high traffic. Please retry in {retry_after} seconds.",
+            "verdict": "rate_limited",
+            "retry_after": retry_after
+        })
+        res.status_code = 429
+        res.headers["Retry-After"] = str(retry_after)
+        return res
+
     result_text, verdict = url_detection(url)
     if verdict == "error":
         status_code = 503 if "API_KEY" in result_text else 502
@@ -212,6 +233,21 @@ def api_detect_file():
             return jsonify({"error": "Only .pdf or .txt files are supported"}), 400
         if not extracted_text.strip():
             return jsonify({"error": "File is empty or text could not be extracted"}), 400
+
+        # Rate Limit Check: 13 RPM Global Pool / 5 RPM per IP
+        client_ip = get_client_ip()
+        allowed, retry_after, _ = acquire_rate_limit_slot("gemini_ai", client_ip, global_limit=13, client_limit=5, window_sec=60)
+        if not allowed:
+            res = jsonify({
+                "error": f"AI service busy. Global rate limit of 13 requests/minute reached to protect API quota. Please try again in {retry_after} seconds.",
+                "result": f"⏳ AI verification service is experiencing high traffic. Please retry in {retry_after} seconds.",
+                "verdict": "rate_limited",
+                "retry_after": retry_after
+            })
+            res.status_code = 429
+            res.headers["Retry-After"] = str(retry_after)
+            return res
+
         result_text, verdict = predict_fake_or_real(extracted_text)
         if verdict == "error":
             status_code = 503 if "API_KEY" in result_text else 502

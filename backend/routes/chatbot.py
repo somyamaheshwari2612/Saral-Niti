@@ -7,9 +7,15 @@ import re
 import json
 import requests
 from flask import Blueprint, request, jsonify
-from database import get_db_connection, row_to_dict
+from database import get_db_connection, row_to_dict, acquire_rate_limit_slot
 
 chatbot_bp = Blueprint('chatbot', __name__)
+
+def get_client_ip():
+    """Accurately extracts client IP behind Vercel / Render proxies."""
+    if request.headers.get("X-Forwarded-For"):
+        return request.headers.get("X-Forwarded-For").split(",")[0].strip()
+    return request.remote_addr or "127.0.0.1"
 
 # Canonical keywords mapping for code-mixed / vernacular terms
 VERNACULAR_KEYWORD_MAP = {
@@ -114,16 +120,17 @@ def extract_entities_and_slots(user_text):
     return slots, list(matched_domains), list(set(keywords))
 
 
-def retrieve_grounded_schemes(keywords, slots, limit=4):
+def retrieve_grounded_schemes(keywords, slots, raw_message="", limit=4):
     """
     Queries local SQLite FTS5 database to retrieve top matching scheme rulebooks.
-    Returns: list of scheme dictionaries
+    Uses extracted keywords + state, with intelligent fallback to raw search terms
+    or flagship initiatives.
     """
     try:
         con = get_db_connection()
         cur = con.cursor()
 
-        # Build clean FTS search query
+        # 1. Primary search: extracted keywords + state
         terms = []
         if keywords:
             clean_kws = [f'"{re.sub(r"[^\w\s]", "", k)}"' for k in keywords if k.strip()]
@@ -141,17 +148,44 @@ def retrieve_grounded_schemes(keywords, slots, limit=4):
                 WHERE s.is_active = 1 AND schemes_fts MATCH ?
                 LIMIT ?
             """, (fts_query, limit))
-        else:
-            # Fallback to general popular schemes
-            cur.execute("""
-                SELECT s.* FROM schemes s
-                WHERE s.is_active = 1
-                ORDER BY s.id ASC
-                LIMIT ?
-            """, (limit,))
+            rows = cur.fetchall()
+            if rows:
+                return [row_to_dict(r) for r in rows]
 
+        # 2. Secondary search: search raw meaningful words from user message
+        if raw_message:
+            words = [w.strip() for w in re.findall(r'[a-zA-Z]{3,}', raw_message.lower())]
+            stop_words = {"the", "and", "for", "are", "with", "from", "how", "what", "where", "which", "want", "need", "can", "tell"}
+            filtered_words = [f'"{w}"' for w in words if w not in stop_words][:4]
+            if filtered_words:
+                try:
+                    fts_query2 = " OR ".join(filtered_words)
+                    cur.execute("""
+                        SELECT s.* FROM schemes s
+                        JOIN schemes_fts f ON s.id = f.rowid
+                        WHERE s.is_active = 1 AND schemes_fts MATCH ?
+                        LIMIT ?
+                    """, (fts_query2, limit))
+                    rows = cur.fetchall()
+                    if rows:
+                        return [row_to_dict(r) for r in rows]
+                except Exception:
+                    pass
+
+        # 3. Flagship central welfare schemes fallback (instead of arbitrary ID order)
+        cur.execute("""
+            SELECT s.* FROM schemes s
+            WHERE s.is_active = 1 AND (
+                s.title LIKE '%PM-KISAN%' OR s.title LIKE '%Ayushman%' OR 
+                s.title LIKE '%Awas%' OR s.title LIKE '%Mudra%' OR s.title LIKE '%Scholarship%'
+            )
+            ORDER BY s.id ASC
+            LIMIT ?
+        """, (limit,))
         rows = cur.fetchall()
         return [row_to_dict(r) for r in rows]
+    except Exception:
+        return []
     except Exception:
         return []
 
@@ -220,39 +254,72 @@ def call_gemini_rag(user_message, schemes, slots):
     return None
 
 
+def format_scheme_entry(scheme):
+    """Formats an individual scheme into clear, actionable Markdown."""
+    title = scheme.get("title", "Government Scheme")
+    ministry = scheme.get("ministry") or "Government of India"
+    benefits = scheme.get("benefits") or "Welfare and financial assistance."
+    portal = scheme.get("application_url") or "https://www.myscheme.gov.in"
+    category = (scheme.get("category") or "General").capitalize()
+
+    elig = scheme.get("eligibility") or {}
+    elig_points = []
+    if elig.get("min_age") is not None or elig.get("max_age") is not None:
+        elig_points.append(f"Age {elig.get('min_age', 0)}–{elig.get('max_age', 'No upper limit')} yrs")
+    if elig.get("income_limit"):
+        elig_points.append(f"Income cap ₹{int(elig['income_limit']):,}/yr")
+    if elig.get("gender") and elig.get("gender") not in ("all", "any"):
+        elig_points.append(f"{elig['gender'].capitalize()} only")
+    if elig.get("caste") and isinstance(elig.get("caste"), list) and "all" not in elig.get("caste"):
+        elig_points.append(f"Reserved: {', '.join(elig['caste']).upper()}")
+    if elig.get("occupation") and isinstance(elig.get("occupation"), list) and "all" not in elig.get("occupation"):
+        elig_points.append(f"Target: {', '.join(elig['occupation']).capitalize()}")
+
+    elig_line = f"  • **Eligibility Criteria:** {'; '.join(elig_points)}\n" if elig_points else ""
+
+    return (
+        f"🏛 **{title}** ({ministry})\n"
+        f"  • **Category:** {category}\n"
+        f"  • **Primary Benefits:** {benefits[:240]}\n"
+        f"{elig_line}"
+        f"  • **Official Portal:** {portal}"
+    )
+
+
 def fallback_deterministic_reply(user_message, schemes, domains, slots):
     """
-    Deterministic rule-based reply engine when Gemini is offline or not configured.
-    Ensures 100% test compatibility and resilient offline performance.
+    Comprehensive, high-utility rulebook reply engine when Gemini is offline,
+    unconfigured, or global rate limit (13 RPM) is reached.
+    Delivers grounded, actionable citizen assistance directly from official records.
     """
     msg = user_message.lower().strip()
 
-    # Priority 1: Direct specific keywords
-    if any(k in msg for k in ["npci", "bank seeding", "dbt fail", "dbt reject", "pfms", "account mismatch"]):
+    # Priority 1: Direct Specific Keywords (Must preserve exact test matching strings)
+    # A. DBT Failures & Bank Seeding
+    if any(k in msg for k in ["npci", "bank seeding", "dbt fail", "dbt reject", "pfms", "account mismatch", "seeding"]):
         return (
             "Over 68% of DBT failures happen due to Aadhaar-Bank NPCI mapper issues:\n"
             "1. **Check Seeding Status:** Dial *99*99*1# on your registered mobile or check on myaadhaar.uidai.gov.in.\n"
             "2. **Name Mismatch:** Your Aadhaar name and Bank Passbook name must match closely to pass PFMS automated clearing.\n"
             "3. **Submit Annexure-I:** If unseeded, submit the DBT Mandate form to your home bank branch."
         )
-    if "pm kisan" in msg or "pm-kisan" in msg:
+
+    # B. Agriculture & Farmers (PM-KISAN, PMFBY, KCC)
+    if "pm kisan" in msg or "pm-kisan" in msg or "pmkisan" in msg:
         return (
             "PM-KISAN gives ₹6,000/year to eligible landholder farmer families in 3 installments of ₹2,000. "
             "You can apply directly at the official portal: https://pmkisan.gov.in"
         )
-    if "ayushman" in msg:
+
+    if any(k in msg for k in ["fasal bima", "crop insurance", "pmfby", "crop damage", "fasal nuksan"]):
         return (
-            "Ayushman Bharat Pradhan Mantri Jan Arogya Yojana (PM-JAY) provides health coverage of up to ₹5 lakh per family per year "
-            "for secondary and tertiary care hospitalization across impaneled hospitals nationwide."
+            "**Pradhan Mantri Fasal Bima Yojana (PMFBY)** provides comprehensive crop loss insurance:\n\n"
+            "• **Coverage:** Non-preventable natural risks (drought, flood, unseasonal rain, pests) from pre-sowing to post-harvest.\n"
+            "• **Low Premium:** Only 2% for Kharif crops, 1.5% for Rabi crops, and 5% for commercial/horticultural crops.\n"
+            "• **72-Hour Claim Window:** In case of localized crop damage (e.g. hailstorm, waterlogging), you **must report within 72 hours** on the Crop Insurance App or call toll-free **14447**.\n"
+            "• **Official Portal:** https://pmfby.gov.in"
         )
-    if "scholarship" in msg or "scholar" in msg:
-        return (
-            "Here are verified scholarship schemes available:\n"
-            "1. National Scholarship Portal (NSP) — Central and UGC schemes\n"
-            "2. Post-Matric Scholarships for SC/ST/OBC students\n"
-            "3. PM Yashasvi Scheme for meritorious students\n"
-            "You can verify and apply directly at https://scholarships.gov.in"
-        )
+
     if "farmer" in msg or "kisan" in msg:
         return (
             "Here are verified government schemes for farmers:\n"
@@ -260,13 +327,14 @@ def fallback_deterministic_reply(user_message, schemes, domains, slots):
             "2. Pradhan Mantri Fasal Bima Yojana (PMFBY) — Comprehensive crop damage insurance\n"
             "3. Kisan Credit Card (KCC) — Low-interest institutional agriculture credit"
         )
-    if "women" in msg or "mahila" in msg:
+
+    # C. Health & Medical (Ayushman Bharat / PM-JAY)
+    if "ayushman" in msg or "pmjay" in msg:
         return (
-            "Here are major welfare initiatives dedicated for women:\n"
-            "1. Pradhan Mantri Matru Vandana Yojana — Maternity cash benefits\n"
-            "2. Ujjwala Yojana — Free LPG connections for rural households\n"
-            "3. Beti Bachao Beti Padhao — Girl child education & protection"
+            "Ayushman Bharat Pradhan Mantri Jan Arogya Yojana (PM-JAY) provides health coverage of up to ₹5 lakh per family per year "
+            "for secondary and tertiary care hospitalization across impaneled hospitals nationwide."
         )
+
     if "health" in msg or "hospital" in msg:
         return (
             "Here are key health welfare schemes:\n"
@@ -274,12 +342,57 @@ def fallback_deterministic_reply(user_message, schemes, domains, slots):
             "2. Janani Suraksha Yojana — Safe motherhood and institutional delivery incentive\n"
             "3. Pradhan Mantri Bhartiya Janaushadhi Pariyojana — Affordable generic medicines"
         )
+
+    # D. Scholarships & Students
+    if "scholarship" in msg or "scholar" in msg or "chhatravritti" in msg:
+        return (
+            "Here are verified scholarship schemes available:\n"
+            "1. National Scholarship Portal (NSP) — Central and UGC schemes\n"
+            "2. Post-Matric Scholarships for SC/ST/OBC students\n"
+            "3. PM Yashasvi Scheme for meritorious students\n"
+            "You can verify and apply directly at https://scholarships.gov.in"
+        )
+
+    # E. Loans & Micro-Credit (Mudra, SVANidhi)
+    if any(k in msg for k in ["mudra", "business loan", "svanidhi", "karz", "rin", "vendor loan", "loan"]):
+        return (
+            "Here are verified collateral-free institutional credit initiatives:\n"
+            "1. **Pradhan Mantri MUDRA Yojana (PMMY):** Non-agricultural micro/small business loans across 3 categories:\n"
+            "   • *Shishu:* Loans up to ₹50,000 (starting a new trade)\n"
+            "   • *Kishore:* Loans ₹50,000 to ₹5,00,000\n"
+            "   • *Tarun:* Loans ₹5,00,000 to ₹10,00,000 (scaling up)\n"
+            "   • *Guarantee:* Zero collateral security required.\n"
+            "2. **PM SVANidhi (Street Vendors):** Collateral-free working capital loan of ₹10,000 (1st tranche), ₹20,000 (2nd tranche), and ₹50,000 (3rd tranche) with a 7% interest subsidy on digital repayments.\n"
+            "• **Official Portals:** https://www.mudra.org.in | https://pmsvanidhi.mohua.gov.in"
+        )
+
+    # F. Housing & Shelter (PMAY)
+    if any(k in msg for k in ["housing", "makan", "ghar", "awas", "pm awas", "kutcha"]):
+        return (
+            "**Pradhan Mantri Awas Yojana (PMAY)** provides financial assistance for pucca house construction:\n\n"
+            "• **PMAY-Gramin (Rural):** Direct financial assistance of ₹1,20,000 in plains and ₹1,30,000 in hilly/difficult regions, plus 90 days of MGNREGS wage labor support.\n"
+            "• **PMAY-Urban:** Credit-Linked Subsidy Scheme (CLSS) offering upfront interest subsidies up to ₹2.67 lakh for Economically Weaker Sections (EWS) and LIG.\n"
+            "• **Eligibility:** Household must not own a pucca house anywhere in India and must be listed in SECC deprivation data.\n"
+            "• **Official Portal:** https://pmayg.nic.in"
+        )
+
+    # G. Women & Child Welfare
+    if "women" in msg or "mahila" in msg or "maternity" in msg:
+        return (
+            "Here are major welfare initiatives dedicated for women:\n"
+            "1. Pradhan Mantri Matru Vandana Yojana — Maternity cash benefits\n"
+            "2. Ujjwala Yojana — Free LPG connections for rural households\n"
+            "3. Beti Bachao Beti Padhao — Girl child education & protection"
+        )
+
+    # H. Greetings & Help
     if any(k in msg for k in ["hello", "hi", "namaste", "namaskar", "pranam"]):
         return (
             "Namaste! 🙏 I am Saral Niti Sahayak. I can help you find and understand central and state government schemes. "
             "Try asking: 'schemes for farmers', 'scholarship for SC student', or 'how to get a health card'."
         )
-    if "help" in msg:
+
+    if msg in ("help", "madad", "options"):
         return (
             "You can ask me questions in English or Hindi, such as:\n"
             "• Schemes for farmers in UP\n"
@@ -287,18 +400,30 @@ def fallback_deterministic_reply(user_message, schemes, domains, slots):
             "• What is PM Kisan benefit?\n"
             "• Health coverage under Ayushman Bharat"
         )
+
     if any(k in msg for k in ["bye", "alvida", "dhanyawad", "thank"]):
         return "Thank you for using Saral Niti! We are dedicated to transparent citizen welfare. Jai Hind! 🇮🇳"
 
-    # Priority 2: Use retrieved SQLite FTS5 schemes
+    # Priority 2: Dynamic Multi-Scheme Matching using retrieved SQLite FTS5 database
     if schemes:
-        top_scheme = schemes[0]
-        reply = (
-            f"Based on your query, here is a relevant verified initiative:\n"
-            f"🏛 **{top_scheme.get('title')}** ({top_scheme.get('ministry', 'Govt of India')})\n"
-            f"✨ **Benefit:** {top_scheme.get('benefits', 'Welfare assistance')}\n"
-            f"🔗 **Official Portal:** {top_scheme.get('application_url', 'myscheme.gov.in')}\n\n"
-            f"Would you like to check specific eligibility requirements or required documents?"
+        slot_tags = []
+        if slots.get("state"):
+            slot_tags.append(slots["state"])
+        if slots.get("gender"):
+            slot_tags.append(slots["gender"].capitalize())
+        if slots.get("age"):
+            slot_tags.append(f"Age {slots['age']}")
+        if slots.get("caste"):
+            slot_tags.append(slots["caste"].upper())
+
+        header = "Based on your query, here are verified government schemes from official records:\n\n"
+        if slot_tags:
+            header = f"Verified government schemes tailored for your profile (**{', '.join(slot_tags)}**):\n\n"
+
+        scheme_blocks = [format_scheme_entry(s) for s in schemes[:3]]
+        reply = header + "\n\n".join(scheme_blocks) + (
+            "\n\n💡 **Citizen Tip:** Use our **Pre-Flight Audit** tab before applying to verify that your "
+            "Aadhaar name and Bank Passbook match perfectly, preventing DBT payment holds."
         )
         return reply
 
@@ -313,6 +438,8 @@ def chatbot_reply():
     """
     RAG-grounded citizen chatbot endpoint with multilingual code-mixed NLU,
     SQLite FTS5 knowledge retrieval, and transparent eligibility explainability.
+    Enforces server-wide 13 RPM rate-limit to protect Gemini free-tier quota,
+    gracefully falling back to verified rulebook matching when quota is busy.
     """
     try:
         data = request.get_json(silent=True)
@@ -330,14 +457,31 @@ def chatbot_reply():
         slots, domains, keywords = extract_entities_and_slots(raw_message)
 
         # Step 2: SQLite FTS5 RAG Knowledge Base Retrieval
-        retrieved_schemes = retrieve_grounded_schemes(keywords, slots, limit=3)
+        retrieved_schemes = retrieve_grounded_schemes(keywords, slots, raw_message=raw_message, limit=3)
 
-        # Step 3: LLM Synthesis with Gemini 3.5 Flash Lite
-        llm_reply = call_gemini_rag(raw_message, retrieved_schemes, slots)
+        # Step 3: Shared Rate Limit Check (13 RPM Global Ceiling / 5 RPM per IP)
+        client_ip = get_client_ip()
+        allowed, retry_after, _ = acquire_rate_limit_slot(
+            endpoint_group="gemini_ai",
+            client_ip=client_ip,
+            global_limit=13,
+            client_limit=5,
+            window_sec=60
+        )
 
-        # Step 4: Deterministic fallback if Gemini is offline/unconfigured
+        llm_reply = None
+        rate_limited = False
+        if allowed:
+            # LLM Synthesis with Gemini 3.5 Flash Lite
+            llm_reply = call_gemini_rag(raw_message, retrieved_schemes, slots)
+        else:
+            rate_limited = True
+
+        # Step 4: Robust deterministic fallback if Gemini is offline, unconfigured, or rate-limited
         if not llm_reply:
             reply = fallback_deterministic_reply(raw_message, retrieved_schemes, domains, slots)
+            if rate_limited:
+                reply = f"*(High AI traffic — serving verified rulebook response)*\n\n" + reply
         else:
             reply = llm_reply
 
@@ -372,8 +516,13 @@ def chatbot_reply():
             "bot": "Saral Niti Sahayak",
             "matched_schemes": compact_cards,
             "extracted_slots": slots,
-            "suggested_followups": suggested_followups
+            "suggested_followups": suggested_followups,
+            "engine": "gemini-3.5-flash-lite" if llm_reply else "rulebook_engine",
+            "rate_limited": rate_limited
         }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
     except Exception as e:
         return jsonify({"error": str(e)}), 500
