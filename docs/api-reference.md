@@ -223,7 +223,7 @@ Evaluates a citizen's application inputs against departmental validation rules t
 ## 🤖 Vernacular Voice & RAG Chatbot
 
 ### 9. Chat with Sahayak
-Multilingual conversational welfare assistant supporting code-mixed Hinglish, dynamic slot extraction, SQLite FTS5 RAG retrieval, and Gemini 3.5 Flash Lite synthesis.
+Multilingual conversational welfare assistant supporting code-mixed Hinglish, dynamic slot extraction, household persona context, SQLite FTS5 RAG retrieval, and Gemini 3.5 Flash Lite synthesis.
 
 - **URL:** `/api/chatbot`
 - **Method:** `POST`
@@ -231,16 +231,33 @@ Multilingual conversational welfare assistant supporting code-mixed Hinglish, dy
 - **Body:**
 ```json
 {
-  "message": "kisan ke liye fasal bima aur tractor loan"
+  "message": "My father is a 58 year old farmer in UP, what schemes are available for him?",
+  "active_persona": {
+    "label": "Rajesh (Papa)",
+    "relationship": "father",
+    "age": 58,
+    "gender": "male",
+    "state": "Uttar Pradesh",
+    "occupation": "farmer"
+  }
 }
 ```
 - **Response:** `200 OK`
 ```json
 {
   "status": "ok",
-  "reply": "Here are verified government schemes for farmers:\n1. PM-KISAN — ₹6,000/year income support\n2. PM Fasal Bima Yojana — Comprehensive crop damage insurance\n3. Kisan Credit Card — Low-interest institutional credit",
+  "reply": "Here are verified government schemes for your Father:\n1. PM-KISAN — ₹6,000/year income support\n2. PM Fasal Bima Yojana — Comprehensive crop damage insurance\n3. Kisan Credit Card — Low-interest institutional credit",
   "matched_schemes": [...],
-  "extracted_slots": {"domain": "agriculture", "state": null},
+  "extracted_slots": {
+    "relationship": "father",
+    "target_subject": "Father",
+    "age": 58,
+    "gender": "male",
+    "state": "Uttar Pradesh",
+    "occupation": "farmer"
+  },
+  "target_subject": "Father",
+  "inferred_relationship": "father",
   "suggested_followups": ["How to apply for PM-KISAN?", "Documents for Fasal Bima Yojana"]
 }
 ```

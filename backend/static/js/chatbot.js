@@ -801,10 +801,17 @@ async function sendMessage() {
   const typingId = showTypingIndicator();
 
   try {
+    const activePersona = (typeof window !== 'undefined' && window.SaralFamilyVault)
+      ? window.SaralFamilyVault.toChatbotContext()
+      : null;
+
     const response = await fetch(`${CHAT_BACKEND_URL}/api/chatbot`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message })
+      body: JSON.stringify({
+        message,
+        active_persona: activePersona
+      })
     });
     const data = await response.json();
     removeTypingIndicator(typingId);

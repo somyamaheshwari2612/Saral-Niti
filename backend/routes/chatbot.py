@@ -43,6 +43,49 @@ VERNACULAR_KEYWORD_MAP = {
 }
 
 # State synonyms for geographic extraction
+# Canonical mapping for family relationships across English, Hindi, and Hinglish
+FAMILY_RELATION_MAP = {
+    "father": [
+        "father", "dad", "papa", "pitaji", "pita", "bauji", "abbu", "bapuji", "baap", "walid"
+    ],
+    "mother": [
+        "mother", "mom", "mummy", "mataji", "mata", "maa", "ammi", "aai", "maaji", "walida"
+    ],
+    "spouse": [
+        "husband", "wife", "spouse", "patni", "pati", "biwi", "shauhar", "begum", "mian", "ardhangini"
+    ],
+    "son": [
+        "son", "beta", "ladka", "boy", "putra", "betey"
+    ],
+    "daughter": [
+        "daughter", "beti", "ladki", "girl", "putri", "kanya", "gudiya"
+    ],
+    "brother": [
+        "brother", "bhai", "bhaiya", "bhrata", "sahodar", "veer"
+    ],
+    "sister": [
+        "sister", "behen", "didi", "behna", "bhagini"
+    ],
+    "grandfather": [
+        "grandfather", "grandpa", "dadaji", "dada", "nanaji", "nana", "baba", "thatha", "ajja"
+    ],
+    "grandmother": [
+        "grandmother", "grandma", "dadiji", "dadi", "naniji", "nani", "dadi ma", "paati", "ajji"
+    ]
+}
+
+RELATION_LABELS = {
+    "father": "Father",
+    "mother": "Mother",
+    "spouse": "Spouse",
+    "son": "Son",
+    "daughter": "Daughter",
+    "brother": "Brother",
+    "sister": "Sister",
+    "grandfather": "Grandfather",
+    "grandmother": "Grandmother"
+}
+
 STATE_MAP = {
     "up": "Uttar Pradesh", "uttar pradesh": "Uttar Pradesh",
     "mp": "Madhya Pradesh", "madhya pradesh": "Madhya Pradesh",
@@ -69,11 +112,37 @@ def get_model_name():
 def extract_entities_and_slots(user_text):
     """
     Extracts conversational slots from user query (supporting Hinglish, Hindi, English).
-    Returns: dict of extracted slots and search keywords
+    Identifies household relationship markers (father, mother, student sibling, elderly grandparent),
+    demographics (age, gender, caste, state), occupations, and welfare domains.
+    Returns: dict of extracted slots, list of matched domains, and search keywords
     """
     text = user_text.lower()
     slots = {}
     keywords = []
+
+    # 0. Household relationship & conversational subject extraction
+    for rel_key, aliases in FAMILY_RELATION_MAP.items():
+        pattern = rf'\b(?:my|meri|mera|mere|for|hamare|unke|apne)?\s*({"|".join([re.escape(a) for a in aliases])})\b'
+        if re.search(pattern, text):
+            slots["relationship"] = rel_key
+            slots["target_subject"] = RELATION_LABELS.get(rel_key, rel_key.capitalize())
+            # Default gender inference if not otherwise explicitly stated
+            if "gender" not in slots:
+                if rel_key in ("father", "son", "brother", "grandfather"):
+                    slots["gender"] = "male"
+                elif rel_key in ("mother", "daughter", "sister", "grandmother"):
+                    slots["gender"] = "female"
+                elif rel_key == "spouse":
+                    if re.search(r'\b(wife|biwi|patni|begum|ardhangini)\b', text):
+                        slots["gender"] = "female"
+                    elif re.search(r'\b(husband|pati|shauhar|mian)\b', text):
+                        slots["gender"] = "male"
+            # Grandparents imply senior citizen status
+            if rel_key in ("grandfather", "grandmother"):
+                slots["is_senior"] = True
+                if "age" not in slots:
+                    slots["age"] = 65
+            break
 
     # 1. Age extraction
     age_match = re.search(r'\b(\d{1,2})\s*(?:saal|sal|years?|yr|varsh)?\b', text)
@@ -82,7 +151,7 @@ def extract_entities_and_slots(user_text):
         if 5 <= val <= 95:
             slots["age"] = val
 
-    # 2. Gender extraction
+    # 2. Gender extraction (explicit mentions override relation defaults)
     if re.search(r'\b(mahila|aurat|female|woman|women|ladki|girl)\b', text):
         slots["gender"] = "female"
     elif re.search(r'\b(male|man|purush|ladka|boy)\b', text):
@@ -108,7 +177,39 @@ def extract_entities_and_slots(user_text):
             slots["state"] = full_name
             break
 
-    # 5. Domain keyword mapping
+    # 5. Occupation extraction
+    if re.search(r'\b(farmer|kisan|kisanon|kheti|fasal|agriculture|krishi)\b', text):
+        slots["occupation"] = "farmer"
+        keywords.append("farmer")
+    elif re.search(r'\b(student|vidyarthi|padhai|college|school|10th|12th|iti|degree|scholarship)\b', text):
+        slots["occupation"] = "student"
+        keywords.append("student")
+    elif re.search(r'\b(homemaker|housewife|grihini|grihani)\b', text):
+        slots["occupation"] = "homemaker"
+        keywords.append("women")
+    elif re.search(r'\b(unemployed|berozgar|berozgari|jobless|naukri)\b', text):
+        slots["occupation"] = "unemployed"
+        keywords.append("employment")
+    elif re.search(r'\b(senior|pensioner|vriddha|buddhe|elderly|old age)\b', text):
+        slots["occupation"] = "senior_citizen"
+        slots["is_senior"] = True
+        keywords.append("pension")
+    elif re.search(r'\b(daily wage|mazdoor|majdoor|shramik|labour|construction)\b', text):
+        slots["occupation"] = "daily_wage"
+
+    # 6. Special conditions & vulnerabilities
+    if re.search(r'\b(widow|vidhwa|pativrata|destitute)\b', text):
+        slots["is_widow"] = True
+        slots["marital_status"] = "widowed"
+        keywords.append("women")
+    if re.search(r'\b(divyang|viklang|handicap|disabled|udid|blind|deaf)\b', text):
+        slots["is_differently_abled"] = True
+        keywords.append("disability")
+    if re.search(r'\b(garbhavati|pregnant|maternity|prastuti)\b', text):
+        slots["is_pregnant"] = True
+        keywords.append("women")
+
+    # 7. Domain keyword mapping
     matched_domains = set()
     for domain, aliases in VERNACULAR_KEYWORD_MAP.items():
         for alias in aliases:
@@ -220,6 +321,14 @@ def call_gemini_rag(user_message, schemes, slots):
         )
     context_str = "\n".join(context_lines)
 
+    subject_note = ""
+    if slots.get("target_subject"):
+        subject_note = (
+            f"\n8. The citizen is inquiring on behalf of their {slots['target_subject']} "
+            f"(Relationship: {slots.get('relationship', 'relative')}, Gender: {slots.get('gender', 'unspecified')}). "
+            f"Tailor all explanations, pronouns, and eligibility advice specifically for their {slots['target_subject']}."
+        )
+
     system_instructions = (
         "You are 'Saral Niti Sahayak' (सरल नीति सहायक), an empathetic, transparent government welfare scheme assistant for Indian citizens.\n"
         "Guidelines:\n"
@@ -230,6 +339,7 @@ def call_gemini_rag(user_message, schemes, slots):
         "5. Always cite the official application portal URL.\n"
         "6. Keep responses concise, structured with bullet points, and under 150 words.\n"
         "7. If the citizen asks about DBT payment failures, rejection, or bank issues, explain Aadhaar-NPCI mapper seeding (*99*99*1#) and name matching between Aadhaar and bank passbook."
+        f"{subject_note}"
     )
 
     prompt = (
@@ -457,8 +567,23 @@ def chatbot_reply():
         if len(raw_message) > 500:
             return jsonify({"error": "Message too long (max 500 characters)"}), 400
 
+        # Check if an active persona was provided in the request payload (from SaralFamilyVault)
+        active_persona = data.get("active_persona") or data.get("persona")
+        persona_slots = {}
+        if isinstance(active_persona, dict):
+            for k in ["age", "gender", "caste", "state", "occupation", "relationship"]:
+                v = active_persona.get(k)
+                if v and str(v).lower() not in ("all", "any", "other", "none"):
+                    persona_slots[k] = v
+            if active_persona.get("label"):
+                persona_slots["target_subject"] = active_persona["label"]
+
         # Step 1: Entity & Slot Extraction (Hinglish/Vernacular NLU)
-        slots, domains, keywords = extract_entities_and_slots(raw_message)
+        extracted_slots, domains, keywords = extract_entities_and_slots(raw_message)
+
+        # Merge slots: message-extracted slots take precedence over background active persona
+        slots = dict(persona_slots)
+        slots.update(extracted_slots)
 
         # Step 2: SQLite FTS5 RAG Knowledge Base Retrieval
         retrieved_schemes = retrieve_grounded_schemes(keywords, slots, raw_message=raw_message, limit=3)
@@ -520,6 +645,8 @@ def chatbot_reply():
             "bot": "Saral Niti Sahayak",
             "matched_schemes": compact_cards,
             "extracted_slots": slots,
+            "target_subject": slots.get("target_subject"),
+            "inferred_relationship": slots.get("relationship"),
             "suggested_followups": suggested_followups,
             "engine": "gemini-3.5-flash-lite" if llm_reply else "rulebook_engine",
             "rate_limited": rate_limited

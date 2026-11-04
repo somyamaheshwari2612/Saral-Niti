@@ -763,8 +763,68 @@ def test_chatbot_rate_limit_graceful_fallback(client=None):
 # ══════════════════════════════════════════════════
 #  DIRECT TEST RUNNER (Works without pytest installed)
 # ══════════════════════════════════════════════════
+# Test 40 - Household Persona & Relationship Slot Extraction NLU
+def test_chatbot_family_relationship_nlu(client=None):
+    from routes.chatbot import extract_entities_and_slots
+    c = client or get_test_client()
+
+    # 1. Direct slot extraction for family members
+    slots_father, _, _ = extract_entities_and_slots("My father is a 58 year old farmer in UP")
+    assert slots_father.get("relationship") == "father"
+    assert slots_father.get("target_subject") == "Father"
+    assert slots_father.get("gender") == "male"
+    assert slots_father.get("age") == 58
+    assert slots_father.get("state") == "Uttar Pradesh"
+    assert slots_father.get("occupation") == "farmer"
+
+    slots_mother, _, _ = extract_entities_and_slots("Meri mataji vidhwa hain unke liye pension")
+    assert slots_mother.get("relationship") == "mother"
+    assert slots_mother.get("gender") == "female"
+    assert slots_mother.get("is_widow") is True
+
+    slots_sister, _, _ = extract_entities_and_slots("For my sister 12th pass student scholarship")
+    assert slots_sister.get("relationship") == "sister"
+    assert slots_sister.get("gender") == "female"
+    assert slots_sister.get("occupation") == "student"
+
+    # 2. Integration with /api/chatbot and active_persona
+    res = c.post('/api/chatbot', json={
+        "message": "What schemes are available?",
+        "active_persona": {
+            "label": "Rajesh (Papa)",
+            "relationship": "father",
+            "age": 58,
+            "gender": "male",
+            "state": "Uttar Pradesh",
+            "occupation": "farmer"
+        }
+    })
+    assert res.status_code == 200
+    data = res.get_json()
+    assert data["status"] == "ok"
+    assert data["target_subject"] == "Rajesh (Papa)"
+    assert data["extracted_slots"]["relationship"] == "father"
+    assert data["extracted_slots"]["state"] == "Uttar Pradesh"
+
+    # 3. Message override: Active persona is Father, but message asks for Mother
+    res2 = c.post('/api/chatbot', json={
+        "message": "Now tell me schemes for my mother who is 52 years old",
+        "active_persona": {
+            "label": "Rajesh (Papa)",
+            "relationship": "father",
+            "gender": "male"
+        }
+    })
+    assert res2.status_code == 200
+    data2 = res2.get_json()
+    assert data2["extracted_slots"]["relationship"] == "mother"
+    assert data2["extracted_slots"]["gender"] == "female"
+    assert data2["extracted_slots"]["age"] == 52
+
+
 if __name__ == "__main__":
     test_functions = [
+        test_chatbot_family_relationship_nlu,
         test_home,
         test_schemes_page,
         test_project_page,
