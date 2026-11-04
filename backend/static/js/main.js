@@ -899,12 +899,25 @@ function printModalAuditChecklist() {
 
 function openEligSchemeWithAudit(idx) {
   if (currentEligRecommendations[idx]) {
+    const rec = currentEligRecommendations[idx];
     closeEligibilityModal();
-    openModal(currentEligRecommendations[idx].scheme);
+    openModal(rec.scheme);
     setTimeout(() => {
       const auditSec = document.getElementById('modalPreAuditSection');
       if (auditSec) {
         auditSec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+      if (typeof window !== 'undefined' && window.SaralFamilyVault) {
+        const active = window.SaralFamilyVault.getActiveMember();
+        if (active && active.label) {
+          const nameInput = document.getElementById('auditAadhaarName');
+          if (nameInput) {
+            const cleanName = active.label.replace(/\s*\([^)]*\)/g, '').trim();
+            if (cleanName && cleanName !== 'Myself') {
+              nameInput.value = cleanName;
+            }
+          }
+        }
       }
     }, 300);
   }
@@ -912,7 +925,8 @@ function openEligSchemeWithAudit(idx) {
 
 function shareOnWhatsApp() {
   if (!currentModalScheme) return;
-  const text = `🇮🇳 *${currentModalScheme.title}*\n\n${currentModalScheme.description}\n\n*Key Benefits:* ${currentModalScheme.benefits}\n\nApply on official portal: ${currentModalScheme.application_url}\n\n_Discovered via Saral Niti Portal_`;
+  const personaSuffix = currentModalScheme._target_persona ? ` *(Recommended for ${currentModalScheme._target_persona})*` : '';
+  const text = `🇮🇳 *${currentModalScheme.title}*${personaSuffix}\n\n${currentModalScheme.description}\n\n*Key Benefits:* ${currentModalScheme.benefits}\n\nApply on official portal: ${currentModalScheme.application_url}\n\n_Discovered via Saral Niti Portal_`;
   window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
 }
 
@@ -1188,7 +1202,7 @@ function populateEligibilityFormFromPersona(member) {
   setVal('eligState', member.state || 'all');
   setVal('eligIncome', member.income || '');
   setVal('eligCaste', member.caste || 'general');
-  setVal('eligOccupation', member.occupation || 'other');
+  setVal('eligOccupation', member.occupation || '');
 
   const disabledBox = document.getElementById('eligIsDisabled');
   if (disabledBox) disabledBox.checked = Boolean(member.disability);
@@ -1309,6 +1323,10 @@ if (typeof window !== 'undefined') {
     renderEligibilityPersonas();
     if (document.getElementById('eligibilityOverlay')?.classList.contains('open')) {
       populateEligibilityFormFromPersona(member);
+      // Reset stale results for previously selected persona
+      const resultsWrap = document.getElementById('eligResultsWrap');
+      if (resultsWrap) resultsWrap.style.display = 'none';
+      currentEligRecommendations = [];
     }
   });
 
@@ -1395,8 +1413,12 @@ async function handleEligibilitySubmit(e) {
       return;
     }
 
+    const targetTag = data.persona_label || (data.target_subject && data.target_subject !== 'Myself' ? data.target_subject : null);
+    const targetTagHtml = targetTag ? `<span class="persona-target-tag"><i class="fa-solid fa-user-check"></i> ${escapeHtml(targetTag)}</span>` : '';
+
     resultsList.innerHTML = currentEligRecommendations.map((rec, idx) => {
       const s = rec.scheme;
+      s._target_persona = targetTag;
       const isEligible = rec.status === 'eligible';
       const scoreBadgeClass = isEligible ? 'eligible' : 'partial';
       const scoreBadgeText = isEligible ? `${rec.match_score}% Match • Eligible` : `${rec.match_score}% • Partial Match`;
@@ -1407,7 +1429,10 @@ async function handleEligibilitySubmit(e) {
       return `
         <div class="elig-result-card">
           <div class="elig-card-top">
-            <span class="category-badge cat-${escapeHtml(s.category || 'general')}">${escapeHtml(s.category || 'Welfare')}</span>
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span class="category-badge cat-${escapeHtml(s.category || 'general')}">${escapeHtml(s.category || 'Welfare')}</span>
+              ${targetTagHtml}
+            </div>
             <span class="match-score-badge ${scoreBadgeClass}">${scoreBadgeText}</span>
           </div>
           <div class="elig-card-title">${escapeHtml(s.title)}</div>

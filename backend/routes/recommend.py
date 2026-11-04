@@ -27,18 +27,47 @@ def evaluate_eligibility(scheme, profile):
     reasons = []
     unmet = []
 
+    # Kinship & persona framing for empathetic, personalized evaluation
+    rel = (profile.get("relationship") or profile.get("target_subject") or "self").strip().lower()
+    KINSHIP_TERMS = {
+        "father": {"subject": "your Father", "possessive": "your Father's", "title": "Father"},
+        "mother": {"subject": "your Mother", "possessive": "your Mother's", "title": "Mother"},
+        "spouse": {"subject": "your Spouse", "possessive": "your Spouse's", "title": "Spouse"},
+        "son": {"subject": "your Son", "possessive": "your Son's", "title": "Son"},
+        "daughter": {"subject": "your Daughter", "possessive": "your Daughter's", "title": "Daughter"},
+        "brother": {"subject": "your Brother", "possessive": "your Brother's", "title": "Brother"},
+        "sister": {"subject": "your Sister", "possessive": "your Sister's", "title": "Sister"},
+        "grandfather": {"subject": "your Grandfather", "possessive": "your Grandfather's", "title": "Grandfather"},
+        "grandmother": {"subject": "your Grandmother", "possessive": "your Grandmother's", "title": "Grandmother"},
+        "self": {"subject": "you", "possessive": "your", "title": "You"},
+        "myself": {"subject": "you", "possessive": "your", "title": "You"}
+    }
+    kin = KINSHIP_TERMS.get(rel, {"subject": f"your {rel.capitalize()}", "possessive": f"your {rel.capitalize()}'s", "title": rel.capitalize()})
+    is_third_person = rel not in ("self", "myself")
+    subj = kin["subject"]
+    poss = kin["possessive"]
+
     # 1. State Check
     citizen_state = profile.get("state")
     scheme_state = eligibility.get("state", "all")
     if scheme_state and scheme_state.lower() != "all":
         if citizen_state:
             if scheme_state.lower() != citizen_state.lower() and citizen_state.lower() != "all":
-                unmet.append(f"State restricted: Only open to residents of {scheme_state}.")
+                if is_third_person:
+                    unmet.append(f"State restricted: Only open to residents of {scheme_state} ({subj} is in {citizen_state}).")
+                else:
+                    unmet.append(f"State restricted: Only open to residents of {scheme_state}.")
             else:
-                reasons.append(f"Residency criteria met for {scheme_state}.")
+                if is_third_person:
+                    reasons.append(f"Residency criteria met for {subj} in {scheme_state}.")
+                else:
+                    reasons.append(f"Residency criteria met for {scheme_state}.")
     else:
         if citizen_state and citizen_state.lower() not in ("all", ""):
-            reasons.append(f"Open to all States and Union Territories (including {citizen_state.title()}).")
+            if is_third_person:
+                reasons.append(f"Open to all States and Union Territories (including {subj} in {citizen_state.title()}).")
+            else:
+                reasons.append(f"Open to all States and Union Territories (including {citizen_state.title()}).")
         else:
             reasons.append("Open to all States and Union Territories (All India).")
 
@@ -48,9 +77,15 @@ def evaluate_eligibility(scheme, profile):
     if scheme_gender not in ("all", "any"):
         if citizen_gender and citizen_gender != "all":
             if citizen_gender != scheme_gender:
-                unmet.append(f"Target demographic: Exclusively for {scheme_gender.capitalize()} citizens.")
+                if is_third_person:
+                    unmet.append(f"Target demographic: Exclusively for {scheme_gender.capitalize()} citizens ({subj} is {citizen_gender.capitalize()}).")
+                else:
+                    unmet.append(f"Target demographic: Exclusively for {scheme_gender.capitalize()} citizens.")
             else:
-                reasons.append(f"Gender criteria met ({scheme_gender.capitalize()}).")
+                if is_third_person:
+                    reasons.append(f"Gender criteria met for {subj} ({scheme_gender.capitalize()}).")
+                else:
+                    reasons.append(f"Gender criteria met ({scheme_gender.capitalize()}).")
 
     # 3. Age Range Check
     citizen_age = profile.get("age")
@@ -61,18 +96,33 @@ def evaluate_eligibility(scheme, profile):
         try:
             age_val = float(citizen_age)
             if min_age is not None and age_val < min_age:
-                unmet.append(f"Age minimum: Must be at least {min_age} years (current: {int(age_val)}).")
+                if is_third_person:
+                    unmet.append(f"Age minimum: {subj.capitalize()} must be at least {min_age} years (current: {int(age_val)}).")
+                else:
+                    unmet.append(f"Age minimum: Must be at least {min_age} years (current: {int(age_val)}).")
             elif max_age is not None and age_val > max_age:
-                unmet.append(f"Age limit: Must be under {max_age} years (current: {int(age_val)}).")
+                if is_third_person:
+                    unmet.append(f"Age limit: {subj.capitalize()} must be under {max_age} years (current: {int(age_val)}).")
+                else:
+                    unmet.append(f"Age limit: Must be under {max_age} years (current: {int(age_val)}).")
             else:
                 # Only record reason if scheme actually defines an explicit age constraint
                 if min_age is not None or max_age is not None:
                     if min_age is not None and max_age is not None:
-                        reasons.append(f"Age {int(age_val)} meets age requirement ({int(min_age)}–{int(max_age)} years).")
+                        if is_third_person:
+                            reasons.append(f"Age {int(age_val)} meets {poss} age requirement ({int(min_age)}–{int(max_age)} years).")
+                        else:
+                            reasons.append(f"Age {int(age_val)} meets age requirement ({int(min_age)}–{int(max_age)} years).")
                     elif min_age is not None:
-                        reasons.append(f"Age {int(age_val)} meets minimum age requirement (≥ {int(min_age)} years).")
+                        if is_third_person:
+                            reasons.append(f"Age {int(age_val)} meets {poss} minimum age requirement (≥ {int(min_age)} years).")
+                        else:
+                            reasons.append(f"Age {int(age_val)} meets minimum age requirement (≥ {int(min_age)} years).")
                     else:
-                        reasons.append(f"Age {int(age_val)} meets maximum age limit (≤ {int(max_age)} years).")
+                        if is_third_person:
+                            reasons.append(f"Age {int(age_val)} meets {poss} maximum age limit (≤ {int(max_age)} years).")
+                        else:
+                            reasons.append(f"Age {int(age_val)} meets maximum age limit (≤ {int(max_age)} years).")
         except (ValueError, TypeError):
             pass
 
@@ -103,9 +153,15 @@ def evaluate_eligibility(scheme, profile):
         is_universal_caste = "all" in scheme_caste_lower or all_categories.issubset(set(scheme_caste_lower))
         if not is_universal_caste:
             if citizen_caste not in scheme_caste_lower:
-                unmet.append(f"Reserved category: Available exclusively for {', '.join(scheme_caste).upper()}.")
+                if is_third_person:
+                    unmet.append(f"Reserved category: Available exclusively for {', '.join(scheme_caste).upper()} ({subj} is {citizen_caste.upper()}).")
+                else:
+                    unmet.append(f"Reserved category: Available exclusively for {', '.join(scheme_caste).upper()}.")
             else:
-                reasons.append(f"Affirmative welfare: Targeted for {citizen_caste.upper()} citizens.")
+                if is_third_person:
+                    reasons.append(f"Affirmative welfare: Targeted for {poss} {citizen_caste.upper()} category.")
+                else:
+                    reasons.append(f"Affirmative welfare: Targeted for {citizen_caste.upper()} citizens.")
 
     # 6. Occupation / Student Check
     citizen_occ = (profile.get("occupation") or "").strip().lower()
@@ -123,11 +179,22 @@ def evaluate_eligibility(scheme, profile):
 
         if occ_matched:
             if citizen_occ:
-                reasons.append(f"Occupation match: {citizen_occ.capitalize()}.")
+                if is_third_person:
+                    reasons.append(f"Occupation match: Tailored for {poss} {citizen_occ.capitalize()} occupation.")
+                else:
+                    reasons.append(f"Occupation match: {citizen_occ.capitalize()}.")
+            elif is_student and ("student" in scheme_occ_lower or "youth" in scheme_occ_lower):
+                if is_third_person:
+                    reasons.append(f"Student status matches {poss} educational focus.")
+                else:
+                    reasons.append("Student status matches scheme focus.")
         else:
-            unmet.append(f"Target occupation: Tailored for {', '.join(scheme_occ).capitalize()}.")
+            if is_third_person and citizen_occ:
+                unmet.append(f"Target occupation: Tailored for {', '.join(scheme_occ).capitalize()} ({poss} occupation is {citizen_occ.capitalize()}).")
+            else:
+                unmet.append(f"Target occupation: Tailored for {', '.join(scheme_occ).capitalize()}.")
 
-    # 7. Vulnerabilities / Disability
+    # 7. Vulnerabilities & Life-Stage Support
     is_disabled = profile.get("is_differently_abled", False)
     vulnerabilities = profile.get("vulnerabilities") or []
     if isinstance(vulnerabilities, str):
@@ -138,13 +205,30 @@ def evaluate_eligibility(scheme, profile):
     for vuln in vulnerabilities:
         v = vuln.lower()
         if v in ("disability", "differently_abled") and any(k in desc_blob for k in ["disability", "divyang", "handicap", "udid"]):
-            reasons.append("Prioritizes Divyangjan / Persons with Disabilities.")
+            if is_third_person:
+                reasons.append(f"Prioritizes Divyangjan welfare assistance for {subj}.")
+            else:
+                reasons.append("Prioritizes Divyangjan / Persons with Disabilities.")
         elif v == "widow" and ("widow" in desc_blob or "destitute women" in desc_blob):
-            reasons.append("Specifically covers Widows and single heads of household.")
+            if is_third_person:
+                reasons.append(f"Specifically covers single heads of household for {subj}.")
+            else:
+                reasons.append("Specifically covers Widows and single heads of household.")
         elif v == "orphan" and ("orphan" in desc_blob or "abandoned child" in desc_blob):
             reasons.append("Tailored for Orphans and vulnerable children.")
         elif v == "destitute" and ("destitute" in desc_blob or "homeless" in desc_blob):
             reasons.append("Dedicated welfare for destitute and homeless individuals.")
+
+    # Senior Citizen recognition
+    if citizen_age is not None:
+        try:
+            if float(citizen_age) >= 60 and any(k in desc_blob for k in ["senior citizen", "old age", "vridha", "elderly", "pension"]):
+                if is_third_person:
+                    reasons.append(f"Dedicated senior citizen welfare program for {subj}.")
+                else:
+                    reasons.append("Dedicated senior citizen welfare program.")
+        except (ValueError, TypeError):
+            pass
 
     # 8. Socio-Economic Status (Ration Card, Housing, Land)
     ration_card = (profile.get("ration_card") or "").strip().lower()
@@ -198,6 +282,17 @@ def recommend_schemes():
         if not isinstance(data, dict):
             return jsonify({"error": "Payload must be a valid JSON object"}), 400
 
+        # Extract active persona context
+        active_persona = data.get("active_persona") or {}
+        relationship = (active_persona.get("relationship") or data.get("relationship") or "self").lower()
+        target_subject = (
+            active_persona.get("relationship") or
+            active_persona.get("label") or
+            data.get("target_subject") or
+            "Myself"
+        )
+        persona_label = active_persona.get("label") or target_subject
+
         # Extract & sanitize profile
         profile = {
             "age": data.get("age"),
@@ -214,7 +309,10 @@ def recommend_schemes():
             "land_ownership": data.get("land_ownership"),
             "education_level": data.get("education_level"),
             "location_type": data.get("location_type"),
-            "domicile_status": data.get("domicile_status")
+            "domicile_status": data.get("domicile_status"),
+            "relationship": relationship,
+            "target_subject": target_subject,
+            "persona_label": persona_label
         }
 
         # Validation on age & income types if passed
@@ -267,20 +365,12 @@ def recommend_schemes():
             reverse=True
         )
 
-        active_persona = data.get("active_persona") or {}
-        target_subject = (
-            active_persona.get("relationship") or
-            active_persona.get("label") or
-            data.get("target_subject") or
-            "Myself"
-        )
-
         return jsonify({
             "status": "ok",
             "total_evaluated": len(raw_schemes),
             "matched_count": len(evaluated),
             "target_subject": target_subject,
-            "persona_label": active_persona.get("label"),
+            "persona_label": persona_label,
             "profile": {
                 k: v for k, v in profile.items() if v is not None and v != "" and v is not False and v != []
             },

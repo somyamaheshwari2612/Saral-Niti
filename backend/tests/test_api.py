@@ -956,7 +956,16 @@ def test_recommendation_sqlite_prefilter_and_clean_criteria(client=None):
     assert any("18–35 years" in r for r in eval_targeted["reasons"]), "Explicit age requirement missing"
     assert any("Affirmative welfare: Targeted for SC" in r for r in eval_targeted["reasons"]), "Affirmative caste reason missing"
 
-    # 3. POST /api/recommend with Active Persona integration
+    # 3. Empathetic Kinship Phrasing in evaluate_eligibility
+    eval_father = evaluate_eligibility(targeted_scheme, {
+        "age": 25,
+        "caste": "sc",
+        "relationship": "father"
+    })
+    assert any("your Father's" in r for r in eval_father["reasons"]), "Personalized possessive kinship phrasing missing"
+    assert any("your Father's SC category" in r for r in eval_father["reasons"]), "Personalized caste phrasing missing"
+
+    # 4. POST /api/recommend with Active Persona integration
     res_persona = c.post('/api/recommend', json={
         "age": 62,
         "gender": "male",
@@ -971,6 +980,10 @@ def test_recommendation_sqlite_prefilter_and_clean_criteria(client=None):
     data_p = res_persona.get_json()
     assert data_p["target_subject"] == "father"
     assert data_p["persona_label"] == "Rajesh (Papa)"
+    recs = data_p.get("recommendations", [])
+    if recs:
+        # Check that top recommendations contain personalized phrasing for father
+        assert any("your Father" in r or "your Father's" in r for r in recs[0]["reasons"]), "Personalized reason phrasing missing from API response"
 
 
 if __name__ == "__main__":
