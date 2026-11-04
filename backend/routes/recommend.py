@@ -37,7 +37,10 @@ def evaluate_eligibility(scheme, profile):
             else:
                 reasons.append(f"Residency criteria met for {scheme_state}.")
     else:
-        reasons.append("Open to all States and Union Territories (All India).")
+        if citizen_state and citizen_state.lower() not in ("all", ""):
+            reasons.append(f"Open to all States and Union Territories (including {citizen_state.title()}).")
+        else:
+            reasons.append("Open to all States and Union Territories (All India).")
 
     # 2. Gender Check
     citizen_gender = (profile.get("gender") or "").strip().lower()
@@ -62,8 +65,14 @@ def evaluate_eligibility(scheme, profile):
             elif max_age is not None and age_val > max_age:
                 unmet.append(f"Age limit: Must be under {max_age} years (current: {int(age_val)}).")
             else:
-                age_range_str = f"{min_age or 0}–{max_age or 'No upper limit'}"
-                reasons.append(f"Age {int(age_val)} falls within eligible range ({age_range_str} years).")
+                # Only record reason if scheme actually defines an explicit age constraint
+                if min_age is not None or max_age is not None:
+                    if min_age is not None and max_age is not None:
+                        reasons.append(f"Age {int(age_val)} meets age requirement ({int(min_age)}–{int(max_age)} years).")
+                    elif min_age is not None:
+                        reasons.append(f"Age {int(age_val)} meets minimum age requirement (≥ {int(min_age)} years).")
+                    else:
+                        reasons.append(f"Age {int(age_val)} meets maximum age limit (≤ {int(max_age)} years).")
         except (ValueError, TypeError):
             pass
 
@@ -90,10 +99,13 @@ def evaluate_eligibility(scheme, profile):
     scheme_caste = eligibility.get("caste", []) or []
     if isinstance(scheme_caste, list) and scheme_caste and citizen_caste and citizen_caste != "all":
         scheme_caste_lower = [c.lower() for c in scheme_caste]
-        if citizen_caste not in scheme_caste_lower and "all" not in scheme_caste_lower:
-            unmet.append(f"Reserved category: Available for {', '.join(scheme_caste).upper()}.")
-        else:
-            reasons.append(f"Social category ({citizen_caste.upper()}) is eligible.")
+        all_categories = {"general", "obc", "sc", "st"}
+        is_universal_caste = "all" in scheme_caste_lower or all_categories.issubset(set(scheme_caste_lower))
+        if not is_universal_caste:
+            if citizen_caste not in scheme_caste_lower:
+                unmet.append(f"Reserved category: Available exclusively for {', '.join(scheme_caste).upper()}.")
+            else:
+                reasons.append(f"Affirmative welfare: Targeted for {citizen_caste.upper()} citizens.")
 
     # 6. Occupation / Student Check
     citizen_occ = (profile.get("occupation") or "").strip().lower()
@@ -255,10 +267,20 @@ def recommend_schemes():
             reverse=True
         )
 
+        active_persona = data.get("active_persona") or {}
+        target_subject = (
+            active_persona.get("relationship") or
+            active_persona.get("label") or
+            data.get("target_subject") or
+            "Myself"
+        )
+
         return jsonify({
             "status": "ok",
             "total_evaluated": len(raw_schemes),
             "matched_count": len(evaluated),
+            "target_subject": target_subject,
+            "persona_label": active_persona.get("label"),
             "profile": {
                 k: v for k, v in profile.items() if v is not None and v != "" and v is not False and v != []
             },

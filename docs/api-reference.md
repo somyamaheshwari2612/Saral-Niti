@@ -145,10 +145,48 @@ Deterministically evaluates a citizen demographic and financial profile against 
   "state": "Maharashtra",
   "income": 200000,
   "caste": "obc",
-  "occupation": "farmer"
+  "occupation": "farmer",
+  "active_persona": {
+    "label": "Rajesh (Papa)",
+    "relationship": "father"
+  }
 }
 ```
-- **Response:** `200 OK` (returns `recommendations` array with `match_score`, `status`, `reasons`, and `unmet_criteria`)
+> **High-Performance SQLite Pre-Filtering & Clean Evaluation:**
+> - Evaluates schemes with native SQLite `json_extract` pre-filtering on `state`, `gender`, `min_age`, `max_age`, and `income_limit`, pruning disqualified rows at the database engine level.
+> - Omits trivial reasons (such as `0–No upper limit` or universal caste matches), highlighting only genuine demographic qualifications and affirmative welfare reservations.
+
+- **Response:** `200 OK`
+```json
+{
+  "status": "ok",
+  "total_evaluated": 670,
+  "matched_count": 8,
+  "target_subject": "father",
+  "persona_label": "Rajesh (Papa)",
+  "profile": {
+    "age": 24,
+    "gender": "male",
+    "state": "Maharashtra",
+    "income": 200000,
+    "caste": "obc",
+    "occupation": "farmer"
+  },
+  "recommendations": [
+    {
+      "scheme": { ... },
+      "match_score": 100,
+      "status": "eligible",
+      "reasons": [
+        "Open to all States and Union Territories (including Maharashtra).",
+        "Age 24 meets minimum age requirement (≥ 18 years).",
+        "Occupation match: Farmer."
+      ],
+      "unmet_criteria": []
+    }
+  ]
+}
+```
 
 ---
 

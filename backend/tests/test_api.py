@@ -880,8 +880,102 @@ def test_chatbot_multi_turn_memory(client=None):
     assert t5_res.status_code == 200
 
 
+# Test 42 - Recommendation Native SQLite JSON Pre-Filter & Clean Criteria
+def test_recommendation_sqlite_prefilter_and_clean_criteria(client=None):
+    from database import get_schemes_for_recommendation
+    from routes.recommend import evaluate_eligibility
+    c = client or get_test_client()
+
+    # 1. Native SQLite json_extract Pre-Filtering Verification
+    # Senior citizen profile (age 75)
+    senior_candidates = get_schemes_for_recommendation({"age": 75, "gender": "male"})
+    for s in senior_candidates:
+        elig = s.get("eligibility") or {}
+        max_age = elig.get("max_age")
+        if max_age is not None:
+            assert max_age >= 75, f"Senior should not get youth-capped scheme: {s['title']} (max_age: {max_age})"
+
+    # Youth profile (age 16)
+    youth_candidates = get_schemes_for_recommendation({"age": 16, "gender": "male"})
+    for s in youth_candidates:
+        elig = s.get("eligibility") or {}
+        min_age = elig.get("min_age")
+        if min_age is not None:
+            assert min_age <= 16, f"Youth should not get senior-restricted scheme: {s['title']} (min_age: {min_age})"
+
+    # High income earner (₹15,00,000)
+    high_inc_candidates = get_schemes_for_recommendation({"income": 1500000})
+    for s in high_inc_candidates:
+        elig = s.get("eligibility") or {}
+        inc_limit = elig.get("income_limit")
+        if inc_limit is not None:
+            assert inc_limit >= 1500000, f"High income earner should not get BPL capped scheme: {s['title']} (cap: {inc_limit})"
+
+    # 2. Clean Criteria in evaluate_eligibility (No trivial age or caste reasons)
+    universal_scheme = {
+        "title": "Universal Public Scheme",
+        "eligibility": {
+            "min_age": None,
+            "max_age": None,
+            "gender": "all",
+            "income_limit": None,
+            "caste": ["general", "obc", "sc", "st"],
+            "state": "all",
+            "occupation": []
+        }
+    }
+    eval_universal = evaluate_eligibility(universal_scheme, {
+        "age": 28,
+        "caste": "general",
+        "gender": "male",
+        "income": 100000
+    })
+    # Must NOT have trivial "0–No upper limit" or trivial caste match
+    for r in eval_universal["reasons"]:
+        assert "0–No upper limit" not in r, f"Trivial age string found in reasons: {r}"
+        assert "Social category (GENERAL)" not in r, f"Trivial caste string found in reasons: {r}"
+
+    # Targeted age and affirmative caste criteria verification
+    targeted_scheme = {
+        "title": "SC ST Youth Scheme",
+        "eligibility": {
+            "min_age": 18,
+            "max_age": 35,
+            "gender": "all",
+            "income_limit": 250000,
+            "caste": ["sc", "st"],
+            "state": "all",
+            "occupation": []
+        }
+    }
+    eval_targeted = evaluate_eligibility(targeted_scheme, {
+        "age": 25,
+        "caste": "sc",
+        "income": 150000
+    })
+    assert any("18–35 years" in r for r in eval_targeted["reasons"]), "Explicit age requirement missing"
+    assert any("Affirmative welfare: Targeted for SC" in r for r in eval_targeted["reasons"]), "Affirmative caste reason missing"
+
+    # 3. POST /api/recommend with Active Persona integration
+    res_persona = c.post('/api/recommend', json={
+        "age": 62,
+        "gender": "male",
+        "state": "Uttar Pradesh",
+        "income": 80000,
+        "active_persona": {
+            "label": "Rajesh (Papa)",
+            "relationship": "father"
+        }
+    })
+    assert res_persona.status_code == 200
+    data_p = res_persona.get_json()
+    assert data_p["target_subject"] == "father"
+    assert data_p["persona_label"] == "Rajesh (Papa)"
+
+
 if __name__ == "__main__":
     test_functions = [
+        test_recommendation_sqlite_prefilter_and_clean_criteria,
         test_chatbot_multi_turn_memory,
         test_chatbot_family_relationship_nlu,
         test_home,

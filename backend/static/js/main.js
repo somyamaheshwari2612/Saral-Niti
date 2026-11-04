@@ -1338,6 +1338,10 @@ async function handleEligibilitySubmit(e) {
   const ageVal = document.getElementById('eligAge').value;
   const incomeVal = document.getElementById('eligIncome').value;
 
+  const activePersona = (typeof window !== 'undefined' && window.SaralFamilyVault)
+    ? window.SaralFamilyVault.toChatbotContext()
+    : null;
+
   const payload = {
     age: ageVal ? Number(ageVal) : null,
     gender: document.getElementById('eligGender').value,
@@ -1355,7 +1359,8 @@ async function handleEligibilitySubmit(e) {
       ...(document.getElementById('eligIsDisabled')?.checked ? ['disability'] : []),
       ...(document.getElementById('eligIsWidow')?.checked ? ['widow'] : []),
       ...(document.getElementById('eligIsSingleWomen')?.checked ? ['single_women'] : [])
-    ]
+    ],
+    active_persona: activePersona
   };
 
   btn.disabled = true;
@@ -1376,7 +1381,8 @@ async function handleEligibilitySubmit(e) {
 
     currentEligRecommendations = data.recommendations || [];
     resultsWrap.style.display = 'block';
-    resultsTitle.textContent = `Found ${currentEligRecommendations.length} Matching Schemes`;
+    const personaPrefix = data.persona_label ? ` for ${escapeHtml(data.persona_label)}` : (data.target_subject && data.target_subject !== 'Myself' ? ` for ${escapeHtml(data.target_subject)}` : '');
+    resultsTitle.textContent = `Found ${currentEligRecommendations.length} Matching Schemes${personaPrefix}`;
     resultsSub.textContent = `Evaluated against ${data.total_evaluated} official welfare initiatives.`;
 
     if (currentEligRecommendations.length === 0) {
