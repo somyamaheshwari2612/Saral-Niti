@@ -14,7 +14,17 @@ app = Flask(
 )
 # Protect against unbounded request body buffering (6MB max payload)
 app.config['MAX_CONTENT_LENGTH'] = 6 * 1024 * 1024
-CORS(app)
+
+# Lock CORS: allow Vercel frontend domain (configurable via FRONTEND_URL or CORS_ORIGINS)
+frontend_origin = os.getenv("FRONTEND_URL") or os.getenv("CORS_ORIGINS") or "https://your-domain.vercel.app"
+allowed_origins = [orig.strip() for orig in frontend_origin.split(",") if orig.strip()]
+# Include local dev hosts if in development mode or not explicitly overridden
+if "your-domain.vercel.app" in frontend_origin or os.getenv("FLASK_ENV") == "development":
+    for local_host in ["http://localhost:3000", "http://127.0.0.1:3000", "http://localhost:5000", "http://127.0.0.1:5000"]:
+        if local_host not in allowed_origins:
+            allowed_origins.append(local_host)
+
+CORS(app, origins=allowed_origins)
 
 # ══════════════════════════════════════════════════
 #  GLOBAL ERROR HANDLERS (JSON-safe for APIs)

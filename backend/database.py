@@ -37,6 +37,7 @@ def get_db_connection():
         os.makedirs(os.path.dirname(DB_PATH), exist_ok=True)
         con = sqlite3.connect(DB_PATH, check_same_thread=False)
         con.row_factory = sqlite3.Row
+        con.execute("PRAGMA journal_mode=WAL")
         _local.con = con
     return con
 

@@ -7,7 +7,7 @@ import re
 import difflib
 from datetime import datetime
 from flask import Blueprint, request, jsonify
-from database import get_scheme_by_id, get_schemes_collection, scheme_to_dict
+from database import get_scheme_by_id, scheme_to_dict
 
 pre_audit_bp = Blueprint("pre_audit", __name__)
 
@@ -315,25 +315,9 @@ def analyze_scheme_last_mile(scheme):
 
 
 def find_scheme(scheme_id):
-    """Retrieves scheme seamlessly from collection adapter or direct SQLite connection."""
+    """Retrieves scheme by integer id, _id string, or slug using the SQLite database layer."""
     if not scheme_id:
         return None
-    collection = get_schemes_collection()
-    if collection is not None:
-        try:
-            from bson import ObjectId
-            if ObjectId.is_valid(scheme_id):
-                s = collection.find_one({"_id": ObjectId(scheme_id)})
-                if s:
-                    return s
-        except Exception:
-            pass
-        s = collection.find_one({"_id": str(scheme_id)})
-        if s:
-            return s
-        s = collection.find_one({"slug": str(scheme_id)})
-        if s:
-            return s
     return get_scheme_by_id(str(scheme_id))
 
 
