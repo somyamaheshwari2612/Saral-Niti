@@ -612,6 +612,36 @@ def test_name_similarity_engine(client=None):
     r4 = calculate_name_similarity('Ramesh K Sharma', 'Ramesh Kumar Sharma')
     assert r4['score'] >= 70
 
+    # Devanagari (Hindi) transliteration to English
+    r_dev = calculate_name_similarity('रमेश कुमार शर्मा', 'Ramesh Kumar Sharma')
+    assert r_dev['status'] == 'PASS'
+    assert r_dev['score'] >= 85
+
+    # Compound name joining/splitting
+    r_comp = calculate_name_similarity('Ramkumar Sharma', 'Ram Kumar Sharma')
+    assert r_comp['status'] == 'PASS'
+    assert r_comp['score'] >= 90
+
+    # Common middle patronymic omission tolerance
+    r_mid = calculate_name_similarity('Ramesh Sharma', 'Ramesh Kumar Sharma')
+    assert r_mid['status'] == 'PASS'
+    assert r_mid['score'] >= 85
+
+    # Phonetic surname variations (Choudhary / Chaudhary)
+    r_sur = calculate_name_similarity('Suresh Choudhary', 'Suresh Chaudhary')
+    assert r_sur['status'] == 'PASS'
+    assert r_sur['score'] >= 90
+
+    # Phonetic surname variations (Aggarwal / Agarwal)
+    r_agg = calculate_name_similarity('Amit Aggarwal', 'Amit Agarwal')
+    assert r_agg['status'] == 'PASS'
+    assert r_agg['score'] >= 90
+
+    # Initial abbreviation matching
+    r_init = calculate_name_similarity('R K Sharma', 'Ramesh Kumar Sharma')
+    assert r_init['status'] == 'PASS'
+    assert r_init['score'] >= 85
+
     # Severe mismatch
     r5 = calculate_name_similarity('Ramesh Sharma', 'Sita Devi')
     assert r5['status'] == 'FAIL'

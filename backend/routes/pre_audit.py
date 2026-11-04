@@ -15,10 +15,124 @@ pre_audit_bp = Blueprint("pre_audit", __name__)
 # ══════════════════════════════════════════════════
 #  NAME SIMILARITY & PHONETIC NORMALIZATION
 # ══════════════════════════════════════════════════
+
+# Devanagari transliteration mapping tables for vernacular input
+DEVANAGARI_VOWELS = {
+    'अ': 'a', 'आ': 'aa', 'इ': 'i', 'ई': 'ee', 'उ': 'u', 'ऊ': 'oo',
+    'ए': 'e', 'ऐ': 'ai', 'ओ': 'o', 'औ': 'au', 'ऋ': 'ri'
+}
+DEVANAGARI_MATRAS = {
+    'ा': 'aa', 'ि': 'i', 'ी': 'ee', 'ु': 'u', 'ू': 'oo',
+    'े': 'e', 'ै': 'ai', 'ो': 'o', 'ौ': 'au', 'ं': 'n', 'ः': 'h', 'ृ': 'ri'
+}
+DEVANAGARI_CONSONANTS = {
+    'क': 'k', 'ख': 'kh', 'ग': 'g', 'घ': 'gh', 'ङ': 'ng',
+    'च': 'ch', 'छ': 'chh', 'ज': 'j', 'झ': 'jh', 'ञ': 'ny',
+    'ट': 't', 'ठ': 'th', 'ड': 'd', 'ढ': 'dh', 'ण': 'n',
+    'त': 't', 'थ': 'th', 'द': 'd', 'ध': 'dh', 'न': 'n',
+    'प': 'p', 'फ': 'ph', 'ब': 'b', 'भ': 'bh', 'म': 'm',
+    'य': 'y', 'र': 'r', 'ल': 'l', 'व': 'v',
+    'श': 'sh', 'ष': 'sh', 'स': 's', 'ह': 'h',
+    'क्ष': 'ksh', 'त्र': 'tr', 'ज्ञ': 'gy'
+}
+
+COMMON_INDIAN_MIDDLE_NAMES = {
+    "kumar", "kumari", "singh", "devi", "prasad", "parshad", "lal", "chandra",
+    "chander", "bhai", "ben", "bahen", "amma", "appa", "rao", "ram", "nath"
+}
+
+INDIAN_SURNAME_EQUIVALENTS = {
+    "chander": "chandra",
+    "narain": "narayan",
+    "parshad": "prasad",
+    "agrawal": "agarwal",
+    "aggarwal": "agarwal",
+    "agrawala": "agarwal",
+    "choudhary": "chaudhary",
+    "choudhury": "chaudhary",
+    "chowdhury": "chaudhary",
+    "chaudhari": "chaudhary",
+    "shukla": "sukla",
+    "mishra": "misra",
+    "pandey": "pande",
+    "tiwary": "tiwari",
+    "tewari": "tiwari",
+    "tripathy": "tripathi"
+}
+
+
+def devanagari_to_latin(text):
+    """Accurately transliterates Devanagari (Hindi) names to Latin script."""
+    if not text:
+        return ""
+    res = []
+    i = 0
+    n = len(text)
+    while i < n:
+        ch = text[i]
+        if ch in DEVANAGARI_VOWELS:
+            res.append(DEVANAGARI_VOWELS[ch])
+        elif ch in DEVANAGARI_CONSONANTS:
+            c_trans = DEVANAGARI_CONSONANTS[ch]
+            if i + 1 < n and text[i + 1] == '्':
+                res.append(c_trans)
+                i += 1
+            elif i + 1 < n and text[i + 1] in DEVANAGARI_MATRAS:
+                res.append(c_trans + DEVANAGARI_MATRAS[text[i + 1]])
+                i += 1
+            else:
+                res.append(c_trans + 'a')
+        elif ch in DEVANAGARI_MATRAS:
+            res.append(DEVANAGARI_MATRAS[ch])
+        elif ch == '्':
+            pass
+        else:
+            res.append(ch)
+        i += 1
+    out = ''.join(res).strip()
+    words = []
+    for w in out.split():
+        # Hindi schwa deletion on final syllable (e.g. Ramesha -> Ramesh, Kumara -> Kumar)
+        if len(w) > 3 and w.endswith('a') and not w.endswith(('aa', 'ia', 'ya', 'ka', 'ta', 'da')):
+            w = w[:-1]
+        words.append(w)
+    return ' '.join(words)
+
+
+def indian_phonetic_normalize(word):
+    """Applies phonetic reduction rules specific to Indian names and surnames."""
+    if not word:
+        return ""
+    w = word.lower().strip()
+    if w in INDIAN_SURNAME_EQUIVALENTS:
+        w = INDIAN_SURNAME_EQUIVALENTS[w]
+    # Vowel simplifications in Indian transliteration
+    w = re.sub(r'ee+', 'i', w)
+    w = re.sub(r'oo+', 'u', w)
+    w = re.sub(r'aa+', 'a', w)
+    w = re.sub(r'ai', 'e', w)
+    w = re.sub(r'au|ou', 'o', w)
+    # Consonant sound-alikes
+    w = re.sub(r'w', 'v', w)
+    w = re.sub(r'ph', 'f', w)
+    w = re.sub(r'sh', 's', w)
+    w = re.sub(r'th', 't', w)
+    w = re.sub(r'dh', 'd', w)
+    w = re.sub(r'bh', 'b', w)
+    w = re.sub(r'kh', 'k', w)
+    w = re.sub(r'gh', 'g', w)
+    # Deduplicate repeated consonants (e.g. mittal -> mital, khanna -> khana)
+    w = re.sub(r'([bcdfghjklmnpqrstvwxyz])\1+', r'\1', w)
+    return w
+
+
 def normalize_name(name):
-    """Normalizes Indian names by stripping titles, honorifics, and redundant punctuation."""
+    """Normalizes Indian names by transliterating Devanagari, stripping titles, and removing punctuation."""
     if not name:
         return ""
+    # Transliterate Devanagari characters if present
+    if re.search(r'[\u0900-\u097F]', name):
+        name = devanagari_to_latin(name)
     n = name.lower().strip()
     # Remove common honorifics and noise words
     honorifics = [
@@ -36,7 +150,12 @@ def normalize_name(name):
 def calculate_name_similarity(name1, name2):
     """
     Simulates PFMS / Core Banking (CBS) automated name-matching verification.
-    Uses SequenceMatcher ratio combined with token-set intersection.
+    Features:
+      1. Devanagari-to-Latin transliteration
+      2. Compound word joining/splitting ('Ramkumar' vs 'Ram Kumar')
+      3. Common Indian middle patronymic omission tolerance ('Kumar', 'Singh', etc.)
+      4. Single-letter initial abbreviation expansion ('R K Sharma' vs 'Ramesh Kumar Sharma')
+      5. Indian phonetic surname equivalence ('Chander'/'Chandra', 'Agarwal'/'Aggarwal')
     Returns:
         dict: {
             "score": int (0-100),
@@ -64,34 +183,92 @@ def calculate_name_similarity(name1, name2):
             "action": "Safe for automated PFMS banking clearance."
         }
 
-    # Levenshtein sequence ratio
-    seq_ratio = difflib.SequenceMatcher(None, n1, n2).ratio()
+    t1 = n1.split()
+    t2 = n2.split()
+    s1, s2 = set(t1), set(t2)
 
-    # Token overlap (handles rearranged names e.g. "Sharma Ramesh" vs "Ramesh Sharma")
-    t1 = set(n1.split())
-    t2 = set(n2.split())
-
-    if t1 == t2 and len(t1) > 0:
+    # 1. Pure token reorder (e.g. 'Sharma Ramesh' vs 'Ramesh Sharma')
+    if s1 == s2 and len(s1) > 0:
         return {
-            "score": 92,
+            "score": 95,
             "status": "PASS",
-            "message": "High Concordance (92%): First and last name transposed (e.g. surname first), acceptable to CBS/PFMS gateways.",
+            "message": "High Concordance (95%): Name components transposed (e.g. surname first), acceptable to CBS/PFMS gateways.",
             "action": "Ensure name components are aligned when filling the application form."
         }
 
-    token_overlap = len(t1.intersection(t2)) / max(len(t1.union(t2)), 1)
+    # 2. Compound name split/join (e.g. 'Ramkumar Sharma' vs 'Ram Kumar Sharma')
+    joined1 = "".join(t1)
+    joined2 = "".join(t2)
+    if joined1 == joined2:
+        return {
+            "score": 96,
+            "status": "PASS",
+            "message": "High Concordance (96%): Compounded name alignment (e.g. 'Ramkumar' vs 'Ram Kumar'), acceptable to CBS/PFMS.",
+            "action": "No action needed. Automated PFMS clearing accommodates compound word joining."
+        }
 
-    combined_score = round(((seq_ratio * 0.6) + (token_overlap * 0.4)) * 100)
+    # 3. Middle name omission tolerance (e.g. 'Ramesh Sharma' vs 'Ramesh Kumar Sharma')
+    diff1 = s1 - s2
+    diff2 = s2 - s1
+    omitted = diff1 if len(diff1) > len(diff2) else diff2
+    matched_core = s1.intersection(s2)
+    if len(matched_core) >= 2 and len(omitted) == 1 and list(omitted)[0] in COMMON_INDIAN_MIDDLE_NAMES:
+        return {
+            "score": 88,
+            "status": "PASS",
+            "message": f"High Concordance (88%): Common middle patronymic '{list(omitted)[0].capitalize()}' omitted on one document, accepted by CBS gateways.",
+            "action": "Ensure bank passbook photocopy is clear when uploading supporting documents."
+        }
+
+    # 4. Single-letter initial expansion check (e.g. 'R K Sharma' vs 'Ramesh Kumar Sharma')
+    short_t, long_t = (t1, t2) if len(t1) <= len(t2) else (t2, t1)
+    if len(short_t) == len(long_t) and len(short_t) >= 2:
+        initial_match = True
+        for st, lt in zip(short_t, long_t):
+            if st == lt:
+                continue
+            elif len(st) == 1 and lt.startswith(st):
+                continue
+            elif len(lt) == 1 and st.startswith(lt):
+                continue
+            else:
+                initial_match = False
+                break
+        if initial_match:
+            return {
+                "score": 86,
+                "status": "PASS",
+                "message": "High Concordance (86%): Name uses initial abbreviations matching full name components, acceptable to CBS/PFMS.",
+                "action": "Ensure bank account signature card matches official ID."
+            }
+
+    # 5. Phonetic normalization comparison
+    p1 = " ".join([indian_phonetic_normalize(w) for w in t1])
+    p2 = " ".join([indian_phonetic_normalize(w) for w in t2])
+    if p1 == p2:
+        return {
+            "score": 92,
+            "status": "PASS",
+            "message": "High Concordance (92%): Phonetic transliteration equivalence satisfies CBS name verification.",
+            "action": "Minor spelling variation is acceptable to PFMS clearing."
+        }
+
+    # 6. Combined Levenshtein + Phonetic + Token Overlap
+    seq_ratio = difflib.SequenceMatcher(None, n1, n2).ratio()
+    phonetic_ratio = difflib.SequenceMatcher(None, p1, p2).ratio()
+    token_overlap = len(s1.intersection(s2)) / max(len(s1.union(s2)), 1)
+
+    combined_score = round(((phonetic_ratio * 0.4) + (seq_ratio * 0.3) + (token_overlap * 0.3)) * 100)
     combined_score = max(5, min(100, combined_score))
 
-    if combined_score >= 85:
+    if combined_score >= 80:
         return {
             "score": combined_score,
             "status": "PASS",
             "message": f"High Concordance ({combined_score}%): Minor spelling or initial variation acceptable to most CBS gateways.",
             "action": "Ensure bank passbook photocopy is clear when uploading supporting documents."
         }
-    elif combined_score >= 70:
+    elif combined_score >= 65:
         return {
             "score": combined_score,
             "status": "WARN",
