@@ -1,4 +1,4 @@
-﻿// ══════════════════════════════════════════════════
+// ══════════════════════════════════════════════════
 //  CONFIG
 //  Automatically handles monolithic, local dev, and separate deployments
 // ══════════════════════════════════════════════════
@@ -214,12 +214,61 @@ function renderSkeletons() {
   `).join('');
 }
 
+/**
+ * Formats a clean, readable short description snippet for scheme cards.
+ * Prevents awkward mid-word breaks and excessive text overflow.
+ */
+function formatCardSnippet(text, maxLen = 110) {
+  if (!text) return 'Explore scheme guidelines, eligibility criteria, and benefits.';
+  let clean = String(text).replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ').trim();
+  clean = clean.replace(/^[-*•|\s]+/, '');
+  if (clean.length <= maxLen) return clean;
+
+  const sub = clean.slice(0, maxLen);
+  const lastSpace = sub.lastIndexOf(' ');
+  const cut = lastSpace > maxLen * 0.5 ? sub.slice(0, lastSpace) : sub;
+  return cut.replace(/[,;:.!?\-–\s]+$/, '') + '...';
+}
+
+/**
+ * Extracts and formats the primary benefit highlight for scheme cards.
+ * If multiple benefits are separated by pipes '|' or newlines, takes the first substantive point.
+ * Truncates gracefully to fit within 2 card lines (~95 chars).
+ */
+function formatCardBenefit(benefits, maxLen = 95) {
+  if (!benefits) return 'Financial assistance & citizen welfare support';
+  let str = String(benefits).trim();
+
+  // If piped or multiline, isolate the first meaningful bullet point
+  if (str.includes('|')) {
+    const parts = str.split('|').map(p => p.trim()).filter(Boolean);
+    str = parts[0] || str;
+  } else if (str.includes('\n')) {
+    const parts = str.split('\n').map(p => p.trim()).filter(Boolean);
+    str = parts[0] || str;
+  }
+
+  // Strip leading bullet dashes, asterisks, pipes, or numbers (e.g. "- The applicant", "1. Financial")
+  str = str.replace(/^[-*•|\d.)\s]+/, '').trim();
+  str = str.replace(/[\r\n\t]+/g, ' ').replace(/\s{2,}/g, ' ');
+
+  if (!str) return 'Financial assistance & citizen welfare support';
+  if (str.length <= maxLen) return str;
+
+  const sub = str.slice(0, maxLen);
+  const lastSpace = sub.lastIndexOf(' ');
+  const cut = lastSpace > maxLen * 0.5 ? sub.slice(0, lastSpace) : sub;
+  return cut.replace(/[,;:.!?\-–\s]+$/, '') + '...';
+}
+
 function formatSchemeCardHTML(s, idx) {
   const icon = CATEGORY_ICONS[s.category] || '🏛';
   const safeCat = escapeHtml(s.category || 'general');
   const safeTitle = escapeHtml(s.title || '');
-  const safeDesc = escapeHtml(s.description || '');
-  const safeBenefits = escapeHtml(s.benefits || '');
+  const shortDesc = formatCardSnippet(s.description, 110);
+  const safeDesc = escapeHtml(shortDesc);
+  const shortBenefit = formatCardBenefit(s.benefits, 95);
+  const safeBenefits = escapeHtml(shortBenefit);
   const safeMinistry = escapeHtml(s.ministry || '');
   const safeUrl = sanitizeUrl(s.application_url);
 
@@ -231,8 +280,8 @@ function formatSchemeCardHTML(s, idx) {
           <div class="active-dot" title="Active Scheme"></div>
         </div>
         <div class="card-title">${safeTitle}</div>
-        <div class="card-desc">${safeDesc}</div>
-        <div class="card-benefit">
+        <div class="card-desc" title="${escapeHtml(s.description || '')}">${safeDesc}</div>
+        <div class="card-benefit" title="${escapeHtml(s.benefits || '')}">
           <i class="fa-solid fa-gift" style="margin-right:4px;"></i> ${safeBenefits}
         </div>
       </div>
@@ -1129,8 +1178,48 @@ function openModal(s) {
   if (catEl) catEl.textContent = icon + ' ' + (s.category || '').toUpperCase();
   if (titleEl) titleEl.textContent = s.title || '';
   if (minEl) minEl.textContent = (s.ministry || '') + (s.launched_year ? ' • Launched ' + s.launched_year : '');
-  if (descEl) descEl.textContent = s.description || '';
-  if (benEl) benEl.textContent = s.benefits || '';
+  if (descEl) {
+    const fullDesc = (s.description || 'No detailed description provided.').trim();
+    const paras = fullDesc.split(/\n{2,}|\r\n\r\n/);
+    if (paras.length > 1) {
+      descEl.innerHTML = paras.map(p => `<p style="margin-bottom:10px;line-height:1.65;">${escapeHtml(p.trim())}</p>`).join('');
+    } else {
+      descEl.textContent = fullDesc;
+    }
+  }
+
+  if (benEl) {
+    const rawBenefits = (s.benefits || '').trim();
+    if (!rawBenefits) {
+      benEl.innerHTML = '<em>General welfare scheme support and departmental assistance.</em>';
+    } else {
+      let points = [];
+      if (rawBenefits.includes('|')) {
+        points = rawBenefits.split('|').map(p => p.trim()).filter(Boolean);
+      } else if (rawBenefits.includes('\n')) {
+        points = rawBenefits.split('\n').map(p => p.trim()).filter(Boolean);
+      }
+
+      if (points.length > 1) {
+        benEl.innerHTML = `
+          <ul class="benefit-list">
+            ${points.map(pt => {
+              const cleanPt = pt.replace(/^[-*•|\d.)\s]+/, '').trim();
+              return cleanPt ? `<li><i class="fa-solid fa-circle-check"></i> <span>${escapeHtml(cleanPt)}</span></li>` : '';
+            }).filter(Boolean).join('')}
+          </ul>
+        `;
+      } else {
+        const cleanPt = rawBenefits.replace(/^[-*•|\s]+/, '').trim();
+        benEl.innerHTML = `
+          <div style="display:flex; align-items:flex-start; gap:10px; line-height:1.6;">
+            <i class="fa-solid fa-circle-check" style="color:var(--saffron);margin-top:4px;flex-shrink:0;"></i>
+            <span>${escapeHtml(cleanPt)}</span>
+          </div>
+        `;
+      }
+    }
+  }
   if (applyEl) applyEl.href = sanitizeUrl(s.application_url);
 
   const e = s.eligibility || {};

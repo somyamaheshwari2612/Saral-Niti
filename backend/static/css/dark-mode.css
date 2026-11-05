@@ -183,6 +183,21 @@ html.dark-mode .modal-desc {
   color: #CBD5E1;
 }
 
+html.dark-mode .benefit-box {
+  background: rgba(255, 107, 0, 0.1);
+  border-color: rgba(255, 107, 0, 0.25);
+  border-left-color: #FF6B00;
+  color: #FED7AA;
+}
+
+html.dark-mode .benefit-list li {
+  color: #FED7AA;
+}
+
+html.dark-mode .benefit-list li i {
+  color: #FB923C;
+}
+
 html.dark-mode .elig-item {
   background: #1E293B;
   border-color: #334155;
