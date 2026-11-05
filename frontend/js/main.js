@@ -46,6 +46,130 @@ function debounce(func, delay = 300) {
 }
 
 // ══════════════════════════════════════════════════
+//  SARAL OFFLINE ENGINE (Gram Panchayat PWA Cache)
+// ══════════════════════════════════════════════════
+const OFFLINE_SCHEMES_STORAGE_KEY = 'saral_panchayat_schemes_cache';
+const MAX_OFFLINE_CACHED_SCHEMES = 350;
+
+function getOfflineCachedSchemes() {
+  try {
+    const raw = localStorage.getItem(OFFLINE_SCHEMES_STORAGE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function saveSchemesToOfflineCache(schemes) {
+  if (!Array.isArray(schemes) || schemes.length === 0) return;
+  try {
+    const existing = getOfflineCachedSchemes();
+    const map = new Map();
+    // Keep newer schemes first
+    schemes.forEach(s => {
+      if (s && (s.id || s._id)) {
+        map.set(String(s.id || s._id), s);
+      }
+    });
+    existing.forEach(s => {
+      const key = String(s.id || s._id);
+      if (!map.has(key)) map.set(key, s);
+    });
+    const combined = Array.from(map.values()).slice(0, MAX_OFFLINE_CACHED_SCHEMES);
+    localStorage.setItem(OFFLINE_SCHEMES_STORAGE_KEY, JSON.stringify(combined));
+  } catch (e) {
+    console.warn('[OfflineCache] Storage notice:', e);
+  }
+}
+
+function searchOfflineSchemes(q) {
+  const store = getOfflineCachedSchemes();
+  if (!q || !q.trim()) return store.slice(0, 24);
+  const terms = q.toLowerCase().trim().split(/\s+/).filter(Boolean);
+  
+  const scored = [];
+  store.forEach(s => {
+    let score = 0;
+    const title = (s.title || '').toLowerCase();
+    const desc = (s.description || '').toLowerCase();
+    const cat = (s.category || '').toLowerCase();
+    const min = (s.ministry || '').toLowerCase();
+    const ben = (s.benefits || '').toLowerCase();
+    const tags = Array.isArray(s.tags) ? s.tags.join(' ').toLowerCase() : '';
+
+    terms.forEach(term => {
+      if (title.includes(term)) score += 10;
+      if (cat.includes(term)) score += 6;
+      if (tags.includes(term)) score += 5;
+      if (min.includes(term)) score += 4;
+      if (desc.includes(term)) score += 2;
+      if (ben.includes(term)) score += 2;
+    });
+
+    if (score > 0) scored.push({ scheme: s, score });
+  });
+
+  scored.sort((a, b) => b.score - a.score);
+  return scored.map(item => item.scheme);
+}
+
+function filterOfflineSchemes(payload) {
+  const store = getOfflineCachedSchemes();
+  return store.filter(s => {
+    if (payload.category && payload.category !== 'all' && payload.category !== '') {
+      if ((s.category || '').toLowerCase() !== payload.category.toLowerCase()) return false;
+    }
+    if (payload.state && payload.state !== 'all' && payload.state !== '') {
+      const lvl = (s.level || '').toLowerCase();
+      const stateMatch = lvl.includes(payload.state.toLowerCase()) || (s.title || '').toLowerCase().includes(payload.state.toLowerCase());
+      if (!stateMatch && lvl !== 'central' && lvl !== 'national') return false;
+    }
+    return true;
+  });
+}
+
+function updateOnlineStatus(isOnline) {
+  const banner = document.getElementById('offlineBanner');
+  const bannerText = document.getElementById('offlineBannerText');
+  if (!banner) return;
+
+  if (!isOnline) {
+    banner.classList.remove('online-sync');
+    if (bannerText) {
+      bannerText.innerHTML = '<strong>📡 Offline Mode Active (Gram Panchayat Cache)</strong> — Browsing cached schemes & Welfare Passbook.';
+    }
+    banner.style.display = 'block';
+  } else {
+    banner.classList.add('online-sync');
+    if (bannerText) {
+      bannerText.innerHTML = '<strong>🟢 Reconnected to Saral Niti Network</strong> — Live scheme sync enabled.';
+    }
+    banner.style.display = 'block';
+    setTimeout(() => {
+      banner.style.display = 'none';
+      banner.classList.remove('online-sync');
+    }, 3500);
+  }
+}
+
+function retryConnection() {
+  const bannerText = document.getElementById('offlineBannerText');
+  if (bannerText) bannerText.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking network connection...';
+  fetch(`${SCHEMES_API}/api/health`, { cache: 'no-cache', method: 'GET' })
+    .then((res) => {
+      if (res.ok) {
+        updateOnlineStatus(true);
+        loadSchemes(1, false);
+      } else {
+        updateOnlineStatus(false);
+      }
+    })
+    .catch(() => {
+      updateOnlineStatus(false);
+    });
+}
+
+// ══════════════════════════════════════════════════
 //  LOAD SCHEMES
 // ══════════════════════════════════════════════════
 // ══════════════════════════════════════════════════
@@ -158,6 +282,7 @@ async function loadSchemes(page = 1, append = false) {
     }
 
     const fetchedSchemes = data.schemes || [];
+    saveSchemesToOfflineCache(fetchedSchemes);
     totalAvailableSchemes = data.total || 0;
     hasMoreServerSchemes = Boolean(data.has_more);
     currentPage = data.page || page;
@@ -182,13 +307,24 @@ async function loadSchemes(page = 1, append = false) {
 
     updateScrollStatus();
   } catch (err) {
-    if (!append && grid) {
+    const cached = getOfflineCachedSchemes();
+    if (cached && cached.length > 0 && !append) {
+      currentSchemesList = cached;
+      allSchemes = cached;
+      isServerBrowsing = false;
+      if (grid) {
+        grid.innerHTML = currentSchemesList.map((s, idx) => formatSchemeCardHTML(s, idx)).join('');
+      }
+      if (count) count.innerHTML = `Showing <strong>${cached.length}</strong> schemes from Gram Panchayat Offline Cache 📡`;
+      updateOnlineStatus(false);
+    } else if (!append && grid) {
       grid.innerHTML = `
         <div class="no-results">
           <h3>Could not connect to server</h3>
-          <p>Make sure your Flask backend is running on port 5000</p>
+          <p>You appear to be offline with no cached schemes yet. Please connect to internet.</p>
         </div>`;
       if (count) count.textContent = 'Connection error';
+      updateOnlineStatus(false);
     }
   } finally {
     isLoadingNextBatch = false;
@@ -379,19 +515,35 @@ async function handleSearch() {
     const res = await fetch(`${SCHEMES_API}/api/search?q=${encodeURIComponent(q)}`);
     const data = await res.json();
     if (!res.ok || data.error) {
-      document.getElementById('schemesGrid').innerHTML = `
-        <div class="no-results">
-          <h3>Search Error</h3>
-          <p>${escapeHtml(data.error || 'Failed to search schemes')}</p>
-        </div>`;
-      document.getElementById('resultsCount').innerHTML = 'Error searching schemes';
+      fallbackOfflineSearch(q);
       return;
     }
-    renderSchemes(data.schemes || []);
+    const schemes = data.schemes || [];
+    renderSchemes(schemes);
+    saveSchemesToOfflineCache(schemes);
   } catch {
-    document.getElementById('schemesGrid').innerHTML = `<div class="no-results"><h3>Search failed</h3><p>Please check your connection and try again</p></div>`;
-    document.getElementById('resultsCount').textContent = 'Connection error';
+    fallbackOfflineSearch(q);
   }
+}
+
+function fallbackOfflineSearch(q) {
+  const offlineMatches = searchOfflineSchemes(q);
+  const grid = document.getElementById('schemesGrid');
+  const count = document.getElementById('resultsCount');
+  if (offlineMatches.length > 0) {
+    renderSchemes(offlineMatches);
+    if (count) count.innerHTML = `Showing <strong>${offlineMatches.length}</strong> offline cached schemes for "${escapeHtml(q)}" 📡`;
+  } else {
+    if (grid) {
+      grid.innerHTML = `
+        <div class="no-results">
+          <h3>No matching schemes in offline cache</h3>
+          <p>You are currently offline. Try general keywords like "kisan", "women", "student", or reconnect to search all 4,800+ online schemes.</p>
+        </div>`;
+    }
+    if (count) count.innerHTML = 'Offline Search (0 results)';
+  }
+  updateOnlineStatus(false);
 }
 
 function quickSearch(term) {
@@ -571,8 +723,13 @@ async function submitVoiceRecording(audioBlob) {
 
   } catch (err) {
     console.error('Voice transcription error:', err);
-    alert('Voice input error: ' + (err.message || 'Please try again or use the search bar.'));
     resetVoiceUI();
+    if (!navigator.onLine) {
+      updateOnlineStatus(false);
+      alert('📡 You are currently offline. Multilingual AI voice input requires an internet connection. Please type keywords into the search bar while offline.');
+    } else {
+      alert('Voice input error: ' + (err.message || 'Please try again or use the search bar.'));
+    }
   }
 }
 
@@ -902,23 +1059,23 @@ async function applyAdvancedFilters() {
     });
     const data = await res.json();
     if (!res.ok || data.error) {
-      document.getElementById('schemesGrid').innerHTML = `
-        <div class="no-results">
-          <h3>Filter Error</h3>
-          <p>${escapeHtml(data.error || 'Failed to apply filters')}</p>
-        </div>`;
-      document.getElementById('resultsCount').innerHTML = 'Error applying filters';
+      fallbackOfflineFilter(payload);
       return;
     }
-    renderSchemes(data.schemes || []);
+    const schemes = data.schemes || [];
+    renderSchemes(schemes);
+    saveSchemesToOfflineCache(schemes);
   } catch (err) {
-    document.getElementById('schemesGrid').innerHTML = `
-      <div class="no-results">
-        <h3>Filter failed</h3>
-        <p>Please check your connection and try again</p>
-      </div>`;
-    document.getElementById('resultsCount').textContent = 'Connection error';
+    fallbackOfflineFilter(payload);
   }
+}
+
+function fallbackOfflineFilter(payload) {
+  const filtered = filterOfflineSchemes(payload);
+  renderSchemes(filtered);
+  const count = document.getElementById('resultsCount');
+  if (count) count.innerHTML = `Showing <strong>${filtered.length}</strong> offline filtered schemes 📡`;
+  updateOnlineStatus(false);
 }
 
 async function filterByCategory(category, btn) {
@@ -2692,3 +2849,58 @@ function toggleMenu() {
   if (links) links.classList.toggle('open');
   if (burger) burger.classList.toggle('open');
 }
+
+
+// ══════════════════════════════════════════════════
+//  PWA SERVICE WORKER REGISTRATION & INSTALL ENGINE
+// ══════════════════════════════════════════════════
+let deferredInstallPrompt = null;
+
+if (typeof window !== 'undefined' && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    const isFileOrStandalone = window.location.pathname.endsWith('.html');
+    const swPath = isFileOrStandalone ? './sw.js' : '/sw.js';
+    navigator.serviceWorker.register(swPath)
+      .then((reg) => {
+        console.log('[Saral PWA] Service Worker active with scope:', reg.scope);
+      })
+      .catch((err) => {
+        console.warn('[Saral PWA] Service Worker registration note:', err);
+      });
+  });
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredInstallPrompt = e;
+  const installBtn = document.getElementById('pwaInstallBtn');
+  if (installBtn) {
+    installBtn.style.display = 'inline-flex';
+  }
+});
+
+window.addEventListener('appinstalled', () => {
+  deferredInstallPrompt = null;
+  const installBtn = document.getElementById('pwaInstallBtn');
+  if (installBtn) installBtn.style.display = 'none';
+  console.log('[Saral PWA] App installed successfully');
+});
+
+function triggerPWAInstall() {
+  if (!deferredInstallPrompt) {
+    alert('Saral Niti is installable! On Android Chrome, tap "Add to Home Screen" or the 3-dot menu. On iOS Safari, tap "Share" -> "Add to Home Screen".');
+    return;
+  }
+  deferredInstallPrompt.prompt();
+  deferredInstallPrompt.userChoice.then((choiceResult) => {
+    if (choiceResult && choiceResult.outcome === 'accepted') {
+      console.log('[Saral PWA] User accepted installation prompt');
+    }
+    deferredInstallPrompt = null;
+    const installBtn = document.getElementById('pwaInstallBtn');
+    if (installBtn) installBtn.style.display = 'none';
+  });
+}
+
+window.addEventListener('online', () => updateOnlineStatus(true));
+window.addEventListener('offline', () => updateOnlineStatus(false));

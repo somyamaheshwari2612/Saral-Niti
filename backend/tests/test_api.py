@@ -1174,8 +1174,50 @@ def test_voice_query_normalizer_and_endpoints():
     assert trans_data["schema"]["category"] in ("agriculture", "financial")
 
 
+# Test 45 - PWA Offline Mode, Service Worker, Web App Manifest & Static Assets
+def test_pwa_offline_service_worker_and_manifest(client=None):
+    c = client or get_test_client()
+
+    # 1. Web App Manifest
+    res_m = c.get("/manifest.json")
+    assert res_m.status_code == 200, f"Expected 200, got {res_m.status_code}"
+    assert "application/manifest+json" in res_m.content_type
+    manifest = res_m.get_json()
+    assert manifest.get("name") == "Saral Niti — Government Scheme Discovery & Citizen Passbook"
+    assert manifest.get("start_url") == "/"
+    assert manifest.get("display") == "standalone"
+    assert any(icon.get("sizes") == "192x192" for icon in manifest.get("icons", []))
+    assert any(icon.get("sizes") == "512x512" for icon in manifest.get("icons", []))
+
+    # 2. Service Worker File & Allowed Scope
+    res_sw = c.get("/sw.js")
+    assert res_sw.status_code == 200, f"Expected 200, got {res_sw.status_code}"
+    assert "javascript" in res_sw.content_type
+    assert res_sw.headers.get("Service-Worker-Allowed") == "/"
+    sw_text = res_sw.get_data(as_text=True)
+    assert "saral-niti-v1" in sw_text
+    assert "caches.open" in sw_text
+
+    # 3. Static Icons & Favicon
+    res_fav = c.get("/favicon.ico")
+    assert res_fav.status_code == 200
+    res_i192 = c.get("/icons/icon-192.png")
+    assert res_i192.status_code == 200
+    res_i512 = c.get("/icons/icon-512.png")
+    assert res_i512.status_code == 200
+
+    # 4. Home Page PWA tags & Offline banner
+    res_home = c.get("/")
+    assert res_home.status_code == 200
+    home_html = res_home.get_data(as_text=True)
+    assert 'rel="manifest" href="/manifest.json"' in home_html
+    assert 'id="offlineBanner"' in home_html
+    assert 'id="pwaInstallBtn"' in home_html
+
+
 if __name__ == "__main__":
     test_functions = [
+        test_pwa_offline_service_worker_and_manifest,
         test_voice_query_normalizer_and_endpoints,
     test_recommend_household_matrix,
     test_recommendation_sqlite_prefilter_and_clean_criteria,

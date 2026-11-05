@@ -187,4 +187,3 @@ document.addEventListener('DOMContentLoaded', () => {
   const initialLang = getStoredLanguage();
   setLanguage(initialLang);
 });
-

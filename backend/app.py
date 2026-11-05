@@ -1,5 +1,5 @@
 import os
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_cors import CORS
 from dotenv import load_dotenv
 
@@ -75,6 +75,28 @@ def health_check():
         }), 200
     except Exception as e:
         return jsonify({"message": "Health check failed", "error": str(e), "status": "error"}), 500
+
+# ══════════════════════════════════════════════════
+#  PWA (PROGRESSIVE WEB APP) ROOT ENDPOINTS
+# ══════════════════════════════════════════════════
+@app.route("/manifest.json")
+def pwa_manifest():
+    return send_from_directory(app.static_folder, "manifest.json", mimetype="application/manifest+json")
+
+@app.route("/sw.js")
+def service_worker():
+    response = send_from_directory(app.static_folder, "sw.js", mimetype="application/javascript")
+    response.headers["Service-Worker-Allowed"] = "/"
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    return response
+
+@app.route("/icons/<path:filename>")
+def serve_icons(filename):
+    return send_from_directory(os.path.join(app.static_folder, "icons"), filename)
+
+@app.route("/favicon.ico")
+def favicon():
+    return send_from_directory(os.path.join(app.static_folder, "icons"), "favicon.ico")
 
 # Register blueprints
 from routes.schemes import schemes_bp

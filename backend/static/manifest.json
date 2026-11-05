@@ -1,0 +1,64 @@
+{
+  "name": "Saral Niti — Government Scheme Discovery & Citizen Passbook",
+  "short_name": "Saral Niti",
+  "description": "Vernacular AI-powered government scheme discovery, entire household welfare matrix, and offline-ready citizen passbook for rural and urban India.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["window-controls-overlay", "standalone", "minimal-ui"],
+  "background_color": "#0B0F19",
+  "theme_color": "#2563EB",
+  "orientation": "portrait-primary",
+  "lang": "en-IN",
+  "categories": ["government", "productivity", "utilities", "social"],
+  "icons": [
+    {
+      "src": "/static/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/icons/icon-maskable.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/static/icons/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Browse Schemes",
+      "short_name": "Schemes",
+      "description": "Explore all verified central & state welfare schemes",
+      "url": "/#schemes",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Check Household Eligibility",
+      "short_name": "Eligibility",
+      "description": "Instant multi-parameter household eligibility matrix",
+      "url": "/#eligibility",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
+    },
+    {
+      "name": "Citizen Welfare Passbook",
+      "short_name": "Passbook",
+      "description": "Open your family welfare dossier and document checklist",
+      "url": "/#passbook",
+      "icons": [{ "src": "/static/icons/icon-192.png", "sizes": "192x192" }]
+    }
+  ],
+  "prefer_related_applications": false
+}
+

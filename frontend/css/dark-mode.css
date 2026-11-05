@@ -522,3 +522,22 @@ html.dark-mode .voice-insight-badge {
 html.dark-mode .voice-insight-badge strong {
   color: #F8FAFC;
 }
+
+
+/* ── DARK MODE: PWA OFFLINE BANNER & INSTALL BUTTON ── */
+html.dark-mode .offline-banner {
+  background: linear-gradient(90deg, #78350F 0%, #92400E 100%);
+  border-bottom: 1px solid #B45309;
+}
+html.dark-mode .offline-banner.online-sync {
+  background: linear-gradient(90deg, #064E3B 0%, #065F46 100%);
+  border-bottom: 1px solid #059669;
+}
+html.dark-mode .nav-pwa-btn {
+  background: linear-gradient(135deg, #1D4ED8, #1E40AF);
+  border-color: rgba(96, 165, 250, 0.3);
+}
+html.dark-mode .nav-pwa-btn:hover {
+  background: linear-gradient(135deg, #2563EB, #1D4ED8);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.5);
+}

@@ -214,31 +214,7 @@
     to { opacity: 1; transform: translateY(0); }
   }
 }
-/* -- LANGUAGE SWITCHER BUTTON -- */
-.nav-lang-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255, 107, 0, 0.08);
-  color: var(--saffron);
-  border: 1px solid rgba(255, 107, 0, 0.25);
-  padding: 6px 12px;
-  border-radius: var(--radius-full);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-.nav-lang-btn:hover {
-  background: var(--saffron);
-  color: #fff;
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(255, 107, 0, 0.25);
-}
-.dark-mode .nav-lang-btn {
-  background: rgba(255, 107, 0, 0.15);
-  border-color: rgba(255, 107, 0, 0.4);
-}
+
 /* ── LANGUAGE SWITCHER BUTTON ── */
 .nav-lang-btn {
   display: inline-flex;
@@ -261,12 +237,116 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(255, 107, 0, 0.3);
 }
-.dark-mode .nav-lang-btn {
+.dark-mode .nav-lang-btn,
+html.dark-mode .nav-lang-btn {
   background: rgba(255, 107, 0, 0.2);
   border-color: rgba(255, 107, 0, 0.5);
   color: #FFA04D;
 }
-.dark-mode .nav-lang-btn:hover {
+.dark-mode .nav-lang-btn:hover,
+html.dark-mode .nav-lang-btn:hover {
   background: #FF6B00;
   color: #ffffff;
+}
+
+/* ══════════════ OFFLINE STATUS BANNER ══════════════ */
+.offline-banner {
+  background: linear-gradient(90deg, #B45309 0%, #D97706 100%);
+  color: #FFFFFF;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+  position: relative;
+  z-index: 1001;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  animation: slideDownBanner 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.offline-banner.online-sync {
+  background: linear-gradient(90deg, #047857 0%, #10B981 100%);
+}
+
+.offline-banner-content {
+  max-width: 1240px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  text-align: center;
+}
+
+.offline-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background-color: #FEF08A;
+  display: inline-block;
+  box-shadow: 0 0 8px #FEF08A;
+  animation: pulseDot 1.5s infinite;
+}
+
+.offline-banner.online-sync .offline-dot {
+  background-color: #A7F3D0;
+  box-shadow: 0 0 8px #A7F3D0;
+}
+
+@keyframes pulseDot {
+  0% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.25); opacity: 1; }
+  100% { transform: scale(0.9); opacity: 0.7; }
+}
+
+@keyframes slideDownBanner {
+  from { transform: translateY(-100%); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.offline-retry-btn {
+  background: rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #FFFFFF;
+  border-radius: 9999px;
+  padding: 3px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.offline-retry-btn:hover {
+  background: rgba(255, 255, 255, 0.35);
+  transform: translateY(-1px);
+}
+
+/* ══════════════ NAVBAR PWA INSTALL BUTTON ══════════════ */
+.nav-pwa-btn {
+  background: linear-gradient(135deg, #2563EB, #1D4ED8);
+  color: #FFFFFF;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 9999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  cursor: pointer;
+  box-shadow: 0 3px 10px rgba(37, 99, 235, 0.3);
+  transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.nav-pwa-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.4);
+  background: linear-gradient(135deg, #1D4ED8, #1E40AF);
+}
+
+.nav-pwa-btn i {
+  font-size: 13px;
 }

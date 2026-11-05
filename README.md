@@ -59,6 +59,7 @@ India provides thousands of central and state government welfare schemes — yet
 | 🎙️ **Voice-First Vernacular STT** | 3-tier cascading Speech-to-Text (`whisper-large-v3-turbo` → `whisper-large-v3` → Web Speech API) with 18 RPM concurrency guard & anti-hallucination query normalizer |
 | 👨‍👩‍👧‍👦 **Household Persona Vault & Matrix** | Multi-member parallel discovery (`SaralFamilyVault`) calculating combined annual DBT cash support, health cover, and consolidated master document checklists |
 | 📑 **Citizen Welfare Passbook** | Official CSC & Jan Seva Kendra format A4 printable dossiers with QR reference codes, verification checklists, and anti-bribery advisories |
+| 📲 **PWA Offline Mode & Service Worker** | Installable mobile web app (`manifest.json` & `sw.js`), App Shell caching, and rural Gram Panchayat offline mode for scheme browsing & Citizen Passbooks |
 | 🌙 **Theme & Accessibility** | Dark mode with persistent session state and zero flash of unstyled content (FOUC) |
 | 🚀 **Decoupled Deployment** | Pure static client ready for **Vercel**; lightweight Python REST backend ready for **Render** |
 

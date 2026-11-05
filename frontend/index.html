@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
   <!-- Google tag (gtag.js) -->
@@ -12,9 +12,19 @@
 </script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- PWA & Mobile App Meta Tags -->
+  <link rel="manifest" href="./manifest.json">
+  <link rel="icon" type="image/svg+xml" href="./icons/favicon.svg">
+  <link rel="alternate icon" href="./icons/favicon.ico">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <meta name="theme-color" content="#2563EB">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Saral Niti">
   <!-- For separate frontend deployment: Set content to your backend URL e.g. https://saral-niti-backend.onrender.com -->
   <meta name="backend-api" content="">
-  <title>Saral Niti — Government Scheme Discovery</title>
+  <title>Saral Niti — Government Scheme Discovery & Citizen Passbook</title>
   <script>
     (function() {
       try {
@@ -26,10 +36,22 @@
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
-<link rel="stylesheet" href="./css/main.css"></head>
+  <link rel="stylesheet" href="./css/main.css">
+</head>
 <body id="base">
 
- <!-- ══════════════ TOP TRICOLOR BAR ══════════════ -->
+  <!-- ══════════════ OFFLINE STATUS BANNER ══════════════ -->
+  <div id="offlineBanner" class="offline-banner" style="display:none;" role="status" aria-live="polite">
+    <div class="offline-banner-content">
+      <span class="offline-dot"></span>
+      <span id="offlineBannerText">📡 Offline Mode Active — Showing cached schemes & Welfare Passbook.</span>
+      <button class="offline-retry-btn" onclick="retryConnection()" title="Retry network connection">
+        <i class="fa-solid fa-rotate-right"></i> Check Connection
+      </button>
+    </div>
+  </div>
+
+  <!-- ══════════════ TOP TRICOLOR BAR ══════════════ -->
 <div class="tricolor-strip">
   <div class="strip-saffron"></div>
   <div class="strip-white"></div>
@@ -67,9 +89,15 @@
         </button>
       </li>
       <li>
-        <button class="nav-lang-btn" onclick="toggleLanguage()" id="langToggleBtn" title="Switch Language / भाषा बदलें">
+        <button class="nav-lang-btn" onclick="toggleLanguage()" id="langToggleBtn" type="button" title="Switch Language / भाषा बदलें">
           <i class="fa-solid fa-language"></i>
           <span id="langToggleText">हिन्दी</span>
+        </button>
+      </li>
+      <li>
+        <button id="pwaInstallBtn" class="nav-pwa-btn" style="display:none;" onclick="triggerPWAInstall()" title="Install Saral Niti App on your phone/desktop">
+          <i class="fa-solid fa-mobile-screen-button"></i>
+          <span>Install App</span>
         </button>
       </li>
       <li>
@@ -88,13 +116,13 @@
   </nav>
 </header>
 
- 
- <!-- ══════════════ HERO SECTION ══════════════ -->
+  
+  ﻿<!-- ══════════════ HERO SECTION ══════════════ -->
 <section class="hero">
   <div class="hero-container">
     <div class="hero-badge">
       <span class="badge-dot"></span>
-      <span>National Welfare Portal • Direct Benefit Discovery</span>
+      <span data-i18n="hero_badge">National Welfare Portal • Direct Benefit Discovery</span>
     </div>
 
     <h1 class="hero-headline">
@@ -113,7 +141,7 @@
         <input 
           type="text" 
           id="searchInput" 
-          placeholder="Search by scheme name, ministry, or keyword (e.g. farmer, student, health)..."
+          data-i18n-placeholder="search_placeholder" placeholder="Search by scheme name, ministry, or keyword (e.g. farmer, student, health)..."
           autocomplete="off"
         />
         <button type="button" class="voice-search-btn" id="btnVoiceSearch" onclick="toggleVoiceSearch()" title="बोलकर खोजें (Voice Search in Hindi/English)" aria-label="Voice Search">
@@ -198,7 +226,7 @@
   </div>
 </section>
 
- <!-- ══════════════ SCHEMES EXPLORER SECTION ══════════════ -->
+  ﻿<!-- ══════════════ SCHEMES EXPLORER SECTION ══════════════ -->
 <main class="main" id="schemes">
   <div class="section-header">
     <div class="section-heading">
@@ -686,8 +714,8 @@
   </div>
 </main>
 
- 
- <!-- ══════════════ MODERN FOOTER ══════════════ -->
+  
+  ﻿<!-- ══════════════ MODERN FOOTER ══════════════ -->
 <footer class="footer-wrap" id="Contact">
   <div class="footer-container">
     <div class="footer-grid">
@@ -776,7 +804,7 @@
   </div>
 </footer>
 
-<!-- ══════════════ SCHEME DETAIL MODAL ══════════════ -->
+  <!-- ══════════════ SCHEME DETAIL MODAL ══════════════ -->
 <div class="modal-overlay" id="modalOverlay" onclick="closeModalOnOverlay(event)" role="dialog" aria-modal="true">
   <div class="modal">
     <div class="modal-header">
@@ -924,7 +952,7 @@
   </div>
 </div>
 
-<!-- ══════════════ URL DETECTOR MODAL ══════════════ -->
+  <!-- ══════════════ URL DETECTOR MODAL ══════════════ -->
 <div class="det-overlay" id="detOverlay" onclick="closeDetectorOnOverlay(event)">
   <div class="det-modal">
 
@@ -996,7 +1024,7 @@
   </div>
 </div>
 
-<!-- ══════════════ ELIGIBILITY CHECKER MODAL ══════════════ -->
+  <!-- ══════════════ ELIGIBILITY CHECKER MODAL ══════════════ -->
 <div class="modal-overlay" id="eligibilityOverlay" onclick="closeEligibilityOnOverlay(event)" role="dialog" aria-modal="true">
   <div class="modal eligibility-modal">
     <div class="modal-header">
@@ -1345,12 +1373,10 @@
 </div>
 
 
+  <script src="./js/i18n.js"></script>
   <script src="./js/family_vault.js"></script>
   <script src="./js/main.js"></script>
-  <script src="./js/i18n.js"></script>`n  <script src="./js/chatbot.js"></script>
+  <script src="./js/chatbot.js"></script>
 
 </body>
 </html>
-
-
-
