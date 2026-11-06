@@ -1174,6 +1174,73 @@ def test_voice_query_normalizer_and_endpoints():
     assert trans_data["schema"]["category"] in ("agriculture", "financial")
 
 
+# Test 49 - Browser-Mode Visual Diagnostics, Zero-Dependency Offline Fallbacks & Vernacular Footer
+def test_browser_ui_offline_resilience_and_footer_i18n(client=None):
+    base_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
+    # 1. Verify i18n dictionary has footer & offline banner in both English and Hindi
+    i18n_path = os.path.join(base_dir, "static", "js", "i18n.js")
+    with open(i18n_path, "r", encoding="utf-8") as f:
+        i18n_code = f.read()
+
+    req_keys = [
+        "footer_link_home",
+        "footer_link_browse",
+        "footer_link_eligibility",
+        "footer_link_scam",
+        "footer_link_chat",
+        "footer_link_mail",
+        "footer_github",
+        "offline_banner_text",
+        "offline_banner_retry",
+        "offline_banner_reconnected"
+    ]
+    for k in req_keys:
+        assert f"{k}:" in i18n_code, f"Missing i18n key: {k}"
+
+    # 2. Verify main.js contains embedded DEFAULT_STARTER_SCHEMES and offline fallback
+    main_js_path = os.path.join(base_dir, "static", "js", "main.js")
+    with open(main_js_path, "r", encoding="utf-8") as f:
+        main_code = f.read()
+
+    assert "DEFAULT_STARTER_SCHEMES" in main_code
+    assert "PM Kisan Samman Nidhi" in main_code
+    assert "Ayushman Bharat PM-JAY" in main_code
+    assert "offline_banner_text" in main_code
+
+    # 3. Verify base.css contains zero-dependency FontAwesome icon fallbacks
+    base_css_path = os.path.join(base_dir, "static", "css", "base.css")
+    with open(base_css_path, "r", encoding="utf-8") as f:
+        base_css = f.read()
+
+    icon_glyphs = [
+        ".fa-file-shield::before",
+        ".fa-robot::before",
+        ".fa-message::before",
+        ".fa-hand-holding-dollar::before",
+        ".fa-user-check::before"
+    ]
+    for ig in icon_glyphs:
+        assert ig in base_css, f"Missing offline icon fallback: {ig}"
+
+    # 4. Verify dark-mode.css includes proper contrast for advanced filters and quick pills
+    dark_css_path = os.path.join(base_dir, "static", "css", "dark-mode.css")
+    with open(dark_css_path, "r", encoding="utf-8") as f:
+        dark_css = f.read()
+
+    assert "html.dark-mode .adv-filter-toggle-btn" in dark_css
+    assert "html.dark-mode .quick-pill" in dark_css
+
+    # 5. Verify footer.html has data-i18n attributes
+    footer_path = os.path.join(base_dir, "templates", "footer.html")
+    with open(footer_path, "r", encoding="utf-8") as f:
+        footer_html = f.read()
+
+    assert 'data-i18n="footer_link_home"' in footer_html
+    assert 'data-i18n="footer_link_browse"' in footer_html
+    assert 'data-i18n="footer_link_mail"' in footer_html
+
+
 # Test 45 - PWA Offline Mode, Service Worker, Web App Manifest & Static Assets
 def test_pwa_offline_service_worker_and_manifest(client=None):
     c = client or get_test_client()
@@ -1375,6 +1442,7 @@ if __name__ == "__main__":
         test_vernacular_i18n_ui_coverage_and_dictionary,
         test_step2_plain_language_simplifier_and_golden_questions,
         test_step3_code_mixed_regional_nlu_and_ask_sahayak,
+        test_browser_ui_offline_resilience_and_footer_i18n,
         test_pwa_offline_service_worker_and_manifest,
         test_voice_query_normalizer_and_endpoints,
     test_recommend_household_matrix,

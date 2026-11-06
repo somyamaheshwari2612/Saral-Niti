@@ -123,3 +123,67 @@ body {
     transition-duration: 0.01ms !important;
   }
 }
+
+/* ══════════════════════════════════════════════════
+   OFFLINE ICON FALLBACKS (Zero-dependency FontAwesome Fallback)
+   Ensures icons display cleanly even without cdnjs/internet
+   ══════════════════════════════════════════════════ */
+.fa-solid, .fa-regular, .fa-brands, [class*="fa-"] {
+  display: inline-block;
+  font-style: normal;
+  font-variant: normal;
+  text-rendering: auto;
+  line-height: 1;
+}
+
+/* Core Navigation & Controls */
+.fa-language::before { content: "🌐"; }
+.fa-moon::before { content: "🌙"; }
+.fa-sun::before { content: "☀️"; }
+.fa-mobile-screen-button::before { content: "📱"; }
+.fa-shield-halved::before { content: "🛡️"; }
+.fa-rotate-right::before { content: "🔄"; }
+.fa-spinner::before { content: "⏳"; }
+.fa-envelope::before { content: "✉️"; }
+.fa-github::before { content: "🐙"; }
+
+/* Hero & Search */
+.fa-file-shield::before { content: "📋"; }
+.fa-layer-group::before { content: "📁"; }
+.fa-circle-check::before { content: "✔"; }
+.fa-robot::before { content: "🤖"; }
+.fa-magnifying-glass::before { content: "🔍"; }
+.fa-microphone::before { content: "🎙️"; }
+.fa-arrow-right::before { content: "→"; }
+.fa-fire::before { content: "🔥"; }
+.fa-wand-magic-sparkles::before { content: "✨"; }
+
+/* Cards & Modals */
+.fa-gift::before { content: "🎁"; }
+.fa-building-columns::before { content: "🏛️"; }
+.fa-message::before { content: "💬"; }
+.fa-comments::before { content: "💬"; }
+.fa-paper-plane::before { content: "➤"; }
+.fa-print::before { content: "🖨️"; }
+.fa-download::before { content: "📥"; }
+.fa-headset::before { content: "🎧"; }
+.fa-circle-info::before { content: "ℹ️"; }
+.fa-circle-exclamation::before { content: "⚠️"; }
+.fa-circle-question::before { content: "❓"; }
+.fa-hand-holding-dollar::before { content: "💰"; }
+.fa-user-check::before { content: "👤"; }
+.fa-id-card::before { content: "🪪"; }
+.fa-file-lines::before { content: "📄"; }
+.fa-sliders::before { content: "⚙️"; }
+.fa-money-bill-transfer::before { content: "💸"; }
+.fa-tag::before { content: "🏷️"; }
+.fa-credit-card::before { content: "💳"; }
+.fa-graduation-cap::before { content: "🎓"; }
+.fa-lightbulb::before { content: "💡"; }
+.fa-share-nodes::before { content: "🔗"; }
+.fa-check::before { content: "✓"; }
+.fa-xmark::before { content: "✕"; }
+.fa-times::before { content: "✕"; }
+.fa-box-open::before { content: "📂"; }
+.fa-chevron-right::before { content: "›"; }
+.fa-chevron-down::before { content: "⌄"; }

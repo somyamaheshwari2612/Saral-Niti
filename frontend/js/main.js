@@ -50,14 +50,18 @@ function debounce(func, delay = 300) {
 // ══════════════════════════════════════════════════
 const OFFLINE_SCHEMES_STORAGE_KEY = 'saral_panchayat_schemes_cache';
 const MAX_OFFLINE_CACHED_SCHEMES = 350;
+const DEFAULT_STARTER_SCHEMES = [{"id": 4848, "title": "PM Kisan Samman Nidhi", "category": "agriculture", "ministry": "Ministry of Agriculture & Farmers Welfare", "description": "Provides income support of Rs.6000 per year to small and marginal farmer families across India in three equal installments.", "benefits": "Rs.6000 per year in 3 installments of Rs.2000", "eligibility": {"min_age": 18, "max_age": null, "gender": "all", "income_limit": null, "caste": ["general", "obc", "sc", "st"], "occupation": ["farmer"], "state": "all", "is_student": false, "is_differently_abled": false}, "documents_required": ["Aadhaar Card", "Land Ownership Records (Khasra/Khatauni)", "Bank Account Passbook"], "application_url": "https://pmkisan.gov.in", "level": "central", "tags": ["farmer", "rural", "income support", "cash transfer"]}, {"id": 4849, "title": "PM Awas Yojana Urban", "category": "housing", "ministry": "Ministry of Housing & Urban Affairs", "description": "Affordable housing for urban poor through credit-linked subsidy on home loans.", "benefits": "Interest subsidy up to Rs.2.67 lakh on home loans", "eligibility": {"min_age": 18, "max_age": null, "gender": "all", "income_limit": 1800000, "caste": ["general", "obc", "sc", "st"], "occupation": [], "state": "all", "is_student": false, "is_differently_abled": false}, "documents_required": ["Aadhaar Card", "Income Certificate", "Affidavit of Non-Housing Property Ownership", "Bank Details"], "application_url": "https://pmaymis.gov.in", "level": "central", "tags": ["housing", "urban", "home loan", "subsidy"]}, {"id": 4850, "title": "Beti Bachao Beti Padhao", "category": "women", "ministry": "Ministry of Women & Child Development", "description": "Scheme to address declining child sex ratio and promote welfare and education of the girl child.", "benefits": "Financial incentives, scholarship support, awareness programs", "eligibility": {"min_age": 0, "max_age": 10, "gender": "female", "income_limit": null, "caste": ["general", "obc", "sc", "st"], "occupation": [], "state": "all", "is_student": false, "is_differently_abled": false}, "documents_required": ["Aadhaar Card", "Bank Account (Single/Joint)", "Age Proof", "Address Proof"], "application_url": "https://wcd.nic.in", "level": "central", "tags": ["girl child", "education", "women", "empowerment"]}, {"id": 4851, "title": "Ayushman Bharat PM-JAY", "category": "health", "ministry": "Ministry of Health & Family Welfare", "description": "World's largest health insurance scheme providing Rs.5 lakh per family per year for hospitalization.", "benefits": "Rs.5 lakh per family per year for hospitalization", "eligibility": {"min_age": 0, "max_age": null, "gender": "all", "income_limit": 100000, "caste": ["general", "obc", "sc", "st"], "occupation": [], "state": "all", "is_student": false, "is_differently_abled": false}, "documents_required": ["Aadhaar Card", "Ration Card / BPL Card", "Income Certificate"], "application_url": "https://pmjay.gov.in", "level": "central", "tags": ["health", "insurance", "hospital", "free treatment"]}, {"id": 4852, "title": "PM Mudra Yojana", "category": "employment", "ministry": "Ministry of Finance", "description": "Provides loans up to Rs.10 lakh to non-corporate, non-farm small and micro enterprises.", "benefits": "Collateral-free loans: Shishu up to Rs.50k, Kishor up to Rs.5L, Tarun up to Rs.10L", "eligibility": {"min_age": 18, "max_age": null, "gender": "all", "income_limit": null, "caste": ["general", "obc", "sc", "st"], "occupation": ["business", "self-employed"], "state": "all", "is_student": false, "is_differently_abled": false}, "documents_required": ["Aadhaar Card", "Educational Certificates", "Bank Account Passbook", "Resume/Skill Certificate"], "application_url": "https://mudra.org.in", "level": "central", "tags": ["loan", "business", "self employment", "micro enterprise", "startup"]}, {"id": 4853, "title": "National Scholarship Portal", "category": "education", "ministry": "Ministry of Education", "description": "Single-window portal for students to apply for various central and state government scholarships.", "benefits": "Scholarships ranging from Rs.1000 to Rs.20000 per year", "eligibility": {"min_age": 6, "max_age": 30, "gender": "all", "income_limit": 250000, "caste": ["sc", "st", "obc", "minority"], "occupation": ["student"], "state": "all", "is_student": false, "is_differently_abled": false}, "documents_required": ["Aadhaar Card", "Previous Year Marksheet", "College/School Bonafide Certificate", "Income Certificate"], "application_url": "https://scholarships.gov.in", "level": "central", "tags": ["scholarship", "student", "education", "minority", "merit"]}, {"id": 4854, "title": "Sukanya Samriddhi Yojana", "category": "women", "ministry": "Ministry of Finance", "description": "Small savings scheme for girl child providing high interest rate and tax benefits.", "benefits": "8.2% interest rate per year, tax exemption under Section 80C", "eligibility": {"min_age": 0, "max_age": 10, "gender": "female", "income_limit": null, "caste": ["general", "obc", "sc", "st"], "occupation": [], "state": "all", "is_student": false, "is_differently_abled": false}, "documents_required": ["Aadhaar Card", "Bank Account (Single/Joint)", "Age Proof", "Address Proof"], "application_url": "https://www.indiapost.gov.in", "level": "central", "tags": ["girl child", "savings", "investment", "tax benefit"]}, {"id": 4855, "title": "Atal Pension Yojana", "category": "elderly", "ministry": "Ministry of Finance", "description": "Guaranteed pension scheme for workers in the unorganized sector.", "benefits": "Guaranteed pension of Rs.1000 to Rs.5000 per month after age 60", "eligibility": {"min_age": 18, "max_age": 40, "gender": "all", "income_limit": null, "caste": ["general", "obc", "sc", "st"], "occupation": ["unorganized sector"], "state": "all", "is_student": false, "is_differently_abled": false}, "documents_required": ["Aadhaar Card", "Age Proof Certificate", "Bank Account Details", "Income Certificate"], "application_url": "https://npscra.nsdl.co.in", "level": "central", "tags": ["pension", "retirement", "unorganized sector", "old age"]}, {"id": 4856, "title": "PM Rozgar Protsahan Yojana", "category": "employment", "ministry": "Ministry of Labour & Employment", "description": "Government pays full employer EPF contribution for new employees to incentivize job creation.", "benefits": "Employer's full EPF contribution 12% paid by government for 3 years", "eligibility": {"min_age": 18, "max_age": null, "gender": "all", "income_limit": null, "caste": ["general", "obc", "sc", "st"], "occupation": ["employed"], "state": "all", "is_student": false, "is_differently_abled": false}, "documents_required": ["Aadhaar Card", "Educational Certificates", "Bank Account Passbook", "Resume/Skill Certificate"], "application_url": "https://pmrpy.gov.in", "level": "central", "tags": ["employment", "job creation", "epf", "employer", "youth"]}, {"id": 4857, "title": "Stand Up India", "category": "financial", "ministry": "Ministry of Finance", "description": "Facilitates bank loans between Rs.10 lakh to Rs.1 crore to SC/ST and women entrepreneurs.", "benefits": "Bank loan from Rs.10 lakh to Rs.1 crore for greenfield enterprises", "eligibility": {"min_age": 18, "max_age": null, "gender": "all", "income_limit": null, "caste": ["sc", "st"], "occupation": ["entrepreneur", "business"], "state": "all", "is_student": false, "is_differently_abled": false}, "documents_required": ["Aadhaar Card", "PAN Card", "Bank Account Details", "Income Certificate"], "application_url": "https://www.standupmitra.in", "level": "central", "tags": ["loan", "women", "sc", "st", "entrepreneurship", "business"]}, {"id": 4858, "title": "PM Ujjwala Yojana", "category": "women", "ministry": "Ministry of Petroleum & Natural Gas", "description": "Provides free LPG connections to women from below poverty line households to replace unclean cooking fuels.", "benefits": "Free LPG connection with first refill and stove", "eligibility": {"min_age": 18, "max_age": null, "gender": "female", "income_limit": 100000, "caste": ["general", "obc", "sc", "st"], "occupation": [], "state": "all", "is_student": false, "is_differently_abled": false}, "documents_required": ["Aadhaar Card", "Bank Account (Single/Joint)", "Age Proof", "Address Proof"], "application_url": "https://pmuy.gov.in", "level": "central", "tags": ["lpg", "cooking gas", "bpl", "women", "rural"]}, {"id": 4859, "title": "Swachh Bharat Mission", "category": "housing", "ministry": "Ministry of Jal Shakti", "description": "Provides financial assistance to rural households for construction of individual household toilets.", "benefits": "Rs.12000 incentive for toilet construction", "eligibility": {"min_age": 18, "max_age": null, "gender": "all", "income_limit": null, "caste": ["general", "obc", "sc", "st"], "occupation": [], "state": "all", "is_student": false, "is_differently_abled": false}, "documents_required": ["Aadhaar Card", "Income Certificate", "Affidavit of Non-Housing Property Ownership", "Bank Details"], "application_url": "https://swachhbharatmission.gov.in", "level": "central", "tags": ["toilet", "sanitation", "rural", "hygiene"]}];
+
 
 function getOfflineCachedSchemes() {
   try {
     const raw = localStorage.getItem(OFFLINE_SCHEMES_STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    return [];
-  }
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+    }
+  } catch (e) {}
+  return (typeof DEFAULT_STARTER_SCHEMES !== 'undefined' && Array.isArray(DEFAULT_STARTER_SCHEMES)) ? DEFAULT_STARTER_SCHEMES : [];
 }
 
 function saveSchemesToOfflineCache(schemes) {
@@ -133,16 +137,18 @@ function updateOnlineStatus(isOnline) {
   const bannerText = document.getElementById('offlineBannerText');
   if (!banner) return;
 
+  const tFn = (typeof t === 'function') ? t : (k, fb) => fb;
+
   if (!isOnline) {
     banner.classList.remove('online-sync');
     if (bannerText) {
-      bannerText.innerHTML = '<strong>📡 Offline Mode Active (Gram Panchayat Cache)</strong> — Browsing cached schemes & Welfare Passbook.';
+      bannerText.innerHTML = `<strong>${tFn('offline_banner_text', '📡 Offline Mode Active (Gram Panchayat Cache) — Browsing cached schemes & Welfare Passbook.')}</strong>`;
     }
     banner.style.display = 'block';
   } else {
     banner.classList.add('online-sync');
     if (bannerText) {
-      bannerText.innerHTML = '<strong>🟢 Reconnected to Saral Niti Network</strong> — Live scheme sync enabled.';
+      bannerText.innerHTML = `<strong>${tFn('offline_banner_reconnected', '🟢 Reconnected to Saral Niti Network — Live scheme sync enabled.')}</strong>`;
     }
     banner.style.display = 'block';
     setTimeout(() => {
@@ -154,7 +160,8 @@ function updateOnlineStatus(isOnline) {
 
 function retryConnection() {
   const bannerText = document.getElementById('offlineBannerText');
-  if (bannerText) bannerText.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Checking network connection...';
+  const tFn = (typeof t === 'function') ? t : (k, fb) => fb;
+  if (bannerText) bannerText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${tFn('offline_banner_checking', 'Checking network connection...')}`;
   fetch(`${SCHEMES_API}/api/health`, { cache: 'no-cache', method: 'GET' })
     .then((res) => {
       if (res.ok) {
@@ -363,6 +370,7 @@ async function loadSchemes(page = 1, append = false) {
     updateScrollStatus();
   } catch (err) {
     const cached = getOfflineCachedSchemes();
+    const isHi = (typeof currentLang !== 'undefined' && currentLang === 'hi');
     if (cached && cached.length > 0 && !append) {
       currentSchemesList = cached;
       allSchemes = cached;
@@ -370,15 +378,24 @@ async function loadSchemes(page = 1, append = false) {
       if (grid) {
         grid.innerHTML = currentSchemesList.map((s, idx) => formatSchemeCardHTML(s, idx)).join('');
       }
-      if (count) count.innerHTML = `Showing <strong>${cached.length}</strong> schemes from Gram Panchayat Offline Cache 📡`;
+      if (count) {
+        count.innerHTML = isHi 
+          ? `ग्राम पंचायत सुरक्षित डेटा: <strong>${cached.length}</strong> प्रमुख योजनाएं प्रदर्शित 📡`
+          : `Showing <strong>${cached.length}</strong> schemes from Gram Panchayat Offline Cache 📡`;
+      }
       updateOnlineStatus(false);
+      if (typeof window !== 'undefined' && (window.location.hash.includes('modal') || window.location.search.includes('modal=1'))) {
+        setTimeout(() => {
+          if (currentSchemesList && currentSchemesList.length > 0) openModal(currentSchemesList[0]);
+        }, 150);
+      }
     } else if (!append && grid) {
       grid.innerHTML = `
         <div class="no-results">
-          <h3>Could not connect to server</h3>
-          <p>You appear to be offline with no cached schemes yet. Please connect to internet.</p>
+          <h3>${isHi ? 'सर्वर से संपर्क नहीं हो सका' : 'Could not connect to server'}</h3>
+          <p>${isHi ? 'आप ऑफलाइन प्रतीत हो रहे हैं। कृपया इंटरनेट कनेक्शन की जांच करें।' : 'You appear to be offline with no cached schemes yet. Please connect to internet.'}</p>
         </div>`;
-      if (count) count.textContent = 'Connection error';
+      if (count) count.textContent = isHi ? 'कनेक्शन त्रुटि' : 'Connection error';
       updateOnlineStatus(false);
     }
   } finally {
@@ -3263,6 +3280,10 @@ setInterval(() => {
 window.addEventListener('saralLanguageChange', (e) => {
   updateSearchPlaceholder();
   updateScrollStatus();
+  const offlineBanner = document.getElementById('offlineBanner');
+  if (offlineBanner && offlineBanner.style.display !== 'none') {
+    updateOnlineStatus(navigator.onLine);
+  }
   if (currentSchemesList && currentSchemesList.length > 0) {
     const grid = document.getElementById('schemesGrid');
     if (grid) {

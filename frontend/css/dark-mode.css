@@ -94,6 +94,35 @@ html.dark-mode .filter-btn.active {
   border-color: #FF6B00;
 }
 
+html.dark-mode .adv-filter-toggle-btn {
+  background: #1E293B;
+  border-color: #475569;
+  color: #F1F5F9;
+}
+
+html.dark-mode .adv-filter-toggle-btn:hover {
+  background: #334155;
+  border-color: #FF6B00;
+  color: #FFFFFF;
+}
+
+html.dark-mode .quick-pill {
+  background: #111827;
+  border-color: #334155;
+  color: #CBD5E1;
+}
+
+html.dark-mode .quick-pill:hover {
+  border-color: #FF6B00;
+  color: #FF8C3A;
+}
+
+html.dark-mode .quick-pill.active {
+  background: rgba(255, 107, 0, 0.2);
+  border-color: #FF6B00;
+  color: #FF8C3A;
+}
+
 html.dark-mode .results-bar {
   border-bottom-color: #1F2937;
 }

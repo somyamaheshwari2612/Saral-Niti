@@ -1,0 +1,474 @@
+const DEFAULT_STARTER_SCHEMES = [
+  {
+    "id": 4848,
+    "title": "PM Kisan Samman Nidhi",
+    "category": "agriculture",
+    "ministry": "Ministry of Agriculture & Farmers Welfare",
+    "description": "Provides income support of Rs.6000 per year to small and marginal farmer families across India in three equal installments.",
+    "benefits": "Rs.6000 per year in 3 installments of Rs.2000",
+    "eligibility": {
+      "min_age": 18,
+      "max_age": null,
+      "gender": "all",
+      "income_limit": null,
+      "caste": [
+        "general",
+        "obc",
+        "sc",
+        "st"
+      ],
+      "occupation": [
+        "farmer"
+      ],
+      "state": "all",
+      "is_student": false,
+      "is_differently_abled": false
+    },
+    "documents_required": [
+      "Aadhaar Card",
+      "Land Ownership Records (Khasra/Khatauni)",
+      "Bank Account Passbook"
+    ],
+    "application_url": "https://pmkisan.gov.in",
+    "level": "central",
+    "tags": [
+      "farmer",
+      "rural",
+      "income support",
+      "cash transfer"
+    ]
+  },
+  {
+    "id": 4849,
+    "title": "PM Awas Yojana Urban",
+    "category": "housing",
+    "ministry": "Ministry of Housing & Urban Affairs",
+    "description": "Affordable housing for urban poor through credit-linked subsidy on home loans.",
+    "benefits": "Interest subsidy up to Rs.2.67 lakh on home loans",
+    "eligibility": {
+      "min_age": 18,
+      "max_age": null,
+      "gender": "all",
+      "income_limit": 1800000,
+      "caste": [
+        "general",
+        "obc",
+        "sc",
+        "st"
+      ],
+      "occupation": [],
+      "state": "all",
+      "is_student": false,
+      "is_differently_abled": false
+    },
+    "documents_required": [
+      "Aadhaar Card",
+      "Income Certificate",
+      "Affidavit of Non-Housing Property Ownership",
+      "Bank Details"
+    ],
+    "application_url": "https://pmaymis.gov.in",
+    "level": "central",
+    "tags": [
+      "housing",
+      "urban",
+      "home loan",
+      "subsidy"
+    ]
+  },
+  {
+    "id": 4850,
+    "title": "Beti Bachao Beti Padhao",
+    "category": "women",
+    "ministry": "Ministry of Women & Child Development",
+    "description": "Scheme to address declining child sex ratio and promote welfare and education of the girl child.",
+    "benefits": "Financial incentives, scholarship support, awareness programs",
+    "eligibility": {
+      "min_age": 0,
+      "max_age": 10,
+      "gender": "female",
+      "income_limit": null,
+      "caste": [
+        "general",
+        "obc",
+        "sc",
+        "st"
+      ],
+      "occupation": [],
+      "state": "all",
+      "is_student": false,
+      "is_differently_abled": false
+    },
+    "documents_required": [
+      "Aadhaar Card",
+      "Bank Account (Single/Joint)",
+      "Age Proof",
+      "Address Proof"
+    ],
+    "application_url": "https://wcd.nic.in",
+    "level": "central",
+    "tags": [
+      "girl child",
+      "education",
+      "women",
+      "empowerment"
+    ]
+  },
+  {
+    "id": 4851,
+    "title": "Ayushman Bharat PM-JAY",
+    "category": "health",
+    "ministry": "Ministry of Health & Family Welfare",
+    "description": "World's largest health insurance scheme providing Rs.5 lakh per family per year for hospitalization.",
+    "benefits": "Rs.5 lakh per family per year for hospitalization",
+    "eligibility": {
+      "min_age": 0,
+      "max_age": null,
+      "gender": "all",
+      "income_limit": 100000,
+      "caste": [
+        "general",
+        "obc",
+        "sc",
+        "st"
+      ],
+      "occupation": [],
+      "state": "all",
+      "is_student": false,
+      "is_differently_abled": false
+    },
+    "documents_required": [
+      "Aadhaar Card",
+      "Ration Card / BPL Card",
+      "Income Certificate"
+    ],
+    "application_url": "https://pmjay.gov.in",
+    "level": "central",
+    "tags": [
+      "health",
+      "insurance",
+      "hospital",
+      "free treatment"
+    ]
+  },
+  {
+    "id": 4852,
+    "title": "PM Mudra Yojana",
+    "category": "employment",
+    "ministry": "Ministry of Finance",
+    "description": "Provides loans up to Rs.10 lakh to non-corporate, non-farm small and micro enterprises.",
+    "benefits": "Collateral-free loans: Shishu up to Rs.50k, Kishor up to Rs.5L, Tarun up to Rs.10L",
+    "eligibility": {
+      "min_age": 18,
+      "max_age": null,
+      "gender": "all",
+      "income_limit": null,
+      "caste": [
+        "general",
+        "obc",
+        "sc",
+        "st"
+      ],
+      "occupation": [
+        "business",
+        "self-employed"
+      ],
+      "state": "all",
+      "is_student": false,
+      "is_differently_abled": false
+    },
+    "documents_required": [
+      "Aadhaar Card",
+      "Educational Certificates",
+      "Bank Account Passbook",
+      "Resume/Skill Certificate"
+    ],
+    "application_url": "https://mudra.org.in",
+    "level": "central",
+    "tags": [
+      "loan",
+      "business",
+      "self employment",
+      "micro enterprise",
+      "startup"
+    ]
+  },
+  {
+    "id": 4853,
+    "title": "National Scholarship Portal",
+    "category": "education",
+    "ministry": "Ministry of Education",
+    "description": "Single-window portal for students to apply for various central and state government scholarships.",
+    "benefits": "Scholarships ranging from Rs.1000 to Rs.20000 per year",
+    "eligibility": {
+      "min_age": 6,
+      "max_age": 30,
+      "gender": "all",
+      "income_limit": 250000,
+      "caste": [
+        "sc",
+        "st",
+        "obc",
+        "minority"
+      ],
+      "occupation": [
+        "student"
+      ],
+      "state": "all",
+      "is_student": false,
+      "is_differently_abled": false
+    },
+    "documents_required": [
+      "Aadhaar Card",
+      "Previous Year Marksheet",
+      "College/School Bonafide Certificate",
+      "Income Certificate"
+    ],
+    "application_url": "https://scholarships.gov.in",
+    "level": "central",
+    "tags": [
+      "scholarship",
+      "student",
+      "education",
+      "minority",
+      "merit"
+    ]
+  },
+  {
+    "id": 4854,
+    "title": "Sukanya Samriddhi Yojana",
+    "category": "women",
+    "ministry": "Ministry of Finance",
+    "description": "Small savings scheme for girl child providing high interest rate and tax benefits.",
+    "benefits": "8.2% interest rate per year, tax exemption under Section 80C",
+    "eligibility": {
+      "min_age": 0,
+      "max_age": 10,
+      "gender": "female",
+      "income_limit": null,
+      "caste": [
+        "general",
+        "obc",
+        "sc",
+        "st"
+      ],
+      "occupation": [],
+      "state": "all",
+      "is_student": false,
+      "is_differently_abled": false
+    },
+    "documents_required": [
+      "Aadhaar Card",
+      "Bank Account (Single/Joint)",
+      "Age Proof",
+      "Address Proof"
+    ],
+    "application_url": "https://www.indiapost.gov.in",
+    "level": "central",
+    "tags": [
+      "girl child",
+      "savings",
+      "investment",
+      "tax benefit"
+    ]
+  },
+  {
+    "id": 4855,
+    "title": "Atal Pension Yojana",
+    "category": "elderly",
+    "ministry": "Ministry of Finance",
+    "description": "Guaranteed pension scheme for workers in the unorganized sector.",
+    "benefits": "Guaranteed pension of Rs.1000 to Rs.5000 per month after age 60",
+    "eligibility": {
+      "min_age": 18,
+      "max_age": 40,
+      "gender": "all",
+      "income_limit": null,
+      "caste": [
+        "general",
+        "obc",
+        "sc",
+        "st"
+      ],
+      "occupation": [
+        "unorganized sector"
+      ],
+      "state": "all",
+      "is_student": false,
+      "is_differently_abled": false
+    },
+    "documents_required": [
+      "Aadhaar Card",
+      "Age Proof Certificate",
+      "Bank Account Details",
+      "Income Certificate"
+    ],
+    "application_url": "https://npscra.nsdl.co.in",
+    "level": "central",
+    "tags": [
+      "pension",
+      "retirement",
+      "unorganized sector",
+      "old age"
+    ]
+  },
+  {
+    "id": 4856,
+    "title": "PM Rozgar Protsahan Yojana",
+    "category": "employment",
+    "ministry": "Ministry of Labour & Employment",
+    "description": "Government pays full employer EPF contribution for new employees to incentivize job creation.",
+    "benefits": "Employer's full EPF contribution 12% paid by government for 3 years",
+    "eligibility": {
+      "min_age": 18,
+      "max_age": null,
+      "gender": "all",
+      "income_limit": null,
+      "caste": [
+        "general",
+        "obc",
+        "sc",
+        "st"
+      ],
+      "occupation": [
+        "employed"
+      ],
+      "state": "all",
+      "is_student": false,
+      "is_differently_abled": false
+    },
+    "documents_required": [
+      "Aadhaar Card",
+      "Educational Certificates",
+      "Bank Account Passbook",
+      "Resume/Skill Certificate"
+    ],
+    "application_url": "https://pmrpy.gov.in",
+    "level": "central",
+    "tags": [
+      "employment",
+      "job creation",
+      "epf",
+      "employer",
+      "youth"
+    ]
+  },
+  {
+    "id": 4857,
+    "title": "Stand Up India",
+    "category": "financial",
+    "ministry": "Ministry of Finance",
+    "description": "Facilitates bank loans between Rs.10 lakh to Rs.1 crore to SC/ST and women entrepreneurs.",
+    "benefits": "Bank loan from Rs.10 lakh to Rs.1 crore for greenfield enterprises",
+    "eligibility": {
+      "min_age": 18,
+      "max_age": null,
+      "gender": "all",
+      "income_limit": null,
+      "caste": [
+        "sc",
+        "st"
+      ],
+      "occupation": [
+        "entrepreneur",
+        "business"
+      ],
+      "state": "all",
+      "is_student": false,
+      "is_differently_abled": false
+    },
+    "documents_required": [
+      "Aadhaar Card",
+      "PAN Card",
+      "Bank Account Details",
+      "Income Certificate"
+    ],
+    "application_url": "https://www.standupmitra.in",
+    "level": "central",
+    "tags": [
+      "loan",
+      "women",
+      "sc",
+      "st",
+      "entrepreneurship",
+      "business"
+    ]
+  },
+  {
+    "id": 4858,
+    "title": "PM Ujjwala Yojana",
+    "category": "women",
+    "ministry": "Ministry of Petroleum & Natural Gas",
+    "description": "Provides free LPG connections to women from below poverty line households to replace unclean cooking fuels.",
+    "benefits": "Free LPG connection with first refill and stove",
+    "eligibility": {
+      "min_age": 18,
+      "max_age": null,
+      "gender": "female",
+      "income_limit": 100000,
+      "caste": [
+        "general",
+        "obc",
+        "sc",
+        "st"
+      ],
+      "occupation": [],
+      "state": "all",
+      "is_student": false,
+      "is_differently_abled": false
+    },
+    "documents_required": [
+      "Aadhaar Card",
+      "Bank Account (Single/Joint)",
+      "Age Proof",
+      "Address Proof"
+    ],
+    "application_url": "https://pmuy.gov.in",
+    "level": "central",
+    "tags": [
+      "lpg",
+      "cooking gas",
+      "bpl",
+      "women",
+      "rural"
+    ]
+  },
+  {
+    "id": 4859,
+    "title": "Swachh Bharat Mission",
+    "category": "housing",
+    "ministry": "Ministry of Jal Shakti",
+    "description": "Provides financial assistance to rural households for construction of individual household toilets.",
+    "benefits": "Rs.12000 incentive for toilet construction",
+    "eligibility": {
+      "min_age": 18,
+      "max_age": null,
+      "gender": "all",
+      "income_limit": null,
+      "caste": [
+        "general",
+        "obc",
+        "sc",
+        "st"
+      ],
+      "occupation": [],
+      "state": "all",
+      "is_student": false,
+      "is_differently_abled": false
+    },
+    "documents_required": [
+      "Aadhaar Card",
+      "Income Certificate",
+      "Affidavit of Non-Housing Property Ownership",
+      "Bank Details"
+    ],
+    "application_url": "https://swachhbharatmission.gov.in",
+    "level": "central",
+    "tags": [
+      "toilet",
+      "sanitation",
+      "rural",
+      "hygiene"
+    ]
+  }
+];

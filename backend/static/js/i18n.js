@@ -140,7 +140,24 @@ const I18N_TRANSLATIONS = {
     footer_gov_title: "Official Portals",
     footer_contact_title: "Developed By",
     footer_disclaimer: "Saral Niti is an independent citizen discovery platform. Always verify final guidelines on respective official ministry websites.",
-    footer_back_top: "Back to Top ↑"
+    footer_back_top: "Back to Top ↑",
+    footer_link_home: "Home Portal",
+    footer_link_browse: "Browse All Schemes",
+    footer_link_eligibility: "Check Eligibility",
+    footer_link_scam: "AI Scam Verifier",
+    footer_link_chat: "Chat with Assistant",
+    footer_link_mail: "Mail Us",
+    footer_github: "View on GitHub",
+    footer_made_with: "© 2026 Saral Niti — Made with ❤️ for the Citizens of India 🇮🇳",
+
+    // Offline Status & PWA
+    offline_banner_text: "📡 Offline Mode Active (Gram Panchayat Cache) — Browsing cached schemes & Welfare Passbook.",
+    offline_banner_retry: "Check Connection",
+    offline_banner_checking: "Checking network connection...",
+    offline_banner_reconnected: "🟢 Reconnected to Saral Niti Network — Live scheme sync enabled.",
+    offline_results_count: "Showing <strong>{count}</strong> schemes from Gram Panchayat Offline Cache 📡",
+    offline_empty_title: "Could not connect to server",
+    offline_empty_sub: "You appear to be offline with no cached schemes yet. Please connect to internet."
   },
   hi: {
     // Brand & Nav
@@ -277,7 +294,24 @@ const I18N_TRANSLATIONS = {
     footer_gov_title: "सरकारी पोर्टल",
     footer_contact_title: "निर्माता",
     footer_disclaimer: "सरल नीति एक स्वतंत्र नागरिक सहायता मंच है। अंतिम दिशा-निर्देश संबंधित मंत्रालय की आधिकारिक वेबसाइट पर अवश्य जांचें।",
-    footer_back_top: "वापस ऊपर जाएं ↑"
+    footer_back_top: "वापस ऊपर जाएं ↑",
+    footer_link_home: "मुख्य पोर्टल",
+    footer_link_browse: "सभी योजनाएं देखें",
+    footer_link_eligibility: "पात्रता जांचें",
+    footer_link_scam: "AI फ्रॉड डिटेक्टर",
+    footer_link_chat: "सरल सहायक से बात करें",
+    footer_link_mail: "संपर्क / सुझाव",
+    footer_github: "गिटहब पर देखें",
+    footer_made_with: "© 2026 सरल नीति — भारत के नागरिकों के लिए सस्नेह समर्पित 🇮🇳",
+
+    // Offline Status & PWA
+    offline_banner_text: "📡 ऑफलाइन मोड चालू (ग्राम पंचायत सुरक्षित डेटा) — सहेजी गई योजनाएं और कल्याण पासबुक देख रहे हैं।",
+    offline_banner_retry: "दोबारा जांचें",
+    offline_banner_checking: "इंटरनेट जांच रहे हैं...",
+    offline_banner_reconnected: "🟢 सरल नीति से पुनः जुड़ गए — ताज़ा योजनाएं लोड हो रही हैं।",
+    offline_results_count: "ग्राम पंचायत सुरक्षित डेटा: <strong>{count}</strong> प्रमुख योजनाएं प्रदर्शित 📡",
+    offline_empty_title: "सर्वर से संपर्क नहीं हो सका",
+    offline_empty_sub: "आप ऑफलाइन प्रतीत हो रहे हैं। कृपया इंटरनेट कनेक्शन की जांच करें।"
   }
 };
 
@@ -316,7 +350,12 @@ function setLanguage(lang) {
   translatableElements.forEach((el) => {
     const key = el.getAttribute('data-i18n');
     if (I18N_TRANSLATIONS[lang] && I18N_TRANSLATIONS[lang][key]) {
-      el.textContent = I18N_TRANSLATIONS[lang][key];
+      const val = I18N_TRANSLATIONS[lang][key];
+      if (val.includes('<') && val.includes('>')) {
+        el.innerHTML = val;
+      } else {
+        el.textContent = val;
+      }
     }
   });
 
