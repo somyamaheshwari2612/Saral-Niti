@@ -1263,9 +1263,71 @@ def test_vernacular_i18n_ui_coverage_and_dictionary(client=None):
     assert "खेती-किसानी" in i18n_code
 
 
+# Test 47 - Step 2: Plain Language Simplifier & 3 Golden Questions
+def test_step2_plain_language_simplifier_and_golden_questions(client=None):
+    c = client or get_test_client()
+    res = c.get("/")
+    assert res.status_code == 200
+    html = res.get_data(as_text=True)
+
+    # 1. Verify Mode Switcher and 3 Golden Questions elements in modal HTML
+    modal_elements = [
+        'id="tabModeSaral"',
+        'id="tabModeOfficial"',
+        'data-i18n="modal_tab_saral"',
+        'data-i18n="modal_tab_official"',
+        'id="panelSaralView"',
+        'id="panelOfficialView"',
+        'id="modalSaralExplainer"',
+        'id="modalSaralQ1"',
+        'id="modalSaralQ2"',
+        'id="modalSaralQ3"',
+        'data-i18n="golden_q1_title"',
+        'data-i18n="golden_q2_title"',
+        'data-i18n="golden_q3_title"',
+        'data-i18n="golden_kendra_tip"',
+    ]
+    for el in modal_elements:
+        assert el in html, f"Missing modal golden element: {el}"
+
+    # 2. Verify i18n dictionary contains Step 2 keys in both English & Hindi
+    import os
+    i18n_path = os.path.join(os.path.dirname(__file__), "..", "static", "js", "i18n.js")
+    with open(i18n_path, "r", encoding="utf-8") as f:
+        i18n_code = f.read()
+
+    assert "modal_tab_saral:" in i18n_code
+    assert "golden_q1_title:" in i18n_code
+    assert "1. मुझे क्या मिलेगा? (सीधा फ़ायदा)" in i18n_code
+    assert "2. कौन पात्र है? (किसे मिलेगा लाभ)" in i18n_code
+    assert "3. क्या कागज़ ले जाने हैं? (सीएससी चेकलिस्ट)" in i18n_code
+
+    # 3. Verify main.js implements view switcher and 3 Golden Questions engine
+    main_path = os.path.join(os.path.dirname(__file__), "..", "static", "js", "main.js")
+    with open(main_path, "r", encoding="utf-8") as f:
+        main_code = f.read()
+
+    assert "function switchModalViewMode" in main_code
+    assert "function renderSaralBhashaGoldenQuestions" in main_code
+    assert "function generateSaralPlainExplainer" in main_code
+    assert "function generateSaralQ1Benefits" in main_code
+    assert "function generateSaralQ2Eligibility" in main_code
+    assert "function generateSaralQ3Documents" in main_code
+
+    # 4. Verify CSS contains styles for tabs and golden cards
+    css_path = os.path.join(os.path.dirname(__file__), "..", "static", "css", "modals.css")
+    with open(css_path, "r", encoding="utf-8") as f:
+        css_code = f.read()
+
+    assert ".modal-mode-tabs" in css_code
+    assert ".golden-questions-container" in css_code
+    assert ".golden-q-card" in css_code
+
+
 if __name__ == "__main__":
     test_functions = [
         test_vernacular_i18n_ui_coverage_and_dictionary,
+        test_step2_plain_language_simplifier_and_golden_questions,
         test_pwa_offline_service_worker_and_manifest,
         test_voice_query_normalizer_and_endpoints,
     test_recommend_household_matrix,

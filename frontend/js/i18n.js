@@ -98,6 +98,26 @@ const I18N_TRANSLATIONS = {
     modal_level_central: "Central Government",
     modal_verified_prefix: "Verified Data",
 
+    // Step 2: 3 Golden Questions & Plain Language Simplifier
+    modal_tab_saral: "🌟 Plain Summary (Simple Words)",
+    modal_tab_official: "🏛️ Official Text (Gazette)",
+    saral_explainer_badge: "Plain Language Explainer",
+    saral_read_time: "1-Min Summary",
+    golden_q1_title: "1. What Will I Get? (Direct Benefits)",
+    golden_q1_sub: "Direct cash transfer, monthly pension, subsidies, or services",
+    golden_q2_title: "2. Who Is Eligible? (Qualification Rules)",
+    golden_q2_sub: "Simple rules on age, income, occupation, and family status",
+    golden_q3_title: "3. What Papers to Bring? (CSC Checklist)",
+    golden_q3_sub: "Keep original documents and photocopies ready for Jan Seva Kendra / CSC",
+    golden_kendra_tip: "💡 Jan Seva Kendra / CSC Tip: Carry original copies and one self-attested photocopy of each document.",
+    saral_dbt_badge: "Direct Bank Transfer (DBT)",
+    saral_doc_original: "Original + Copy",
+    saral_rule_age: "Age Limit",
+    saral_rule_income: "Family Income",
+    saral_rule_gender: "Gender",
+    saral_rule_state: "State / UT",
+    saral_rule_work: "Occupation & Group",
+
     // Family Vault
     vault_title: "Family Welfare Passbook",
     vault_sub: "Add all household members (parents, children) to discover eligible schemes and consolidated document checklists.",
@@ -213,6 +233,26 @@ const I18N_TRANSLATIONS = {
     modal_level_state: "राज्य सरकार",
     modal_level_central: "केंद्र सरकार",
     modal_verified_prefix: "सत्यापित जानकारी",
+
+    // Step 2: 3 Golden Questions & Plain Language Simplifier
+    modal_tab_saral: "🌟 सरल सारांश (आसान भाषा)",
+    modal_tab_official: "🏛️ सरकारी विवरण (विभागीय भाषा)",
+    saral_explainer_badge: "सरल भाषा में समझें",
+    saral_read_time: "1 मिनट में समझें",
+    golden_q1_title: "1. मुझे क्या मिलेगा? (सीधा फ़ायदा)",
+    golden_q1_sub: "नकद राशि, पेंशन, सब्सिडी या मुफ़्त सरकारी सहायता",
+    golden_q2_title: "2. कौन पात्र है? (किसे मिलेगा लाभ)",
+    golden_q2_sub: "उम्र, आय, ज़मीन और परिवार से जुड़ी मुख्य शर्तें",
+    golden_q3_title: "3. क्या कागज़ ले जाने हैं? (सीएससी चेकलिस्ट)",
+    golden_q3_sub: "जन सेवा केंद्र या ऑनलाइन आवेदन हेतु मूल दस्तावेज़",
+    golden_kendra_tip: "💡 सीएससी / जन सेवा केंद्र टिप: इन सभी कागज़ातों की मूल प्रति और एक-एक स्वप्रमाणित फ़ोटोकॉपी साथ ले जाएं।",
+    saral_dbt_badge: "सीधे बैंक खाते में (DBT)",
+    saral_doc_original: "मूल प्रति + फ़ोटोकॉपी",
+    saral_rule_age: "उम्र सीमा",
+    saral_rule_income: "पारिवारिक आय",
+    saral_rule_gender: "लिंग",
+    saral_rule_state: "योजना क्षेत्र / राज्य",
+    saral_rule_work: "पेशा व वर्ग",
 
     // Family Vault
     vault_title: "परिवार का वेलफेयर खाता",

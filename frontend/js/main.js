@@ -1177,6 +1177,271 @@ function resetFilters() {
 //  SCHEME DETAIL MODAL & SHARE (XSS-safe)
 // ══════════════════════════════════════════════════
 let currentModalScheme = null;
+let currentModalViewMode = 'saral';
+
+function switchModalViewMode(mode) {
+  currentModalViewMode = mode;
+  const tabSaral = document.getElementById('tabModeSaral');
+  const tabOfficial = document.getElementById('tabModeOfficial');
+  const panelSaral = document.getElementById('panelSaralView');
+  const panelOfficial = document.getElementById('panelOfficialView');
+
+  if (tabSaral && tabOfficial && panelSaral && panelOfficial) {
+    if (mode === 'official') {
+      tabSaral.classList.remove('active');
+      tabSaral.setAttribute('aria-selected', 'false');
+      tabOfficial.classList.add('active');
+      tabOfficial.setAttribute('aria-selected', 'true');
+      panelSaral.style.display = 'none';
+      panelOfficial.style.display = 'block';
+    } else {
+      tabOfficial.classList.remove('active');
+      tabOfficial.setAttribute('aria-selected', 'false');
+      tabSaral.classList.add('active');
+      tabSaral.setAttribute('aria-selected', 'true');
+      panelOfficial.style.display = 'none';
+      panelSaral.style.display = 'block';
+    }
+  }
+}
+
+function generateSaralPlainExplainer(s, isHi) {
+  if (!s) return '';
+  const title = s.title || '';
+  const ministry = s.ministry || (isHi ? 'केंद्र/राज्य सरकार' : 'Central/State Government');
+
+  // Major Schemes with Citizen-Tuned Explanations
+  const lower = title.toLowerCase();
+  if (lower.includes('pm kisan') || lower.includes('kisan samman')) {
+    return isHi
+      ? 'यह केंद्र सरकार की योजना है, जिसके तहत देश के किसान परिवारों को खेती और खाद-बीज के खर्चे हेतु हर साल <strong>₹6,000 की नकद सहायता</strong> तीन किश्तों (₹2,000-₹2,000) में सीधे बैंक खाते में दी जाती है।'
+      : 'A direct welfare initiative by the central government providing <strong>₹6,000 annual income support</strong> in three equal ₹2,000 cash installments directly into farmers’ bank accounts.';
+  }
+  if (lower.includes('ayushman') || lower.includes('pm-jay')) {
+    return isHi
+      ? 'यह देश की सबसे बड़ी मुफ़्त स्वास्थ्य योजना है, जिसमें पात्र परिवारों को किसी भी सरकारी या प्राइवेट सूचीबद्ध अस्पताल में <strong>हर साल ₹5 लाख तक का कैशलेस इलाज</strong> मिलता है।'
+      : 'India\'s flagship health security program providing <strong>₹5 Lakh free cashless hospital treatment</strong> per year for eligible families in empanelled hospitals.';
+  }
+  if (lower.includes('awas yojana') || lower.includes('pmay')) {
+    return isHi
+      ? 'यह बेघर और कच्चे मकान में रहने वाले परिवारों को पक्का मकान बनाने या खरीदने के लिए <strong>सब्सिडी और वित्तीय सहायता</strong> प्रदान करने वाली योजना है।'
+      : 'A national housing mission enabling low-income and homeless families to construct or acquire a pucca house with government subsidies.';
+  }
+  if (lower.includes('mgnrega') || lower.includes('employment guarantee') || lower.includes('मनरेगा')) {
+    return isHi
+      ? 'यह ग्रामीण परिवारों के वयस्क सदस्यों को साल में कम से कम <strong>100 दिनों के अकुशल काम की कानूनी गारंटी</strong> देती है, जिसमें न्यूनतम मज़दूरी सीधे बैंक खाते में मिलती है।'
+      : 'Guarantees <strong>100 days of wage employment</strong> in every financial year to rural households willing to do unskilled manual work with direct bank payouts.';
+  }
+  if (lower.includes('mudra')) {
+    return isHi
+      ? 'यह छोटे दुकानदारों, रेहड़ी-पटरी वालों और अपना व्यापार शुरू करने वालों को <strong>बिना किसी गारंटी के ₹50,000 से लेकर ₹10 लाख तक का सस्ता लोन</strong> देती है।'
+      : 'Provides <strong>collateral-free business loans up to ₹10 Lakh</strong> to micro-enterprises and small entrepreneurs across Shishu, Kishor, and Tarun tiers.';
+  }
+
+  // Dynamic Plain Language Simplifier for general schemes
+  if (isHi) {
+    return `यह <strong>${escapeHtml(ministry)}</strong> द्वारा चलाई जा रही योजना है। इसका मुख्य उद्देश्य पात्र नागरिकों को बिना किसी बिचौलिए के सीधा सरकारी लाभ पहुँचाना है। आप ऑनलाइन या नज़दीकी जन सेवा केंद्र (CSC) से इसके लिए आवेदन कर सकते हैं।`;
+  } else {
+    return `An active welfare initiative under the <strong>${escapeHtml(ministry)}</strong> designed to provide direct financial and social support to eligible citizens with streamlined online application.`;
+  }
+}
+
+function generateSaralQ1Benefits(s, isHi) {
+  const rawBen = (s.benefits || '').trim();
+  let points = [];
+  if (rawBen.includes('|')) {
+    points = rawBen.split('|').map(p => p.trim()).filter(Boolean);
+  } else if (rawBen.includes('\n')) {
+    points = rawBen.split('\n').map(p => p.trim()).filter(Boolean);
+  } else if (rawBen) {
+    points = [rawBen];
+  }
+
+  const cleanPoints = points.slice(0, 5).map(pt => {
+    let p = pt.replace(/^[-*•|\d.)\s]+/, '').trim();
+    if (isHi) {
+      p = p.replace(/Rs\.?\s*(\d+)/gi, '₹$1')
+           .replace(/\bper year\b/gi, 'प्रति वर्ष')
+           .replace(/\bper month\b/gi, 'प्रति माह')
+           .replace(/\binstallments?\b/gi, 'किश्तों')
+           .replace(/\bhospitalization\b/gi, 'अस्पताल में भर्ती व इलाज')
+           .replace(/\bcollateral-free\b/gi, 'बिना गारंटी')
+           .replace(/\bsubsidy\b/gi, 'सरकारी सब्सिडी (छूट)');
+    }
+    return p;
+  });
+
+  const isDbt = (s.tags || []).some(t => /dbt|cash|pension|stipend|financial/i.test(t)) || /Rs\.?|₹|subsidy|loan|pension/i.test(rawBen);
+  const dbtBadge = isDbt ? `
+    <div class="saral-benefit-hero">
+      <i class="fa-solid fa-money-bill-transfer"></i>
+      <span>${isHi ? 'सीधे बैंक खाते में सहायता (DBT)' : 'Direct Bank Benefit (DBT Transfer)'}</span>
+    </div>
+  ` : '';
+
+  const listItems = cleanPoints.map(p => `
+    <li>
+      <i class="fa-solid fa-circle-check"></i>
+      <span>${escapeHtml(p)}</span>
+    </li>
+  `).join('');
+
+  return `
+    ${dbtBadge}
+    <ul class="saral-benefit-points">
+      ${listItems || `<li><i class="fa-solid fa-circle-check"></i> <span>${isHi ? 'विभागीय दिशा-निर्देशों के अनुसार सरकारी सहायता व लाभ' : 'Government welfare aid as per departmental guidelines'}</span></li>`}
+    </ul>
+  `;
+}
+
+function generateSaralQ2Eligibility(s, isHi) {
+  const e = s.eligibility || {};
+
+  let ageText = isHi ? 'कोई आयु सीमा नहीं (सभी उम्र)' : 'No age limit (All ages)';
+  if (e.min_age && e.max_age) {
+    ageText = isHi ? `${e.min_age} से ${e.max_age} वर्ष के बीच` : `Between ${e.min_age} and ${e.max_age} years`;
+  } else if (e.min_age) {
+    ageText = isHi ? `${e.min_age} वर्ष या उससे अधिक` : `${e.min_age} years and above`;
+  } else if (e.max_age) {
+    ageText = isHi ? `अधिकतम ${e.max_age} वर्ष तक` : `Up to ${e.max_age} years`;
+  }
+
+  let genderText = isHi ? 'सभी नागरिक (महिला व पुरुष)' : 'All Citizens (Men & Women)';
+  if (e.gender === 'female') {
+    genderText = isHi ? 'केवल महिलाएं व बेटियां' : 'Exclusively for Women & Girls';
+  } else if (e.gender === 'male') {
+    genderText = isHi ? 'केवल पुरुष' : 'Men only';
+  } else if (e.gender === 'transgender') {
+    genderText = isHi ? 'ट्रांसजेंडर नागरिक' : 'Transgender Citizens';
+  }
+
+  let incomeText = isHi ? 'आय की कोई सीमा नहीं' : 'No income ceiling';
+  if (e.income_limit) {
+    incomeText = isHi ? `सालाना आय ₹${Number(e.income_limit).toLocaleString('en-IN')} से कम` : `Household income under ₹${Number(e.income_limit).toLocaleString('en-IN')} / yr`;
+  }
+
+  let stateText = isHi ? 'पूरे भारत के नागरिक पात्र' : 'Pan-India (All States & UTs)';
+  if (e.state && e.state !== 'all') {
+    stateText = isHi ? `${e.state} के स्थायी निवासी` : `Resident of ${e.state}`;
+  }
+
+  let occText = isHi ? 'सभी कामगार व परिवार' : 'All Vocations & General Public';
+  if (Array.isArray(e.occupation) && e.occupation.length > 0) {
+    const mapOccHi = {
+      farmer: 'किसान व खेतिहर मजदूर',
+      student: 'विद्यार्थी (स्कूल/कॉलेज)',
+      business: 'छोटे दुकानदार व व्यापारी',
+      'self-employed': 'स्वरोजगार',
+      unemployed: 'बेरोज़गार युवा',
+      daily_wage: 'दैनिक मजदूर / श्रमिक'
+    };
+    occText = isHi
+      ? e.occupation.map(o => mapOccHi[o] || o).join(', ')
+      : e.occupation.map(o => o.charAt(0).toUpperCase() + o.slice(1)).join(', ');
+  }
+
+  return `
+    <div class="saral-elig-grid">
+      <div class="saral-elig-chip">
+        <i class="fa-solid fa-cake-candles saral-elig-chip-icon"></i>
+        <div>
+          <div class="saral-elig-chip-label">${isHi ? 'उम्र सीमा' : 'Age Limit'}</div>
+          <div class="saral-elig-chip-val">${escapeHtml(ageText)}</div>
+        </div>
+      </div>
+
+      <div class="saral-elig-chip">
+        <i class="fa-solid fa-indian-rupee-sign saral-elig-chip-icon"></i>
+        <div>
+          <div class="saral-elig-chip-label">${isHi ? 'पारिवारिक आय' : 'Annual Income'}</div>
+          <div class="saral-elig-chip-val">${escapeHtml(incomeText)}</div>
+        </div>
+      </div>
+
+      <div class="saral-elig-chip">
+        <i class="fa-solid fa-venus-mars saral-elig-chip-icon"></i>
+        <div>
+          <div class="saral-elig-chip-label">${isHi ? 'लिंग' : 'Gender'}</div>
+          <div class="saral-elig-chip-val">${escapeHtml(genderText)}</div>
+        </div>
+      </div>
+
+      <div class="saral-elig-chip">
+        <i class="fa-solid fa-location-dot saral-elig-chip-icon"></i>
+        <div>
+          <div class="saral-elig-chip-label">${isHi ? 'राज्य / निवासी' : 'State / Domicile'}</div>
+          <div class="saral-elig-chip-val">${escapeHtml(stateText)}</div>
+        </div>
+      </div>
+
+      <div class="saral-elig-chip" style="grid-column: 1 / -1;">
+        <i class="fa-solid fa-briefcase saral-elig-chip-icon"></i>
+        <div>
+          <div class="saral-elig-chip-label">${isHi ? 'पेशा व लक्षित वर्ग' : 'Target Profession / Group'}</div>
+          <div class="saral-elig-chip-val">${escapeHtml(occText)}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function generateSaralQ3Documents(s, isHi) {
+  const rawDocs = Array.isArray(s.documents_required) && s.documents_required.length > 0
+    ? s.documents_required
+    : ['Aadhaar Card', 'Bank Account Passbook'];
+
+  const docMapHi = {
+    'aadhaar card': 'आधार कार्ड (सक्रिय मोबाइल नंबर लिंक)',
+    'bank account details': 'बैंक पासबुक (खाते में आधार / NPCI लिंक)',
+    'bank account passbook': 'बैंक खाता पासबुक (NPCI DBT लिंक)',
+    'income certificate': 'आय प्रमाण पत्र (ताज़ा / 1 वर्ष के भीतर जारी)',
+    'caste certificate': 'जाति प्रमाण पत्र (आरक्षित वर्ग हेतु)',
+    'land ownership records (khasra/khatauni)': 'ज़मीन के कागज़ात (खसरा/खतौनी की नकल)',
+    'ration card / bpl card': 'राशन कार्ड (राशन कार्ड या बीपीएल सूची)',
+    'ration card': 'राशन कार्ड',
+    'domicile certificate': 'मूल निवास प्रमाण पत्र',
+    'passport size photograph': 'पासपोर्ट साइज़ फ़ोटो (2 प्रति)'
+  };
+
+  const tagLabel = isHi ? 'मूल + 1 कॉपी' : 'Original + 1 Copy';
+
+  const itemsHtml = rawDocs.map(d => {
+    const key = d.toLowerCase().trim();
+    const displayName = isHi ? (docMapHi[key] || d) : d;
+    return `
+      <div class="saral-doc-item">
+        <div class="saral-doc-left">
+          <i class="fa-solid fa-circle-check"></i>
+          <span>${escapeHtml(displayName)}</span>
+        </div>
+        <span class="saral-doc-tag">${tagLabel}</span>
+      </div>
+    `;
+  }).join('');
+
+  return `
+    <div class="saral-doc-checklist">
+      ${itemsHtml}
+    </div>
+  `;
+}
+
+function renderSaralBhashaGoldenQuestions(s) {
+  if (!s) return;
+  const isHi = (typeof currentLang !== 'undefined' && currentLang === 'hi');
+
+  const expEl = document.getElementById('modalSaralExplainer');
+  if (expEl) expEl.innerHTML = generateSaralPlainExplainer(s, isHi);
+
+  const q1El = document.getElementById('modalSaralQ1');
+  if (q1El) q1El.innerHTML = generateSaralQ1Benefits(s, isHi);
+
+  const q2El = document.getElementById('modalSaralQ2');
+  if (q2El) q2El.innerHTML = generateSaralQ2Eligibility(s, isHi);
+
+  const q3El = document.getElementById('modalSaralQ3');
+  if (q3El) q3El.innerHTML = generateSaralQ3Documents(s, isHi);
+}
 
 function openModal(s) {
   if (!s) return;
@@ -1194,6 +1459,10 @@ function openModal(s) {
   if (catEl) catEl.textContent = icon + ' ' + (s.category || '').toUpperCase();
   if (titleEl) titleEl.textContent = s.title || '';
   if (minEl) minEl.textContent = (s.ministry || '') + (s.launched_year ? ' • Launched ' + s.launched_year : '');
+
+  // Render 3 Golden Questions (Saral Bhasha Citizen View)
+  renderSaralBhashaGoldenQuestions(s);
+  switchModalViewMode('saral');
   if (descEl) {
     const fullDesc = (s.description || 'No detailed description provided.').trim();
     const paras = fullDesc.split(/\n{2,}|\r\n\r\n/);
@@ -1502,6 +1771,7 @@ function closeModal() {
   const overlay = document.getElementById('modalOverlay');
   if (overlay) overlay.classList.remove('open');
   document.body.style.overflow = '';
+  currentModalScheme = null;
 }
 
 function closeModalOnOverlay(e) {
@@ -2975,6 +3245,9 @@ window.addEventListener('saralLanguageChange', (e) => {
       const visible = currentSchemesList.slice(0, countToRender);
       grid.innerHTML = visible.map((s, idx) => formatSchemeCardHTML(s, idx)).join('');
     }
+  }
+  if (currentModalScheme) {
+    renderSaralBhashaGoldenQuestions(currentModalScheme);
   }
 });
 

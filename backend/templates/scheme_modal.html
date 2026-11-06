@@ -13,28 +13,98 @@
     </div>
     
     <div class="modal-body">
-      <!-- ABOUT -->
-      <div class="modal-section">
-        <div class="modal-section-title"><i class="fa-solid fa-circle-info"></i> <span data-i18n="modal_sec_about">About this Scheme</span></div>
-        <div class="modal-desc" id="modalDesc"></div>
+      <!-- ══════════ VIEW MODE SWITCHER (सरल सारांश vs सरकारी विवरण) ══════════ -->
+      <div class="modal-mode-tabs" role="tablist">
+        <button type="button" class="modal-mode-tab active" id="tabModeSaral" onclick="switchModalViewMode('saral')" role="tab" aria-selected="true">
+          <i class="fa-solid fa-wand-magic-sparkles"></i>
+          <span data-i18n="modal_tab_saral">सरल सारांश (आसान भाषा)</span>
+        </button>
+        <button type="button" class="modal-mode-tab" id="tabModeOfficial" onclick="switchModalViewMode('official')" role="tab" aria-selected="false">
+          <i class="fa-solid fa-building-columns"></i>
+          <span data-i18n="modal_tab_official">सरकारी विवरण (विभागीय भाषा)</span>
+        </button>
       </div>
 
-      <!-- BENEFITS -->
-      <div class="modal-section">
-        <div class="modal-section-title"><i class="fa-solid fa-gift"></i> <span data-i18n="modal_sec_benefits">Key Benefits</span></div>
-        <div class="benefit-box" id="modalBenefits"></div>
+      <!-- ══════════ PANEL 1: SARAL BHASHA (3 GOLDEN QUESTIONS) ══════════ -->
+      <div class="modal-view-panel active" id="panelSaralView">
+        <!-- Citizen-First Explainer Banner -->
+        <div class="saral-explainer-card">
+          <div class="explainer-header">
+            <span class="explainer-pill"><i class="fa-solid fa-feather-pointed"></i> <span data-i18n="saral_explainer_badge">सरल भाषा में समझें</span></span>
+            <span class="explainer-read-time"><i class="fa-solid fa-clock"></i> <span data-i18n="saral_read_time">1 मिनट में समझें</span></span>
+          </div>
+          <div class="explainer-text" id="modalSaralExplainer"></div>
+        </div>
+
+        <!-- 3 Golden Questions Grid -->
+        <div class="golden-questions-container">
+          <!-- QUESTION 1: WHAT DO I GET? -->
+          <div class="golden-q-card golden-q-benefit">
+            <div class="golden-q-header">
+              <div class="golden-q-icon q1"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+              <div>
+                <h4 class="golden-q-title" data-i18n="golden_q1_title">1. मुझे क्या मिलेगा? (सीधा फ़ायदा)</h4>
+                <p class="golden-q-subtitle" data-i18n="golden_q1_sub">नकद राशि, पेंशन, सब्सिडी या मुफ़्त सरकारी सहायता</p>
+              </div>
+            </div>
+            <div class="golden-q-content" id="modalSaralQ1"></div>
+          </div>
+
+          <!-- QUESTION 2: WHO QUALIFIES? -->
+          <div class="golden-q-card golden-q-eligibility">
+            <div class="golden-q-header">
+              <div class="golden-q-icon q2"><i class="fa-solid fa-user-check"></i></div>
+              <div>
+                <h4 class="golden-q-title" data-i18n="golden_q2_title">2. कौन पात्र है? (किसे मिलेगा लाभ)</h4>
+                <p class="golden-q-subtitle" data-i18n="golden_q2_sub">उम्र, आय, ज़मीन और परिवार से जुड़ी मुख्य शर्तें</p>
+              </div>
+            </div>
+            <div class="golden-q-content" id="modalSaralQ2"></div>
+          </div>
+
+          <!-- QUESTION 3: WHAT PAPERS TO BRING? -->
+          <div class="golden-q-card golden-q-documents">
+            <div class="golden-q-header">
+              <div class="golden-q-icon q3"><i class="fa-solid fa-file-shield"></i></div>
+              <div>
+                <h4 class="golden-q-title" data-i18n="golden_q3_title">3. क्या कागज़ ले जाने हैं? (सीएससी चेकलिस्ट)</h4>
+                <p class="golden-q-subtitle" data-i18n="golden_q3_sub">जन सेवा केंद्र या ऑनलाइन आवेदन हेतु मूल दस्तावेज़</p>
+              </div>
+            </div>
+            <div class="golden-q-content" id="modalSaralQ3"></div>
+            <div class="golden-kendra-tip">
+              <i class="fa-solid fa-lightbulb"></i>
+              <span data-i18n="golden_kendra_tip">सीएससी / जन सेवा केंद्र टिप: इन सभी कागज़ातों की मूल प्रति और एक-एक स्वप्रमाणित फ़ोटोकॉपी साथ ले जाएं।</span>
+            </div>
+          </div>
+        </div>
       </div>
 
-      <!-- ELIGIBILITY -->
-      <div class="modal-section">
-        <div class="modal-section-title"><i class="fa-solid fa-id-card"></i> <span data-i18n="modal_sec_eligibility">Eligibility Criteria</span></div>
-        <div class="eligibility-grid" id="modalEligibility"></div>
-      </div>
+      <!-- ══════════ PANEL 2: OFFICIAL DEPARTMENTAL TEXT (विभागीय भाषा) ══════════ -->
+      <div class="modal-view-panel" id="panelOfficialView" style="display: none;">
+        <!-- ABOUT -->
+        <div class="modal-section">
+          <div class="modal-section-title"><i class="fa-solid fa-circle-info"></i> <span data-i18n="modal_sec_about">About this Scheme</span></div>
+          <div class="modal-desc" id="modalDesc"></div>
+        </div>
 
-      <!-- REQUIRED DOCUMENTS -->
-      <div class="modal-section">
-        <div class="modal-section-title"><i class="fa-solid fa-file-shield"></i> <span data-i18n="modal_sec_docs">Required Documents</span></div>
-        <div class="docs-wrap" id="modalDocs"></div>
+        <!-- BENEFITS -->
+        <div class="modal-section">
+          <div class="modal-section-title"><i class="fa-solid fa-gift"></i> <span data-i18n="modal_sec_benefits">Key Benefits</span></div>
+          <div class="benefit-box" id="modalBenefits"></div>
+        </div>
+
+        <!-- ELIGIBILITY -->
+        <div class="modal-section">
+          <div class="modal-section-title"><i class="fa-solid fa-id-card"></i> <span data-i18n="modal_sec_eligibility">Eligibility Criteria</span></div>
+          <div class="eligibility-grid" id="modalEligibility"></div>
+        </div>
+
+        <!-- REQUIRED DOCUMENTS -->
+        <div class="modal-section">
+          <div class="modal-section-title"><i class="fa-solid fa-file-shield"></i> <span data-i18n="modal_sec_docs">Required Documents</span></div>
+          <div class="docs-wrap" id="modalDocs"></div>
+        </div>
       </div>
 
       <!-- LAST-MILE PRE-FLIGHT AUDIT & VERIFICATION -->
