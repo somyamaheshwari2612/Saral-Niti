@@ -666,3 +666,19 @@ html.dark-mode .saral-doc-tag {
   background: rgba(249, 115, 22, 0.2);
   color: #FB923C;
 }
+
+html.dark-mode .btn-ask-sahayak {
+  background: rgba(37, 99, 235, 0.16);
+  border-color: rgba(37, 99, 235, 0.35);
+  color: #93C5FD;
+}
+html.dark-mode .btn-ask-sahayak:hover {
+  background: rgba(37, 99, 235, 0.28);
+  color: #BFDBFE;
+}
+
+html.dark-mode .card-saral-badge {
+  background: rgba(255, 107, 0, 0.16);
+  border-color: rgba(255, 107, 0, 0.35);
+  color: #FFA559;
+}

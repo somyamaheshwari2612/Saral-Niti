@@ -279,7 +279,10 @@ function formatSchemeCardHTML(s, idx) {
     <div class="scheme-card fade-in-card" data-index="${idx}" tabindex="0" role="button" aria-label="View details for ${safeTitle}">
       <div>
         <div class="card-top">
-          <span class="category-badge cat-${safeCat}">${icon} ${safeCat}</span>
+          <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
+            <span class="category-badge cat-${safeCat}">${icon} ${safeCat}</span>
+            <span class="card-saral-badge" title="3 Golden Questions in Simple Words"><i class="fa-solid fa-wand-magic-sparkles"></i> ${isHi ? 'सरल सारांश' : 'Simple Summary'}</span>
+          </div>
           <div class="active-dot" title="${activeDotTitle}"></div>
         </div>
         <div class="card-title">${safeTitle}</div>
@@ -1765,6 +1768,29 @@ function shareOnWhatsApp() {
   const personaSuffix = currentModalScheme._target_persona ? ` *(Recommended for ${currentModalScheme._target_persona})*` : '';
   const text = `🇮🇳 *${currentModalScheme.title}*${personaSuffix}\n\n${currentModalScheme.description}\n\n*Key Benefits:* ${currentModalScheme.benefits}\n\nApply on official portal: ${currentModalScheme.application_url}\n\n_Discovered via Saral Niti Portal_`;
   window.open(`https://api.whatsapp.com/send?text=${encodeURIComponent(text)}`, '_blank');
+}
+
+function askSahayakAboutCurrentScheme() {
+  if (!currentModalScheme) return;
+  const title = currentModalScheme.title;
+  const isHi = (typeof currentLang !== 'undefined' && currentLang === 'hi');
+  closeModal();
+
+  // Make sure chat box is open
+  const box = document.getElementById('chat-box');
+  if (!box || box.style.display === 'none' || !box.style.display) {
+    if (typeof toggleChat === 'function') toggleChat();
+  }
+
+  const input = document.getElementById('chat-input');
+  if (input) {
+    input.value = isHi
+      ? `${title} योजना के बारे में आसान भाषा में समझाएं: मुझे क्या मिलेगा और कैसे आवेदन करें?`
+      : `Explain ${title} scheme in simple words: what do I get and how to apply?`;
+    if (typeof sendMessage === 'function') {
+      setTimeout(() => sendMessage(), 150);
+    }
+  }
 }
 
 function closeModal() {

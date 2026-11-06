@@ -1324,10 +1324,57 @@ def test_step2_plain_language_simplifier_and_golden_questions(client=None):
     assert ".golden-q-card" in css_code
 
 
+# Test 48 - Step 3: Multi-Regional Code-Mixed NLU & Ask Sahayak Integration
+def test_step3_code_mixed_regional_nlu_and_ask_sahayak(client=None):
+    from routes.chatbot import extract_entities_and_slots
+    c = client or get_test_client()
+
+    # 1. Tanglish (Tamil + English) Code-Mixed NLU
+    slots_tanglish, domains_ta, _ = extract_entities_and_slots("En appa ku 62 years old, vivasayi, any pension or kisan scheme irukka?")
+    assert slots_tanglish.get("relationship") == "father"
+    assert slots_tanglish.get("target_subject") == "Father"
+    assert slots_tanglish.get("age") == 62
+    assert slots_tanglish.get("occupation") == "farmer"
+    assert "farmer" in domains_ta or "pension" in domains_ta
+
+    # 2. Tenglish (Telugu + English) Code-Mixed NLU
+    slots_tenglish, domains_te, _ = extract_entities_and_slots("Maa nanna rythu, 55 years old in AP, panta bima kaavali")
+    assert slots_tenglish.get("relationship") == "father"
+    assert slots_tenglish.get("occupation") == "farmer"
+    assert slots_tenglish.get("state") == "Andhra Pradesh"
+
+    # 3. Benglish (Bengali + English) Code-Mixed NLU
+    slots_benglish, _, _ = extract_entities_and_slots("Amar maa 52 years old, chashi poribar in West Bengal")
+    assert slots_benglish.get("relationship") == "mother"
+    assert slots_benglish.get("occupation") == "farmer"
+    assert slots_benglish.get("state") == "West Bengal"
+
+    # 4. Minglish (Marathi + English) Code-Mixed NLU
+    slots_minglish, domains_mr, _ = extract_entities_and_slots("Majhya aai sathi ladki bahin yojana information in MH")
+    assert slots_minglish.get("relationship") == "mother"
+    assert slots_minglish.get("state") == "Maharashtra"
+    assert "women" in domains_mr
+
+    # 5. Verify Scheme Modal and Cards have Ask Sahayak & Saral Badge integration
+    res = c.get("/")
+    assert res.status_code == 200
+    html = res.get_data(as_text=True)
+    assert 'btn-ask-sahayak' in html
+    assert 'data-i18n="modal_btn_ask_sahayak"' in html
+
+    import os
+    main_path = os.path.join(os.path.dirname(__file__), "..", "static", "js", "main.js")
+    with open(main_path, "r", encoding="utf-8") as f:
+        main_code = f.read()
+    assert "function askSahayakAboutCurrentScheme" in main_code
+    assert "card-saral-badge" in main_code
+
+
 if __name__ == "__main__":
     test_functions = [
         test_vernacular_i18n_ui_coverage_and_dictionary,
         test_step2_plain_language_simplifier_and_golden_questions,
+        test_step3_code_mixed_regional_nlu_and_ask_sahayak,
         test_pwa_offline_service_worker_and_manifest,
         test_voice_query_normalizer_and_endpoints,
     test_recommend_household_matrix,

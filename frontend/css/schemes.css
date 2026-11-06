@@ -188,6 +188,19 @@
   letter-spacing: 0.02em;
 }
 
+.card-saral-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(255, 107, 0, 0.08);
+  border: 1px solid rgba(255, 107, 0, 0.22);
+  color: var(--saffron);
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+}
+
 .cat-agriculture { background: #ECFDF5; color: #047857; }
 .cat-health      { background: #EFF6FF; color: #1D4ED8; }
 .cat-education   { background: #F5F3FF; color: #6D28D9; }

@@ -19,58 +19,108 @@ def get_client_ip():
 
 # Canonical keywords mapping for code-mixed / vernacular terms
 VERNACULAR_KEYWORD_MAP = {
-    # Agriculture / Farming
-    "farmer": ["farmer", "kisan", "fasal", "kheti", "krishi", "zameen", "crop", "agriculture", "tractor", "fertilizer", "seed", "beej"],
-    "pm kisan": ["pm kisan", "pm-kisan", "pmkisan", "kisan samman"],
+    # Agriculture / Farming (Hindi, Tanglish, Tenglish, Minglish, Benglish, Kanglish)
+    "farmer": [
+        "farmer", "kisan", "fasal", "kheti", "krishi", "zameen", "crop", "agriculture",
+        "tractor", "fertilizer", "seed", "beej",
+        # Tamil
+        "vivasaayam", "vivasayi", "uzhavan", "payir", "nilam", "velanmai",
+        # Telugu
+        "rythu", "vyavasayam", "panta", "bhoomi", "polam",
+        # Marathi / Bengali / Kannada
+        "shetkari", "sheti", "krishak", "chashi", "raitha", "krushi"
+    ],
+    "pm kisan": ["pm kisan", "pm-kisan", "pmkisan", "kisan samman", "rythu bhandhu", "kalia"],
     # Health / Insurance
-    "health": ["health", "swasthya", "bimari", "ilaj", "hospital", "aspataal", "dawa", "ayushman", "ayushman bharat", "bima", "mediclaim", "medical"],
-    "ayushman bharat": ["ayushman bharat", "ayushman", "pmjay", "jan arogya"],
+    "health": [
+        "health", "swasthya", "bimari", "ilaj", "hospital", "aspataal", "dawa",
+        "ayushman", "ayushman bharat", "bima", "mediclaim", "medical",
+        # Tamil & Telugu
+        "maruthuvam", "udalnila", "aarokkiyam", "marunthu", "sikitchai", "aarogyam", "vaidyam", "aasupatri",
+        # Bengali, Marathi, Kannada
+        "shasthya", "chikitsha", "hashpatal", "aarogya", "upchar", "aaspatre"
+    ],
+    "ayushman bharat": ["ayushman bharat", "ayushman", "pmjay", "jan arogya", "aarogyasri", "innuyir"],
     # Education / Scholarship
-    "scholarship": ["scholarship", "chhatravritti", "fellowship", "stipend", "padhai", "coaching", "shiksha", "vidyarthi", "tuition"],
-    "student": ["student", "vidyarthi", "school", "college", "university", "10th", "12th", "degree", "diploma", "iti", "post matric", "pre matric"],
+    "scholarship": [
+        "scholarship", "chhatravritti", "fellowship", "stipend", "padhai", "coaching",
+        "shiksha", "vidyarthi", "tuition",
+        # Tamil & Telugu
+        "kalvi", "padipu", "udhavithogai", "chaduvu", "vidya", "fees",
+        # Bengali, Marathi, Kannada
+        "porashona", "shikkha", "britti", "shikshan", "shishyavrutti", "shikshana", "shishyavethana"
+    ],
+    "student": [
+        "student", "vidyarthi", "school", "college", "university", "10th", "12th",
+        "degree", "diploma", "iti", "post matric", "pre matric",
+        "manavan", "manavi", "palli", "kalloori", "chhatro", "shala", "shale"
+    ],
     # Women & Child
-    "women": ["women", "mahila", "aurat", "beti", "ladki", "maternity", "garbhavati", "matru", "widow", "shg", "pradhan mantri matru vandana"],
+    "women": [
+        "women", "mahila", "aurat", "beti", "ladki", "maternity", "garbhavati",
+        "matru", "widow", "shg", "pradhan mantri matru vandana",
+        # Tamil, Telugu, Marathi, Kannada, Bengali
+        "pengal", "magalir", "thaai", "aadapaduchu", "stri", "ladki bahin", "gruhalakshmi", "mohila", "kanyashree"
+    ],
     # Loans & Credit
-    "loan": ["loan", "karz", "rin", "mudra", "credit", "kcc", "subvention", "interest", "borrow", "business loan"],
+    "loan": [
+        "loan", "karz", "rin", "mudra", "credit", "kcc", "subvention", "interest", "borrow", "business loan",
+        "kadan", "vatti", "appu", "runam", "vaddi", "reen", "karj", "saala"
+    ],
     # Housing
-    "housing": ["housing", "makan", "ghar", "awas", "pm awas", "kutcha", "shelter"],
+    "housing": [
+        "housing", "makan", "ghar", "awas", "pm awas", "kutcha", "shelter",
+        "veedu", "kudisai", "illu", "gruha", "bari", "abashan", "gharkul", "mane", "vasathi"
+    ],
     # Employment & Skill
-    "employment": ["employment", "naukri", "rozgar", "job", "berozgari", "skill", "kaushal", "hunar", "unemployed", "training"],
+    "employment": [
+        "employment", "naukri", "rozgar", "job", "berozgari", "skill", "kaushal", "hunar", "unemployed", "training",
+        "velai", "thozhil", "udyogam", "upadhi", "chakri", "kormo", "nokri", "kelasa"
+    ],
     # Senior citizens & Pensions
-    "pension": ["pension", "vriddha", "senior", "buddhe", "elderly", "old age", "vridha pension", "atal pension"],
+    "pension": [
+        "pension", "vriddha", "senior", "buddhe", "elderly", "old age", "vridha pension", "atal pension",
+        "muthiyor", "oyvoothiyam", "vruddhapya", "bardhokko", "bhata", "shravan bal", "sandhya suraksha"
+    ],
     # Divyangjan / Disability
-    "disability": ["disability", "divyang", "viklang", "handicap", "udid", "differently abled"]
+    "disability": [
+        "disability", "divyang", "viklang", "handicap", "udid", "differently abled",
+        "maatru thiranaligal", "vikalamgula", "protibondhi", "angavikalara"
+    ]
 }
 
 # State synonyms for geographic extraction
-# Canonical mapping for family relationships across English, Hindi, and Hinglish
+# Canonical mapping for family relationships across English, Hindi, Hinglish, and South/East/West regional variations
 FAMILY_RELATION_MAP = {
     "father": [
-        "father", "dad", "papa", "pitaji", "pita", "bauji", "abbu", "bapuji", "baap", "walid"
+        "father", "dad", "papa", "pitaji", "pita", "bauji", "abbu", "bapuji", "baap", "walid",
+        "appa", "nanna", "baba", "thande"
     ],
     "mother": [
-        "mother", "mom", "mummy", "mataji", "mata", "maa", "ammi", "aai", "maaji", "walida"
+        "mother", "mom", "mummy", "mataji", "mata", "maa", "ammi", "aai", "maaji", "walida",
+        "amma", "taai", "thaai"
     ],
     "spouse": [
-        "husband", "wife", "spouse", "patni", "pati", "biwi", "shauhar", "begum", "mian", "ardhangini"
+        "husband", "wife", "spouse", "patni", "pati", "biwi", "shauhar", "begum", "mian", "ardhangini",
+        "purushan", "manaivi", "mogudu", "pendlam", "bharta"
     ],
     "son": [
-        "son", "beta", "ladka", "boy", "putra", "betey"
+        "son", "beta", "ladka", "boy", "putra", "betey", "magan", "koduku", "chhele", "maga"
     ],
     "daughter": [
-        "daughter", "beti", "ladki", "girl", "putri", "kanya", "gudiya"
+        "daughter", "beti", "ladki", "girl", "putri", "kanya", "gudiya", "magal", "koothuru", "meye", "magalu"
     ],
     "brother": [
-        "brother", "bhai", "bhaiya", "bhrata", "sahodar", "veer"
+        "brother", "bhai", "bhaiya", "bhrata", "sahodar", "veer", "anna", "thambi", "sahodaran", "annayya", "dada"
     ],
     "sister": [
-        "sister", "behen", "didi", "behna", "bhagini"
+        "sister", "behen", "didi", "behna", "bhagini", "akka", "thangai", "thangi", "sahodari", "chelli"
     ],
     "grandfather": [
-        "grandfather", "grandpa", "dadaji", "dada", "nanaji", "nana", "baba", "thatha", "ajja"
+        "grandfather", "grandpa", "dadaji", "dada", "nanaji", "nana", "baba", "thatha", "ajja", "thathayya", "dadu", "aaba"
     ],
     "grandmother": [
-        "grandmother", "grandma", "dadiji", "dadi", "naniji", "nani", "dadi ma", "paati", "ajji"
+        "grandmother", "grandma", "dadiji", "dadi", "naniji", "nani", "dadi ma", "paati", "ajji", "ammamma", "dida", "aaji"
     ]
 }
 
@@ -94,7 +144,8 @@ STATE_MAP = {
     "karnataka": "Karnataka", "tamil nadu": "Tamil Nadu", "tn": "Tamil Nadu",
     "kerala": "Kerala", "punjab": "Punjab", "haryana": "Haryana",
     "delhi": "Delhi", "west bengal": "West Bengal", "wb": "West Bengal",
-    "odisha": "Odisha", "telangana": "Telangana", "andhra": "Andhra Pradesh"
+    "odisha": "Odisha", "telangana": "Telangana", "andhra": "Andhra Pradesh",
+    "ap": "Andhra Pradesh", "andhra pradesh": "Andhra Pradesh", "jharkhand": "Jharkhand", "assam": "Assam"
 }
 
 
@@ -177,24 +228,24 @@ def extract_entities_and_slots(user_text):
             slots["state"] = full_name
             break
 
-    # 5. Occupation extraction
-    if re.search(r'\b(farmer|kisan|kisanon|kheti|fasal|agriculture|krishi)\b', text):
+    # 5. Occupation extraction (Pan-Indian vernacular code-mixed coverage)
+    if re.search(r'\b(farmer|kisan|kisanon|kheti|fasal|agriculture|krishi|vivasayi|uzhavan|rythu|vyavasayam|shetkari|krishak|chashi|raitha)\b', text):
         slots["occupation"] = "farmer"
         keywords.append("farmer")
-    elif re.search(r'\b(student|vidyarthi|padhai|college|school|10th|12th|iti|degree|scholarship)\b', text):
+    elif re.search(r'\b(student|vidyarthi|padhai|college|school|10th|12th|iti|degree|scholarship|manavan|manavi|kalvi|chaduvu|porashona|shikshan|shikshana)\b', text):
         slots["occupation"] = "student"
         keywords.append("student")
     elif re.search(r'\b(homemaker|housewife|grihini|grihani)\b', text):
         slots["occupation"] = "homemaker"
         keywords.append("women")
-    elif re.search(r'\b(unemployed|berozgar|berozgari|jobless|naukri)\b', text):
+    elif re.search(r'\b(unemployed|berozgar|berozgari|jobless|naukri|velai|upadhi|chakri|nokri|kelasa)\b', text):
         slots["occupation"] = "unemployed"
         keywords.append("employment")
-    elif re.search(r'\b(senior|pensioner|vriddha|buddhe|elderly|old age)\b', text):
+    elif re.search(r'\b(senior|pensioner|vriddha|buddhe|elderly|old age|muthiyor|vruddhapya|bardhokko)\b', text):
         slots["occupation"] = "senior_citizen"
         slots["is_senior"] = True
         keywords.append("pension")
-    elif re.search(r'\b(daily wage|mazdoor|majdoor|shramik|labour|construction)\b', text):
+    elif re.search(r'\b(daily wage|mazdoor|majdoor|shramik|labour|construction|kooli|dinakooli|majuri|kamgar)\b', text):
         slots["occupation"] = "daily_wage"
 
     # 6. Special conditions & vulnerabilities

@@ -599,6 +599,28 @@
   transform: translateY(-1px);
 }
 
+.btn-ask-sahayak {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #EFF6FF;
+  color: #1D4ED8;
+  border: 1px solid #BFDBFE;
+  border-radius: var(--radius-md);
+  padding: 13px 18px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-sans);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-ask-sahayak:hover {
+  background: #DBEAFE;
+  color: #1E40AF;
+  transform: translateY(-1px);
+}
+
 .btn-secondary {
   background: var(--white);
   color: var(--slate-600);
