@@ -271,13 +271,16 @@ function formatSchemeCardHTML(s, idx) {
   const safeBenefits = escapeHtml(shortBenefit);
   const safeMinistry = escapeHtml(s.ministry || '');
   const safeUrl = sanitizeUrl(s.application_url);
+  const isHi = (typeof currentLang !== 'undefined' && currentLang === 'hi');
+  const applyLabel = isHi ? 'आवेदन करें' : 'Apply';
+  const activeDotTitle = isHi ? 'सक्रिय योजना' : 'Active Scheme';
 
   return `
     <div class="scheme-card fade-in-card" data-index="${idx}" tabindex="0" role="button" aria-label="View details for ${safeTitle}">
       <div>
         <div class="card-top">
           <span class="category-badge cat-${safeCat}">${icon} ${safeCat}</span>
-          <div class="active-dot" title="Active Scheme"></div>
+          <div class="active-dot" title="${activeDotTitle}"></div>
         </div>
         <div class="card-title">${safeTitle}</div>
         <div class="card-desc" title="${escapeHtml(s.description || '')}">${safeDesc}</div>
@@ -288,7 +291,7 @@ function formatSchemeCardHTML(s, idx) {
       <div class="card-footer">
         <span class="ministry-name" title="${safeMinistry}"><i class="fa-solid fa-building-columns"></i> ${safeMinistry}</span>
         <a href="${safeUrl}" target="_blank" rel="noopener noreferrer" class="apply-btn" onclick="event.stopPropagation()">
-          <span>Apply</span>
+          <span>${applyLabel}</span>
           <i class="fa-solid fa-arrow-up-right-from-square"></i>
         </a>
       </div>
@@ -499,9 +502,14 @@ function updateScrollStatus() {
   const cards = document.querySelectorAll('#schemesGrid .scheme-card');
   const displayedCount = cards.length;
   const total = isServerBrowsing ? totalAvailableSchemes : currentSchemesList.length;
+  const isHi = (typeof currentLang !== 'undefined' && currentLang === 'hi');
 
   if (count) {
-    count.innerHTML = `Showing <strong>${displayedCount}</strong> of <strong>${total.toLocaleString('en-IN')}</strong> verified schemes`;
+    if (isHi) {
+      count.innerHTML = `प्रदर्शित: <strong>${displayedCount}</strong> / कुल <strong>${total.toLocaleString('en-IN')}</strong> प्रमाणित योजनाएं`;
+    } else {
+      count.innerHTML = `Showing <strong>${displayedCount}</strong> of <strong>${total.toLocaleString('en-IN')}</strong> verified schemes`;
+    }
   }
 
   if (paginationWrap) {
@@ -512,14 +520,22 @@ function updateScrollStatus() {
 
   if (paginationInfo) {
     if (hasMore) {
-      paginationInfo.innerHTML = `Showing <strong>${displayedCount}</strong> of <strong>${total.toLocaleString('en-IN')}</strong> schemes`;
+      paginationInfo.innerHTML = isHi
+        ? `प्रदर्शित: <strong>${displayedCount}</strong> / कुल <strong>${total.toLocaleString('en-IN')}</strong> योजनाएं`
+        : `Showing <strong>${displayedCount}</strong> of <strong>${total.toLocaleString('en-IN')}</strong> schemes`;
     } else {
-      paginationInfo.innerHTML = `<i class="fa-solid fa-check-circle" style="color:#10B981; margin-right:5px;"></i> All <strong>${total.toLocaleString('en-IN')}</strong> verified schemes loaded`;
+      paginationInfo.innerHTML = isHi
+        ? `<i class="fa-solid fa-check-circle" style="color:#10B981; margin-right:5px;"></i> सभी <strong>${total.toLocaleString('en-IN')}</strong> योजनाएं लोड हो चुकी हैं`
+        : `<i class="fa-solid fa-check-circle" style="color:#10B981; margin-right:5px;"></i> All <strong>${total.toLocaleString('en-IN')}</strong> verified schemes loaded`;
     }
   }
 
   if (loadMoreBtn) {
     loadMoreBtn.style.display = hasMore ? 'inline-flex' : 'none';
+    const btnSpan = loadMoreBtn.querySelector('span');
+    if (btnSpan) {
+      btnSpan.textContent = isHi ? 'और योजनाएं देखें' : 'Load More Schemes';
+    }
   }
 }
 
@@ -1223,13 +1239,24 @@ function openModal(s) {
   if (applyEl) applyEl.href = sanitizeUrl(s.application_url);
 
   const e = s.eligibility || {};
-  const incomeStr = e.income_limit ? '₹' + Number(e.income_limit).toLocaleString('en-IN') + ' / year' : 'No income cap';
+  const isHi = (typeof currentLang !== 'undefined' && currentLang === 'hi');
+  const noIncomeText = (typeof t === 'function') ? t('elig_no_income_cap', 'No income cap') : 'No income cap';
+  const incomeStr = e.income_limit ? '₹' + Number(e.income_limit).toLocaleString('en-IN') + (isHi ? ' / वर्ष' : ' / year') : noIncomeText;
+  const ageMax = e.max_age ?? ((typeof t === 'function') ? t('elig_no_limit', 'No limit') : 'No limit');
+  const ageUnit = (typeof t === 'function') ? t('elig_years', 'years') : 'years';
+  const genderVal = e.gender ?? ((typeof t === 'function') ? t('elig_all_citizens', 'All Citizens') : 'All Citizens');
+  const stateVal = e.state ?? ((typeof t === 'function') ? t('elig_all_india', 'All India') : 'All India');
+
   if (eligEl) {
+    const ageLabel = (typeof t === 'function') ? t('modal_elig_age', 'Age Range') : 'Age Range';
+    const genderLabel = (typeof t === 'function') ? t('modal_elig_gender', 'Gender') : 'Gender';
+    const incomeLabel = (typeof t === 'function') ? t('modal_elig_income', 'Income Limit') : 'Income Limit';
+    const stateLabel = (typeof t === 'function') ? t('modal_elig_state', 'Coverage State') : 'Coverage State';
     eligEl.innerHTML = `
-      <div class="elig-item"><div class="elig-label">Age Range</div><div class="elig-value">${escapeHtml(e.min_age ?? 0)} – ${escapeHtml(e.max_age ?? 'No limit')} years</div></div>
-      <div class="elig-item"><div class="elig-label">Gender</div><div class="elig-value">${escapeHtml(e.gender ?? 'All Citizens')}</div></div>
-      <div class="elig-item"><div class="elig-label">Income Limit</div><div class="elig-value">${escapeHtml(incomeStr)}</div></div>
-      <div class="elig-item"><div class="elig-label">Coverage State</div><div class="elig-value">${escapeHtml(e.state ?? 'All India')}</div></div>
+      <div class="elig-item"><div class="elig-label">${escapeHtml(ageLabel)}</div><div class="elig-value">${escapeHtml(e.min_age ?? 0)} – ${escapeHtml(ageMax)} ${escapeHtml(ageUnit)}</div></div>
+      <div class="elig-item"><div class="elig-label">${escapeHtml(genderLabel)}</div><div class="elig-value">${escapeHtml(genderVal)}</div></div>
+      <div class="elig-item"><div class="elig-label">${escapeHtml(incomeLabel)}</div><div class="elig-value">${escapeHtml(incomeStr)}</div></div>
+      <div class="elig-item"><div class="elig-label">${escapeHtml(stateLabel)}</div><div class="elig-value">${escapeHtml(stateVal)}</div></div>
     `;
   }
 
@@ -1241,13 +1268,21 @@ function openModal(s) {
   const verEl = document.getElementById('modalVerified');
   const docsEl = document.getElementById('modalDocs');
 
-  if (levelEl) levelEl.textContent = (s.level === 'state' ? 'State Government' : 'Central Government');
-  if (verEl) verEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Verified Data • ${escapeHtml(s.last_verified_at || '2026')}`;
+  if (levelEl) {
+    const stateText = (typeof t === 'function') ? t('modal_level_state', 'State Government') : 'State Government';
+    const centralText = (typeof t === 'function') ? t('modal_level_central', 'Central Government') : 'Central Government';
+    levelEl.textContent = (s.level === 'state' ? stateText : centralText);
+  }
+  if (verEl) {
+    const verPrefix = (typeof t === 'function') ? t('modal_verified_prefix', 'Verified Data') : 'Verified Data';
+    verEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${escapeHtml(verPrefix)} • ${escapeHtml(s.last_verified_at || '2026')}`;
+  }
 
   if (docsEl) {
+    const defaultDocs = isHi ? ['आधार कार्ड', 'बैंक खाता विवरण'] : ['Aadhaar Card', 'Bank Account Details'];
     const docs = Array.isArray(s.documents_required) && s.documents_required.length > 0
       ? s.documents_required
-      : ['Aadhaar Card', 'Bank Account Details'];
+      : defaultDocs;
     docsEl.innerHTML = docs.map(d => `<span class="doc-pill"><i class="fa-solid fa-file-check"></i> ${escapeHtml(d)}</span>`).join('');
   }
 
@@ -2893,20 +2928,55 @@ document.addEventListener('keydown', e => {
 //  INIT
 // ══════════════════════════════════════════════════
 loadSchemes();
-const placeholders = [
-  "Search for farmer schemes...",
-  "Search for health schemes...",
-  "Search for student schemes...",
-  "Search for women schemes...",
-  "Search for housing schemes..."
-];
+
+const SEARCH_PLACEHOLDERS = {
+  en: [
+    "Search schemes by keyword, benefit, or state (e.g. Kisan, Scholarship, PM Awas)...",
+    "Search for farmer & agriculture schemes...",
+    "Search for health & Ayushman schemes...",
+    "Search for scholarships & student aid...",
+    "Search for women welfare & ladli schemes...",
+    "Search for housing & Awas Yojana..."
+  ],
+  hi: [
+    "योजना का नाम, फ़ायदा या अपना राज्य खोजें (जैसे: किसान, छात्रवृत्ति, आवास)...",
+    "किसान एवं खेती-किसानी योजनाएं खोजें...",
+    "इलाज, अस्पताल और आयुष्मान योजना खोजें...",
+    "छात्रवृत्ति और पढ़ाई योजना खोजें...",
+    "महिला कल्याण और लाडली योजना खोजें...",
+    "आवास और पक्का मकान योजना खोजें..."
+  ]
+};
 
 let pIndex = 0;
-setInterval(() => {
-  pIndex = (pIndex + 1) % placeholders.length;
+function updateSearchPlaceholder() {
   const sEl = document.getElementById('searchInput');
-  if (sEl) sEl.placeholder = placeholders[pIndex];
+  if (!sEl) return;
+  if (document.activeElement === sEl && sEl.value) return;
+  const lang = (typeof currentLang !== 'undefined') ? currentLang : 'en';
+  const list = SEARCH_PLACEHOLDERS[lang] || SEARCH_PLACEHOLDERS.en;
+  sEl.placeholder = list[pIndex % list.length];
+}
+
+setInterval(() => {
+  pIndex++;
+  updateSearchPlaceholder();
 }, 3500);
+
+// Global Language Switch Listener: Update dynamic elements, cards, and placeholders
+window.addEventListener('saralLanguageChange', (e) => {
+  updateSearchPlaceholder();
+  updateScrollStatus();
+  if (currentSchemesList && currentSchemesList.length > 0) {
+    const grid = document.getElementById('schemesGrid');
+    if (grid) {
+      const currentRendered = document.querySelectorAll('#schemesGrid .scheme-card').length;
+      const countToRender = Math.max(currentRendered, Math.min(PAGE_SIZE, currentSchemesList.length));
+      const visible = currentSchemesList.slice(0, countToRender);
+      grid.innerHTML = visible.map((s, idx) => formatSchemeCardHTML(s, idx)).join('');
+    }
+  }
+});
 
 function toggleDarkMode() {
   document.documentElement.classList.toggle('dark-mode');

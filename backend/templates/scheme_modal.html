@@ -7,33 +7,33 @@
       <h2 class="modal-title" id="modalTitle"></h2>
       <div class="modal-ministry" id="modalMinistry"></div>
       <div class="modal-trust-bar">
-        <span class="trust-badge" id="modalVerified"><i class="fa-solid fa-circle-check"></i> Verified Scheme</span>
-        <span class="trust-level" id="modalLevel">Central Government</span>
+        <span class="trust-badge" id="modalVerified"><i class="fa-solid fa-circle-check"></i> <span data-i18n="modal_verified">Verified Scheme</span></span>
+        <span class="trust-level" id="modalLevel" data-i18n="modal_level_central">Central Government</span>
       </div>
     </div>
     
     <div class="modal-body">
       <!-- ABOUT -->
       <div class="modal-section">
-        <div class="modal-section-title"><i class="fa-solid fa-circle-info"></i> About this Scheme</div>
+        <div class="modal-section-title"><i class="fa-solid fa-circle-info"></i> <span data-i18n="modal_sec_about">About this Scheme</span></div>
         <div class="modal-desc" id="modalDesc"></div>
       </div>
 
       <!-- BENEFITS -->
       <div class="modal-section">
-        <div class="modal-section-title"><i class="fa-solid fa-gift"></i> Key Benefits</div>
+        <div class="modal-section-title"><i class="fa-solid fa-gift"></i> <span data-i18n="modal_sec_benefits">Key Benefits</span></div>
         <div class="benefit-box" id="modalBenefits"></div>
       </div>
 
       <!-- ELIGIBILITY -->
       <div class="modal-section">
-        <div class="modal-section-title"><i class="fa-solid fa-id-card"></i> Eligibility Criteria</div>
+        <div class="modal-section-title"><i class="fa-solid fa-id-card"></i> <span data-i18n="modal_sec_eligibility">Eligibility Criteria</span></div>
         <div class="eligibility-grid" id="modalEligibility"></div>
       </div>
 
       <!-- REQUIRED DOCUMENTS -->
       <div class="modal-section">
-        <div class="modal-section-title"><i class="fa-solid fa-file-shield"></i> Required Documents</div>
+        <div class="modal-section-title"><i class="fa-solid fa-file-shield"></i> <span data-i18n="modal_sec_docs">Required Documents</span></div>
         <div class="docs-wrap" id="modalDocs"></div>
       </div>
 
@@ -116,32 +116,32 @@
 
       <!-- TAGS -->
       <div class="modal-section">
-        <div class="modal-section-title"><i class="fa-solid fa-tags"></i> Related Tags</div>
+        <div class="modal-section-title"><i class="fa-solid fa-tags"></i> <span data-i18n="modal_sec_tags">Related Tags</span></div>
         <div class="tags-wrap" id="modalTags"></div>
       </div>
 
       <!-- TRUST & DISCLAIMER -->
       <div class="modal-disclaimer-box">
         <i class="fa-solid fa-circle-exclamation"></i>
-        <span><strong>Citizen Advisory:</strong> Informational only. Official terms, deadlines, and benefits must be verified on the official portal before applying. Saral Niti does not charge fees or guarantee approvals.</span>
+        <span data-i18n="modal_disclaimer"><strong>Citizen Advisory:</strong> Informational only. Official terms, deadlines, and benefits must be verified on the official portal before applying. Saral Niti does not charge fees or guarantee approvals.</span>
       </div>
     </div>
 
     <!-- FOOTER WITH SHARE & APPLY -->
     <div class="modal-footer">
       <a href="#" id="modalApplyBtn" target="_blank" rel="noopener noreferrer" class="btn-primary">
-        <span>Apply on Official Portal</span>
+        <span data-i18n="modal_btn_apply">Apply on Official Portal</span>
         <i class="fa-solid fa-arrow-up-right-from-square"></i>
       </a>
       <button class="btn-checklist-print" id="modalPrintChecklistBtn" onclick="printModalAuditChecklist()" title="Print Pre-Application Clearance Checklist">
         <i class="fa-solid fa-print"></i>
-        <span>Checklist</span>
+        <span data-i18n="modal_btn_checklist">Checklist</span>
       </button>
       <button class="btn-whatsapp" onclick="shareOnWhatsApp()" title="Share Scheme on WhatsApp">
         <i class="fa-brands fa-whatsapp"></i>
-        <span>Share</span>
+        <span data-i18n="modal_btn_share">Share</span>
       </button>
-      <button class="btn-secondary" onclick="closeModal()">Close</button>
+      <button class="btn-secondary" onclick="closeModal()" data-i18n="modal_btn_close">Close</button>
     </div>
   </div>
 </div>

@@ -1215,8 +1215,57 @@ def test_pwa_offline_service_worker_and_manifest(client=None):
     assert 'id="pwaInstallBtn"' in home_html
 
 
+# Test 46 - Vernacular i18n UI Coverage & Saral Bhasha Dictionary
+def test_vernacular_i18n_ui_coverage_and_dictionary(client=None):
+    c = client or get_test_client()
+
+    # 1. Verify Home Page contains complete data-i18n attributes
+    res = c.get("/")
+    assert res.status_code == 200
+    html = res.get_data(as_text=True)
+    required_tags = [
+        'data-i18n="portal_sub"',
+        'data-i18n="hero_title_1"',
+        'data-i18n="hero_title_2"',
+        'data-i18n="hero_title_3"',
+        'data-i18n="search_btn"',
+        'data-i18n="popular_label"',
+        'data-i18n="chip_eligibility"',
+        'data-i18n="chip_kisan"',
+        'data-i18n="stat_active_schemes"',
+        'data-i18n="stat_target_sectors"',
+        'data-i18n="cat_agri"',
+        'data-i18n="cat_health"',
+        'data-i18n="btn_adv_filters"',
+        'data-i18n="pill_dbt"',
+        'data-i18n="active_filters_label"',
+        'data-i18n="btn_load_more"',
+        'data-i18n="modal_sec_about"',
+        'data-i18n="modal_btn_apply"',
+        'data-i18n="footer_tagline"',
+        'data-i18n="nav_install"',
+    ]
+    for tag in required_tags:
+        assert tag in html, f"Missing i18n tag: {tag}"
+
+    # 2. Verify i18n script is linked
+    assert 'i18n.js' in html
+
+    # 3. Verify i18n.js file contains both English and Hindi dictionaries with Saral Bhasha
+    import os
+    i18n_path = os.path.join(os.path.dirname(__file__), "..", "static", "js", "i18n.js")
+    with open(i18n_path, "r", encoding="utf-8") as f:
+        i18n_code = f.read()
+    assert "I18N_TRANSLATIONS" in i18n_code
+    assert "hero_title_1:" in i18n_code
+    assert "cat_agri:" in i18n_code
+    assert "खाते में नकद (DBT)" in i18n_code
+    assert "खेती-किसानी" in i18n_code
+
+
 if __name__ == "__main__":
     test_functions = [
+        test_vernacular_i18n_ui_coverage_and_dictionary,
         test_pwa_offline_service_worker_and_manifest,
         test_voice_query_normalizer_and_endpoints,
     test_recommend_household_matrix,

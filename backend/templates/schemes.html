@@ -1,12 +1,12 @@
-﻿<!-- ══════════════ SCHEMES EXPLORER SECTION ══════════════ -->
+<!-- ══════════════ SCHEMES EXPLORER SECTION ══════════════ -->
 <main class="main" id="schemes">
   <div class="section-header">
     <div class="section-heading">
       <div class="section-badge">
-        <i class="fa-solid fa-shapes"></i> Category Directory
+        <i class="fa-solid fa-shapes"></i> <span data-i18n="sec_category_directory">Category Directory</span>
       </div>
-      <h2 class="section-title">Explore Welfare Schemes by Sector & Needs</h2>
-      <p class="section-sub">Filter verified government initiatives tailored to your demographic, location, socio-economic and business needs</p>
+      <h2 class="section-title" data-i18n="sec_schemes_title">Explore Welfare Schemes by Sector & Needs</h2>
+      <p class="section-sub" data-i18n="sec_schemes_sub">Find government support for farming, studies, healthcare, pension, and small business</p>
     </div>
   </div>
 
@@ -14,37 +14,37 @@
   <div class="filters-scroll-wrap">
     <div class="filters">
       <button class="filter-btn active" data-category="all" onclick="filterByCategory('all', this)">
-        <span>✨ All Categories</span>
+        <span data-i18n="cat_all">✨ All Categories</span>
       </button>
       <button class="filter-btn" data-category="agriculture" onclick="filterByCategory('agriculture', this)">
-        <span>🌾 Agriculture</span>
+        <span data-i18n="cat_agri">🌾 Agriculture</span>
       </button>
       <button class="filter-btn" data-category="health" onclick="filterByCategory('health', this)">
-        <span>🏥 Healthcare</span>
+        <span data-i18n="cat_health">🏥 Healthcare</span>
       </button>
       <button class="filter-btn" data-category="education" onclick="filterByCategory('education', this)">
-        <span>📚 Education</span>
+        <span data-i18n="cat_edu">📚 Education</span>
       </button>
       <button class="filter-btn" data-category="housing" onclick="filterByCategory('housing', this)">
-        <span>🏠 Housing</span>
+        <span data-i18n="cat_housing">🏠 Housing</span>
       </button>
       <button class="filter-btn" data-category="employment" onclick="filterByCategory('employment', this)">
-        <span>💼 Employment</span>
+        <span data-i18n="cat_employment">💼 Employment</span>
       </button>
       <button class="filter-btn" data-category="women" onclick="filterByCategory('women', this)">
-        <span>👩 Women & Child</span>
+        <span data-i18n="cat_women">👩 Women & Child</span>
       </button>
       <button class="filter-btn" data-category="financial" onclick="filterByCategory('financial', this)">
-        <span>💰 Financial Aid</span>
+        <span data-i18n="cat_financial">💰 Financial Aid</span>
       </button>
       <button class="filter-btn" data-category="elderly" onclick="filterByCategory('elderly', this)">
-        <span>👴 Senior Citizens</span>
+        <span data-i18n="cat_elderly">👴 Senior Citizens</span>
       </button>
       <button class="filter-btn" data-category="youth" onclick="filterByCategory('youth', this)">
-        <span>🧑 Youth & Skill</span>
+        <span data-i18n="cat_youth">🧑 Youth & Skill</span>
       </button>
       <button class="filter-btn" data-category="disability" onclick="filterByCategory('disability', this)">
-        <span>♿ Divyangjan</span>
+        <span data-i18n="cat_disability">♿ Divyangjan</span>
       </button>
     </div>
   </div>
@@ -54,25 +54,25 @@
     <div class="filter-bar-left">
       <button class="adv-filter-toggle-btn" id="advFilterToggleBtn" onclick="toggleAdvancedFilterDrawer()">
         <i class="fa-solid fa-sliders"></i>
-        <span>Advanced Filters</span>
+        <span data-i18n="btn_adv_filters">Advanced Filters</span>
         <span class="filter-count-badge" id="advFilterCountBadge" style="display:none;">0</span>
       </button>
 
       <!-- Quick Benefit Filter Pills -->
       <div class="quick-benefit-pills">
-        <button class="quick-pill active" onclick="setQuickBenefit('', this)">All Types</button>
-        <button class="quick-pill" onclick="setQuickBenefit('dbt', this)"><i class="fa-solid fa-money-bill-transfer"></i> Direct Cash (DBT)</button>
-        <button class="quick-pill" onclick="setQuickBenefit('subsidy', this)"><i class="fa-solid fa-tag"></i> Subsidies</button>
-        <button class="quick-pill" onclick="setQuickBenefit('loan', this)"><i class="fa-solid fa-credit-card"></i> Loans & Credit</button>
-        <button class="quick-pill" onclick="setQuickBenefit('scholarship', this)"><i class="fa-solid fa-graduation-cap"></i> Scholarships</button>
-        <button class="quick-pill" onclick="setQuickBenefit('in_kind', this)"><i class="fa-solid fa-box-open"></i> In-Kind</button>
-        <button class="quick-pill" onclick="setQuickBenefit('insurance', this)"><i class="fa-solid fa-shield-halved"></i> Insurance</button>
+        <button class="quick-pill active" onclick="setQuickBenefit('', this)"><span data-i18n="pill_all">All Types</span></button>
+        <button class="quick-pill" onclick="setQuickBenefit('dbt', this)"><i class="fa-solid fa-money-bill-transfer"></i> <span data-i18n="pill_dbt">Direct Cash (DBT)</span></button>
+        <button class="quick-pill" onclick="setQuickBenefit('subsidy', this)"><i class="fa-solid fa-tag"></i> <span data-i18n="pill_subsidy">Subsidies</span></button>
+        <button class="quick-pill" onclick="setQuickBenefit('loan', this)"><i class="fa-solid fa-credit-card"></i> <span data-i18n="pill_loan">Loans & Credit</span></button>
+        <button class="quick-pill" onclick="setQuickBenefit('scholarship', this)"><i class="fa-solid fa-graduation-cap"></i> <span data-i18n="pill_scholarship">Scholarships</span></button>
+        <button class="quick-pill" onclick="setQuickBenefit('in_kind', this)"><i class="fa-solid fa-box-open"></i> <span data-i18n="pill_in_kind">In-Kind</span></button>
+        <button class="quick-pill" onclick="setQuickBenefit('insurance', this)"><i class="fa-solid fa-shield-halved"></i> <span data-i18n="pill_insurance">Insurance</span></button>
       </div>
     </div>
 
     <div class="filter-bar-right">
       <button class="reset-filter-btn" id="resetBtn" onclick="resetAllFilters()" style="display:none;">
-        <i class="fa-solid fa-rotate-left"></i> Reset All Filters
+        <i class="fa-solid fa-rotate-left"></i> <span data-i18n="btn_reset_filters">Reset All Filters</span>
       </button>
     </div>
   </div>
@@ -422,9 +422,9 @@
 
   <!-- ACTIVE FILTERS BADGE BAR -->
   <div class="active-filters-bar" id="activeFiltersBar" style="display: none;">
-    <div class="active-filters-label">Active Filters:</div>
+    <div class="active-filters-label" data-i18n="active_filters_label">Active Filters:</div>
     <div class="active-filter-chips" id="activeFilterChips"></div>
-    <button class="clear-all-link" onclick="resetAllFilters()">Clear All</button>
+    <button class="clear-all-link" onclick="resetAllFilters()" data-i18n="btn_clear_all">Clear All</button>
   </div>
 
   <!-- RESULTS META BAR -->
@@ -476,12 +476,12 @@
   <div class="pagination-wrap" id="paginationWrap" style="display:flex;">
     <div id="infiniteScrollLoader" class="infinite-scroll-loader" style="display: none;">
       <i class="fa-solid fa-circle-notch fa-spin"></i>
-      <span>Loading next 24 schemes...</span>
+      <span data-i18n="loading_schemes">Loading next 24 schemes...</span>
     </div>
     <div class="pagination-info" id="paginationInfo"></div>
     <button type="button" id="btnLoadMoreSchemes" class="btn-load-more" onclick="loadMoreSchemes()" style="display:inline-flex; margin-top:12px;">
       <i class="fa-solid fa-angles-down"></i>
-      <span>Load More Schemes (24 more)</span>
+      <span data-i18n="btn_load_more">Load More Schemes (24 more)</span>
     </button>
   </div>
 </main>

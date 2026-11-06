@@ -1,18 +1,18 @@
-﻿<!-- ══════════════ HERO SECTION ══════════════ -->
+<!-- ══════════════ HERO SECTION ══════════════ -->
 <section class="hero">
   <div class="hero-container">
     <div class="hero-badge">
       <span class="badge-dot"></span>
-      <span data-i18n="hero_badge">National Welfare Portal • Direct Benefit Discovery</span>
+      <span data-i18n="hero_badge">Government Scheme Center • Direct Benefits in Your Bank Account</span>
     </div>
 
     <h1 class="hero-headline">
-      Find the Right <span class="highlight-text">Government Scheme</span><br>
-      For You & Your Family
+      <span data-i18n="hero_title_1">Find the Right</span> <span class="highlight-text" data-i18n="hero_title_2">Government Scheme</span><br>
+      <span data-i18n="hero_title_3">In Simple Words for You & Family</span>
     </h1>
 
     <p class="hero-subtitle" data-i18n="hero_sub">
-      Explore verified central and state welfare initiatives across agriculture, healthcare, education, and entrepreneurship with zero paperwork hurdles.
+      Explore verified welfare schemes across farming, healthcare, education, and jobs — in simple language with zero paperwork confusion.
     </p>
 
     <!-- SEARCH BAR -->
@@ -22,14 +22,14 @@
         <input 
           type="text" 
           id="searchInput" 
-          data-i18n-placeholder="search_placeholder" placeholder="Search by scheme name, ministry, or keyword (e.g. farmer, student, health)..."
+          data-i18n-placeholder="search_placeholder" placeholder="Search schemes by keyword, benefit, or state (e.g. Kisan, Scholarship, PM Awas)..."
           autocomplete="off"
         />
         <button type="button" class="voice-search-btn" id="btnVoiceSearch" onclick="toggleVoiceSearch()" title="बोलकर खोजें (Voice Search in Hindi/English)" aria-label="Voice Search">
           <i class="fa-solid fa-microphone"></i>
         </button>
         <button class="search-btn" onclick="handleSearch()" aria-label="Search schemes">
-          <span>Search</span>
+          <span data-i18n="search_btn">Search</span>
           <i class="fa-solid fa-arrow-right"></i>
         </button>
       </div>
@@ -50,15 +50,15 @@
 
       <!-- TRENDING CHIPS -->
       <div class="trending-searches">
-        <span class="trending-label"><i class="fa-solid fa-fire"></i> Popular:</span>
+        <span class="trending-label"><i class="fa-solid fa-fire"></i> <span data-i18n="popular_label">Popular:</span></span>
         <button class="trend-chip trend-chip-highlight" onclick="openEligibilityModal()">
-          <i class="fa-solid fa-wand-magic-sparkles"></i> <strong>Check Eligibility</strong>
+          <i class="fa-solid fa-wand-magic-sparkles"></i> <strong data-i18n="chip_eligibility">Check Eligibility</strong>
         </button>
-        <button class="trend-chip" onclick="quickSearch('farmer')">🌾 PM Kisan</button>
-        <button class="trend-chip" onclick="quickSearch('ayushman')">🏥 Ayushman Bharat</button>
-        <button class="trend-chip" onclick="quickSearch('scholarship')">📚 Scholarships</button>
-        <button class="trend-chip" onclick="quickSearch('women')">👩 Women Welfare</button>
-        <button class="trend-chip" onclick="quickSearch('housing')">🏠 Awas Yojana</button>
+        <button class="trend-chip" onclick="quickSearch('farmer')"><span data-i18n="chip_kisan">🌾 PM Kisan</span></button>
+        <button class="trend-chip" onclick="quickSearch('ayushman')"><span data-i18n="chip_ayushman">🏥 Ayushman Bharat</span></button>
+        <button class="trend-chip" onclick="quickSearch('scholarship')"><span data-i18n="chip_scholarships">📚 Scholarships</span></button>
+        <button class="trend-chip" onclick="quickSearch('women')"><span data-i18n="chip_women">👩 Women Welfare</span></button>
+        <button class="trend-chip" onclick="quickSearch('housing')"><span data-i18n="chip_housing">🏠 Awas Yojana</span></button>
       </div>
     </div>
 
@@ -69,8 +69,8 @@
           <i class="fa-solid fa-file-shield"></i>
         </div>
         <div>
-          <div class="stat-number" id="totalCount">50+</div>
-          <div class="stat-title">Active Schemes</div>
+          <div class="stat-number" id="totalCount">4,847+</div>
+          <div class="stat-title" data-i18n="stat_active_schemes">Active Schemes</div>
         </div>
       </div>
 
@@ -80,7 +80,7 @@
         </div>
         <div>
           <div class="stat-number">10</div>
-          <div class="stat-title">Target Sectors</div>
+          <div class="stat-title" data-i18n="stat_target_sectors">Key Sectors</div>
         </div>
       </div>
 
@@ -90,7 +90,7 @@
         </div>
         <div>
           <div class="stat-number">100%</div>
-          <div class="stat-title">Official & Free</div>
+          <div class="stat-title" data-i18n="stat_official_free">Official & Free</div>
         </div>
       </div>
 
@@ -99,8 +99,8 @@
           <i class="fa-solid fa-robot"></i>
         </div>
         <div>
-          <div class="stat-number">AI Powered</div>
-          <div class="stat-title">Fraud Protection</div>
+          <div class="stat-number">AI</div>
+          <div class="stat-title" data-i18n="stat_ai_fraud">Safe & Verified</div>
         </div>
       </div>
     </div>
